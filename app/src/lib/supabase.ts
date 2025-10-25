@@ -3,7 +3,12 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = 'https://voskmcxmtvophehityoa.supabase.co'
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZvc2ttY3htdHZvcGhlaGl0eW9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1NTI1MDQsImV4cCI6MjA3NDEyODUwNH0.4sZOl1G7ZgCh0R_VSAULPm-KuPtLQ-013ivFn19VYVQ'
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+console.log('🔧 Initializing Supabase client...');
+console.log('🔧 SUPABASE_URL:', supabaseUrl);
+console.log('🔧 SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Present' : 'Missing');
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+console.log('✅ Supabase client initialized');
 
 // Database schema for beacons
 export interface Beacon {
@@ -157,68 +162,140 @@ export const profileService = {
 export const interactionService = {
   // Like a beacon
   async likeBeacon(beaconId: number, userWallet: string) {
-    const { data, error } = await supabase
-      .from('beacon_likes')
-      .insert([{
-        beacon_id: beaconId,
-        user_wallet: userWallet
-      }])
-      .select()
-      .single()
+    console.log('🔥 likeBeacon called with:', { beaconId, userWallet });
     
-    if (error) throw error
-    return data
+    try {
+      const { data, error } = await supabase
+        .from('beacon_likes')
+        .insert([{
+          beacon_id: beaconId,
+          user_wallet: userWallet
+        }])
+        .select()
+        .single()
+      
+      console.log('🔥 likeBeacon result:', { data, error });
+      
+      if (error) {
+        console.error('❌ likeBeacon error:', error);
+        throw error;
+      }
+      
+      console.log('✅ likeBeacon success:', data);
+      return data;
+    } catch (error) {
+      console.error('❌ likeBeacon exception:', error);
+      throw error;
+    }
   },
 
   // Unlike a beacon
   async unlikeBeacon(beaconId: number, userWallet: string) {
-    const { error } = await supabase
-      .from('beacon_likes')
-      .delete()
-      .eq('beacon_id', beaconId)
-      .eq('user_wallet', userWallet)
+    console.log('💔 unlikeBeacon called with:', { beaconId, userWallet });
     
-    if (error) throw error
+    try {
+      const { error } = await supabase
+        .from('beacon_likes')
+        .delete()
+        .eq('beacon_id', beaconId)
+        .eq('user_wallet', userWallet)
+      
+      console.log('💔 unlikeBeacon result:', { error });
+      
+      if (error) {
+        console.error('❌ unlikeBeacon error:', error);
+        throw error;
+      }
+      
+      console.log('✅ unlikeBeacon success');
+    } catch (error) {
+      console.error('❌ unlikeBeacon exception:', error);
+      throw error;
+    }
   },
 
   // Check if user liked a beacon
   async hasUserLiked(beaconId: number, userWallet: string) {
-    const { data, error } = await supabase
-      .from('beacon_likes')
-      .select('id')
-      .eq('beacon_id', beaconId)
-      .eq('user_wallet', userWallet)
-      .single()
+    console.log('🔍 hasUserLiked called with:', { beaconId, userWallet });
     
-    if (error && error.code !== 'PGRST116') throw error
-    return !!data
+    try {
+      const { data, error } = await supabase
+        .from('beacon_likes')
+        .select('id')
+        .eq('beacon_id', beaconId)
+        .eq('user_wallet', userWallet)
+        .single()
+      
+      console.log('🔍 hasUserLiked result:', { data, error });
+      
+      if (error && error.code !== 'PGRST116') {
+        console.error('❌ hasUserLiked error:', error);
+        throw error;
+      }
+      
+      const result = !!data;
+      console.log('✅ hasUserLiked success:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ hasUserLiked exception:', error);
+      throw error;
+    }
   },
 
   // Get like count for a beacon
   async getLikeCount(beaconId: number) {
-    const { count, error } = await supabase
-      .from('beacon_likes')
-      .select('*', { count: 'exact', head: true })
-      .eq('beacon_id', beaconId)
+    console.log('📊 getLikeCount called with:', { beaconId });
     
-    if (error) throw error
-    return count || 0
+    try {
+      const { count, error } = await supabase
+        .from('beacon_likes')
+        .select('*', { count: 'exact', head: true })
+        .eq('beacon_id', beaconId)
+      
+      console.log('📊 getLikeCount result:', { count, error });
+      
+      if (error) {
+        console.error('❌ getLikeCount error:', error);
+        throw error;
+      }
+      
+      const result = count || 0;
+      console.log('✅ getLikeCount success:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ getLikeCount exception:', error);
+      throw error;
+    }
   },
 
   // Reply to a beacon
   async replyToBeacon(beaconId: number, userWallet: string, content: string) {
-    const { data, error } = await supabase
-      .from('beacon_replies')
-      .insert([{
-        beacon_id: beaconId,
-        user_wallet: userWallet,
-        content: content
-      }])
-      .select()
-      .single()
+    console.log('💬 replyToBeacon called with:', { beaconId, userWallet, content });
     
-    if (error) throw error
-    return data
+    try {
+      const { data, error } = await supabase
+        .from('beacon_replies')
+        .insert([{
+          beacon_id: beaconId,
+          user_wallet: userWallet,
+          content: content
+        }])
+        .select()
+        .single()
+      
+      console.log('💬 replyToBeacon result:', { data, error });
+      
+      if (error) {
+        console.error('❌ replyToBeacon error:', error);
+        throw error;
+      }
+      
+      console.log('✅ replyToBeacon success:', data);
+      return data;
+    } catch (error) {
+      console.error('❌ replyToBeacon exception:', error);
+      throw error;
+    }
   },
 
   // Get replies for a beacon

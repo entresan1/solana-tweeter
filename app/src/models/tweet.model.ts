@@ -46,6 +46,14 @@ export class TweetModel implements ITweet {
     if (accountData.treasuryTransaction) this.treasuryTransaction = accountData.treasuryTransaction;
     if (accountData.author_display) this.authorDisplay = accountData.author_display;
     if (accountData.account) this.account = accountData.account;
+    
+    console.log('🏗️ TweetModel constructor called with:', { 
+      id: this.id, 
+      publicKey: this.publicKey.toBase58(),
+      author: this.author.toBase58(),
+      topic: this.topic,
+      content: this.content
+    });
   }
 
   get key() {

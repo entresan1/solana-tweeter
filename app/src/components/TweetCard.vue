@@ -19,8 +19,16 @@
   const likeCount = ref(0);
   const showReplyModal = ref(false);
   const replyContent = ref('');
+  const replies = ref([]);
+  const showReplies = ref(false);
+  const loadingReplies = ref(false);
 
   onMounted(async () => {
+    console.log('🎯 TweetCard onMounted called');
+    console.log('🎯 tweet.value:', tweet.value);
+    console.log('🎯 tweet.value?.id:', tweet.value?.id);
+    console.log('🎯 tweet.value?.author:', tweet.value?.author);
+    
     if (tweet.value?.author) {
       try {
         const profile = await profileService.getProfile(tweet.value.author.toBase58());
@@ -42,22 +50,64 @@
   });
 
   const loadLikeData = async () => {
-    if (!tweet.value?.id || !wallet.value?.publicKey) return;
+    console.log('🔍 loadLikeData called');
+    console.log('🔍 tweet.value:', tweet.value);
+    console.log('🔍 tweet.value?.id:', tweet.value?.id);
+    console.log('🔍 wallet.value?.publicKey:', wallet.value?.publicKey);
+    
+    if (!tweet.value?.id || !wallet.value?.publicKey) {
+      console.log('❌ Missing required data - tweet ID or wallet public key');
+      return;
+    }
     
     try {
       const beaconId = tweet.value.id;
-      console.log('Loading like data for beacon ID:', beaconId);
+      const userWallet = wallet.value.publicKey.toBase58();
+      console.log('🔍 Loading like data for beacon ID:', beaconId);
+      console.log('🔍 User wallet:', userWallet);
       
-      const [liked, count] = await Promise.all([
-        interactionService.hasUserLiked(beaconId, wallet.value.publicKey.toBase58()),
-        interactionService.getLikeCount(beaconId)
-      ]);
+      console.log('🔍 Calling interactionService.hasUserLiked...');
+      const liked = await interactionService.hasUserLiked(beaconId, userWallet);
+      console.log('🔍 hasUserLiked result:', liked);
+      
+      console.log('🔍 Calling interactionService.getLikeCount...');
+      const count = await interactionService.getLikeCount(beaconId);
+      console.log('🔍 getLikeCount result:', count);
+      
       isLiked.value = liked;
       likeCount.value = count;
+      console.log('✅ Like data loaded successfully:', { liked, count });
     } catch (error) {
-      console.error('Error loading like data:', error);
+      console.error('❌ Error loading like data:', error);
+      console.error('❌ Error details:', error.message);
+      console.error('❌ Error stack:', error.stack);
     }
   };
+
+  const loadReplies = async () => {
+    if (!tweet.value?.id) return;
+    
+    try {
+      loadingReplies.value = true;
+      console.log('💬 Loading replies for beacon ID:', tweet.value.id);
+      
+      const beaconReplies = await interactionService.getBeaconReplies(tweet.value.id);
+      replies.value = beaconReplies;
+      console.log('💬 Loaded replies:', beaconReplies);
+    } catch (error) {
+      console.error('❌ Error loading replies:', error);
+    } finally {
+      loadingReplies.value = false;
+    }
+  };
+
+  const toggleReplies = async () => {
+    if (!showReplies.value) {
+      await loadReplies();
+    }
+    showReplies.value = !showReplies.value;
+  };
+
   const authorRoute = computed(() => {
     if (!tweet.value?.author) {
       return { name: 'Home' };
@@ -78,49 +128,91 @@
 
   // Action handlers
   const handleLike = async () => {
-    if (!wallet.value?.publicKey || !tweet.value?.id) return;
+    console.log('❤️ handleLike called');
+    console.log('❤️ wallet.value?.publicKey:', wallet.value?.publicKey);
+    console.log('❤️ tweet.value?.id:', tweet.value?.id);
+    console.log('❤️ isLiked.value:', isLiked.value);
+    console.log('❤️ likeCount.value:', likeCount.value);
+    
+    if (!wallet.value?.publicKey || !tweet.value?.id) {
+      console.log('❌ Missing wallet or tweet ID');
+      return;
+    }
     
     try {
       const beaconId = tweet.value.id;
-      console.log('Toggling like for beacon ID:', beaconId);
+      const userWallet = wallet.value.publicKey.toBase58();
+      console.log('❤️ Toggling like for beacon ID:', beaconId);
+      console.log('❤️ User wallet:', userWallet);
       
       if (isLiked.value) {
-        await interactionService.unlikeBeacon(beaconId, wallet.value.publicKey.toBase58());
+        console.log('❤️ Unliking beacon...');
+        await interactionService.unlikeBeacon(beaconId, userWallet);
         isLiked.value = false;
         likeCount.value--;
-        console.log('Unliked beacon');
+        console.log('✅ Unliked beacon successfully');
       } else {
-        await interactionService.likeBeacon(beaconId, wallet.value.publicKey.toBase58());
+        console.log('❤️ Liking beacon...');
+        await interactionService.likeBeacon(beaconId, userWallet);
         isLiked.value = true;
         likeCount.value++;
-        console.log('Liked beacon');
+        console.log('✅ Liked beacon successfully');
       }
     } catch (error) {
-      console.error('Error toggling like:', error);
+      console.error('❌ Error toggling like:', error);
+      console.error('❌ Error details:', error.message);
+      console.error('❌ Error stack:', error.stack);
     }
   };
 
   const handleReply = () => {
-    showReplyModal.value = !showReplyModal.value;
+    // Toggle between showing replies and showing reply form
+    if (showReplies.value) {
+      // If replies are shown, show reply form
+      showReplies.value = false;
+      showReplyModal.value = true;
+    } else {
+      // If replies are not shown, show replies
+      toggleReplies();
+    }
   };
 
   const submitReply = async () => {
-    if (!wallet.value?.publicKey || !tweet.value?.id || !replyContent.value.trim()) return;
+    console.log('💬 submitReply called');
+    console.log('💬 wallet.value?.publicKey:', wallet.value?.publicKey);
+    console.log('💬 tweet.value?.id:', tweet.value?.id);
+    console.log('💬 replyContent.value:', replyContent.value);
+    console.log('💬 replyContent.value.trim():', replyContent.value.trim());
+    
+    if (!wallet.value?.publicKey || !tweet.value?.id || !replyContent.value.trim()) {
+      console.log('❌ Missing wallet, tweet ID, or reply content');
+      return;
+    }
     
     try {
       const beaconId = tweet.value.id;
-      console.log('Submitting reply for beacon ID:', beaconId);
+      const userWallet = wallet.value.publicKey.toBase58();
+      const content = replyContent.value.trim();
+      console.log('💬 Submitting reply for beacon ID:', beaconId);
+      console.log('💬 User wallet:', userWallet);
+      console.log('💬 Reply content:', content);
       
-      await interactionService.replyToBeacon(
-        beaconId, 
-        wallet.value.publicKey.toBase58(), 
-        replyContent.value.trim()
-      );
+      console.log('💬 Calling interactionService.replyToBeacon...');
+      await interactionService.replyToBeacon(beaconId, userWallet, content);
+      console.log('✅ Reply submitted successfully');
+      
       replyContent.value = '';
       showReplyModal.value = false;
-      console.log('Reply submitted successfully');
+      console.log('✅ Reply form cleared and hidden');
+      
+      // Refresh replies if they're currently shown
+      if (showReplies.value) {
+        await loadReplies();
+      }
     } catch (error) {
-      console.error('Error submitting reply:', error);
+      console.error('❌ Error submitting reply:', error);
+      console.error('❌ Error details:', error.message);
+      console.error('❌ Error stack:', error.stack);
     }
   };
 
@@ -255,7 +347,7 @@ Come beacon at @https://trenchbeacon.com/`;
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
-            <span class="text-sm">Reply</span>
+            <span class="text-sm">{{ showReplies ? 'Reply' : 'Replies' }}</span>
           </button>
           <button 
             @click="handleShare"
@@ -266,6 +358,54 @@ Come beacon at @https://trenchbeacon.com/`;
             </svg>
             <span class="text-sm">Share</span>
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Replies Section -->
+    <div v-if="showReplies" class="mt-4 border-t border-dark-700 pt-4">
+      <div class="flex items-center justify-between mb-3">
+        <h4 class="text-sm font-medium text-dark-300">Replies</h4>
+        <button 
+          @click="toggleReplies"
+          class="text-xs text-dark-400 hover:text-primary-400 transition-colors"
+        >
+          Hide
+        </button>
+      </div>
+      
+      <div v-if="loadingReplies" class="text-center py-4">
+        <div class="text-dark-400 text-sm">Loading replies...</div>
+      </div>
+      
+      <div v-else-if="replies.length === 0" class="text-center py-4">
+        <div class="text-dark-400 text-sm">No replies yet</div>
+      </div>
+      
+      <div v-else class="space-y-3">
+        <div 
+          v-for="reply in replies" 
+          :key="reply.id"
+          class="bg-dark-800/30 border border-dark-700 rounded-lg p-3"
+        >
+          <div class="flex items-start space-x-3">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-r from-primary-500 to-solana-500 flex items-center justify-center flex-shrink-0">
+              <span class="text-white font-bold text-sm">
+                {{ reply.user_wallet?.slice(0, 2).toUpperCase() || 'U' }}
+              </span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center space-x-2 mb-1">
+                <span class="text-sm font-medium text-white">
+                  {{ reply.user_wallet?.slice(0, 8) + '...' || 'Anonymous' }}
+                </span>
+                <span class="text-xs text-dark-400">
+                  {{ new Date(reply.created_at).toLocaleString() }}
+                </span>
+              </div>
+              <p class="text-dark-100 text-sm">{{ reply.content }}</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -290,3 +430,4 @@ Come beacon at @https://trenchbeacon.com/`;
     </div>
   </div>
 </template>
+
