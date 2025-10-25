@@ -20,6 +20,8 @@
   const content = ref('');
   const topic = ref('');
   const onFocus = ref(false);
+  const isSubmitting = ref(false);
+  const errorMessage = ref('');
   const slugTopic = useSlug(topic);
   const effectiveTopic = computed(() => forcedTopic.value ?? slugTopic.value);
 
@@ -43,24 +45,60 @@
   const emit = defineEmits(['added']);
   const send = async () => {
     if (!canTweet.value) return;
-    const tweet = await sendTweet(effectiveTopic.value, content.value);
-    emit('added', tweet);
-    topic.value = '';
-    content.value = '';
+    
+    isSubmitting.value = true;
+    errorMessage.value = '';
+    
+    try {
+      const tweet = await sendTweet(effectiveTopic.value, content.value);
+      emit('added', tweet);
+      content.value = '';
+      topic.value = '';
+    } catch (error: any) {
+      console.error('Beacon error:', error);
+      
+      // Handle specific error cases
+      if (error.message?.includes('insufficient funds') || error.message?.includes('Insufficient')) {
+        errorMessage.value = 'Insufficient SOL balance. Please add funds to your wallet.';
+      } else if (error.message?.includes('User rejected') || error.message?.includes('rejected')) {
+        errorMessage.value = 'Transaction was cancelled by user.';
+      } else if (error.message?.includes('network') || error.message?.includes('connection')) {
+        errorMessage.value = 'Network error. Please check your connection and try again.';
+      } else if (error.message?.includes('wallet') || error.message?.includes('Wallet')) {
+        errorMessage.value = 'Wallet connection issue. Please reconnect your wallet.';
+      } else {
+        errorMessage.value = 'Failed to send beacon. Please try again.';
+      }
+    } finally {
+      isSubmitting.value = false;
+    }
   };
 
   // Handler
   const handleTopicChange = (event: Event) => {
     topic.value = (event?.target as HTMLInputElement)?.value;
+    errorMessage.value = ''; // Clear error when user types
+  };
+  
+  const handleContentChange = () => {
+    errorMessage.value = ''; // Clear error when user types
   };
 </script>
 
 <template>
   <div v-if="connected" class="card mb-6 group relative overflow-hidden">
-    <!-- Shimmer Effect -->
-    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-primary-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 animate-shimmer"></div>
     
     <div class="relative z-10">
+      <!-- Error Message -->
+      <div v-if="errorMessage" class="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+        <div class="flex items-center space-x-2">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+          </svg>
+          <span>{{ errorMessage }}</span>
+        </div>
+      </div>
+      
       <!-- Enhanced Content field -->
       <div class="mb-6">
         <div class="relative">
@@ -72,6 +110,7 @@
             placeholder="What's happening on Solana?"
             @focus="onFocus = true"
             @blur="onFocus = false"
+            @input="handleContentChange"
           ></textarea>
           <!-- Typing Indicator -->
           <div v-if="content && onFocus" class="absolute right-3 top-3">
@@ -120,18 +159,20 @@
           <!-- Enhanced Tweet button -->
           <button
             class="btn-primary text-sm px-6 py-2 relative overflow-hidden group/btn"
-            :disabled="!canTweet"
-            :class="!canTweet ? 'opacity-50 cursor-not-allowed' : 'hover-glow hover:scale-105'"
+            :disabled="!canTweet || isSubmitting"
+            :class="(!canTweet || isSubmitting) ? 'opacity-50 cursor-not-allowed' : 'hover-glow hover:scale-105'"
             @click="send"
           >
             <span class="flex items-center space-x-2 relative z-10">
-              <svg class="w-4 h-4 transition-transform duration-300 group-hover/btn:rotate-12" fill="currentColor" viewBox="0 0 20 20">
+              <svg v-if="!isSubmitting" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
               </svg>
-              <span>Beacon</span>
+              <svg v-else class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>{{ isSubmitting ? 'Sending...' : 'Beacon' }}</span>
             </span>
-            <!-- Button Shimmer Effect -->
-            <div v-if="canTweet" class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 animate-shimmer"></div>
           </button>
         </div>
       </div>
@@ -141,17 +182,15 @@
   <div v-else class="card mb-6 text-center">
     <div class="flex flex-col items-center space-y-6 py-8">
       <div class="relative">
-        <div class="w-16 h-16 rounded-full bg-gradient-to-r from-primary-500/20 to-solana-500/20 flex items-center justify-center animate-float">
+        <div class="w-16 h-16 rounded-full bg-gradient-to-r from-primary-500/20 to-solana-500/20 flex items-center justify-center">
           <svg class="w-8 h-8 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
         </div>
-        <!-- Pulsing Ring -->
-        <div class="absolute inset-0 rounded-full border-2 border-primary-400/30 animate-ping"></div>
       </div>
       <div class="space-y-2">
-        <h3 class="text-lg font-semibold text-dark-200 animate-fade-in">Connect Your Wallet</h3>
-        <p class="text-dark-400 animate-fade-in" style="animation-delay: 0.2s;">Connect your Solana wallet to start beaming on the blockchain</p>
+        <h3 class="text-lg font-semibold text-dark-200">Connect Your Wallet</h3>
+        <p class="text-dark-400">Connect your Solana wallet to start beaming on the blockchain</p>
       </div>
     </div>
   </div>
