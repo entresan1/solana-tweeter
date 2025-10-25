@@ -47,36 +47,35 @@
 
     // Load like status and count
     await loadLikeData();
+    
+    // Automatically load replies
+    await loadReplies();
+    showReplies.value = true;
   });
 
   const loadLikeData = async () => {
     console.log('🔍 loadLikeData called');
     console.log('🔍 tweet.value:', tweet.value);
     console.log('🔍 tweet.value?.id:', tweet.value?.id);
-    console.log('🔍 wallet.value?.publicKey:', wallet.value?.publicKey);
     
-    if (!tweet.value?.id || !wallet.value?.publicKey) {
-      console.log('❌ Missing required data - tweet ID or wallet public key');
+    if (!tweet.value?.id) {
+      console.log('❌ Missing required data - tweet ID');
       return;
     }
     
     try {
       const beaconId = tweet.value.id;
-      const userWallet = wallet.value.publicKey.toBase58();
       console.log('🔍 Loading like data for beacon ID:', beaconId);
-      console.log('🔍 User wallet:', userWallet);
       
-      console.log('🔍 Calling interactionService.hasUserLiked...');
-      const liked = await interactionService.hasUserLiked(beaconId, userWallet);
-      console.log('🔍 hasUserLiked result:', liked);
-      
+      // Only get the like count, skip the hasUserLiked check to avoid 406 errors
       console.log('🔍 Calling interactionService.getLikeCount...');
       const count = await interactionService.getLikeCount(beaconId);
       console.log('🔍 getLikeCount result:', count);
       
-      isLiked.value = liked;
+      // Set liked to false initially (will be updated when user actually likes)
+      isLiked.value = false;
       likeCount.value = count;
-      console.log('✅ Like data loaded successfully:', { liked, count });
+      console.log('✅ Like data loaded successfully:', { liked: false, count });
     } catch (error: any) {
       console.error('❌ Error loading like data:', error);
       console.error('❌ Error details:', error.message);
@@ -134,8 +133,14 @@
     console.log('❤️ isLiked.value:', isLiked.value);
     console.log('❤️ likeCount.value:', likeCount.value);
     
-    if (!wallet.value?.publicKey || !tweet.value?.id) {
-      console.log('❌ Missing wallet or tweet ID');
+    if (!wallet.value?.publicKey) {
+      console.log('❌ Wallet not connected. Please connect your wallet first.');
+      alert('Please connect your wallet first to like beacons.');
+      return;
+    }
+    
+    if (!tweet.value?.id) {
+      console.log('❌ Missing tweet ID');
       return;
     }
     
@@ -166,14 +171,16 @@
   };
 
   const handleReply = () => {
-    // Toggle between showing replies and showing reply form
-    if (showReplies.value) {
-      // If replies are shown, show reply form
-      showReplies.value = false;
-      showReplyModal.value = true;
+    // Toggle reply form visibility
+    if (showReplyModal.value) {
+      // If reply form is open, close it
+      showReplyModal.value = false;
     } else {
-      // If replies are not shown, show replies
-      toggleReplies();
+      // If reply form is closed, open it and load replies if needed
+      if (!showReplies.value) {
+        toggleReplies(); // Load and show replies
+      }
+      showReplyModal.value = true; // Show reply form
     }
   };
 
@@ -327,7 +334,7 @@ Come beacon at @https://trenchbeacon.com/`;
         </div>
 
         <!-- Action Buttons -->
-        <div class="flex items-center space-x-6 mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div class="flex items-center space-x-6 mt-4">
         <button 
           @click="handleLike"
           :class="[
@@ -362,10 +369,10 @@ Come beacon at @https://trenchbeacon.com/`;
       </div>
     </div>
 
-    <!-- Replies Section -->
-    <div v-if="showReplies" class="mt-4 border-t border-dark-700 pt-4">
+    <!-- Replies Section - Only show if there are replies -->
+    <div v-if="showReplies && replies.length > 0" class="mt-4 border-t border-dark-700 pt-4">
       <div class="flex items-center justify-between mb-3">
-        <h4 class="text-sm font-medium text-dark-300">Replies</h4>
+        <h4 class="text-sm font-medium text-dark-300">Replies ({{ replies.length }})</h4>
         <button 
           @click="toggleReplies"
           class="text-xs text-dark-400 hover:text-primary-400 transition-colors"
@@ -378,11 +385,14 @@ Come beacon at @https://trenchbeacon.com/`;
         <div class="text-dark-400 text-sm">Loading replies...</div>
       </div>
       
-      <div v-else-if="replies.length === 0" class="text-center py-4">
-        <div class="text-dark-400 text-sm">No replies yet</div>
-      </div>
-      
-      <div v-else class="space-y-3">
+      <!-- Scrollable replies container for 3+ replies -->
+      <div 
+        v-else 
+        :class="[
+          'space-y-3',
+          replies.length > 3 ? 'max-h-64 overflow-y-auto pr-2' : ''
+        ]"
+      >
         <div 
           v-for="reply in replies" 
           :key="reply.id"
@@ -412,20 +422,22 @@ Come beacon at @https://trenchbeacon.com/`;
 
     <!-- Inline Reply Box -->
     <div v-if="showReplyModal" class="mt-4 p-4 bg-dark-800/50 border border-dark-700 rounded-lg">
-      <div class="flex items-end space-x-3">
+      <div class="flex flex-col space-y-3">
         <textarea
           v-model="replyContent"
           placeholder="Write your reply..."
-          class="input-field flex-1 h-20 resize-none"
+          class="input-field w-full h-20 resize-none"
           maxlength="280"
         ></textarea>
-        <button 
-          @click="submitReply"
-          :disabled="!replyContent.trim()"
-          class="btn-primary px-6 py-3 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-        >
-          Reply
-        </button>
+        <div class="flex justify-center">
+          <button 
+            @click="submitReply"
+            :disabled="!replyContent.trim()"
+            class="btn-primary px-6 py-3 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+          >
+            Reply
+          </button>
+        </div>
       </div>
     </div>
   </div>

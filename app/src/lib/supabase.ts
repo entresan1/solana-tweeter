@@ -125,14 +125,27 @@ export const beaconService = {
 export const profileService = {
   // Get user profile by wallet address
   async getProfile(walletAddress: string) {
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('wallet_address', walletAddress)
-      .single()
-    
-    if (error && error.code !== 'PGRST116') throw error // PGRST116 = no rows found
-    return data
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('wallet_address', walletAddress)
+        .single()
+      
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No profile found - this is normal
+          return null;
+        } else {
+          console.warn('⚠️ Profile fetch failed:', error.message);
+          return null;
+        }
+      }
+      return data;
+    } catch (error) {
+      console.warn('⚠️ Profile fetch failed:', error);
+      return null;
+    }
   },
 
   // Create or update user profile
@@ -329,10 +342,7 @@ export const interactionService = {
   async getBeaconReplies(beaconId: number) {
     const { data, error } = await supabase
       .from('beacon_replies')
-      .select(`
-        *,
-        user_profiles!beacon_replies_user_wallet_fkey(nickname, profile_picture_url)
-      `)
+      .select('*')
       .eq('beacon_id', beaconId)
       .order('created_at', { ascending: true })
     
