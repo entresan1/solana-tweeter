@@ -1,6 +1,8 @@
 <script setup lang="ts">
   import { useWallet, WalletMultiButton } from 'solana-wallets-vue';
+  import { useRoute } from 'vue-router';
   const { connected } = useWallet();
+  const route = useRoute();
 </script>
 
 <template>
@@ -20,15 +22,14 @@
     <!-- Navigation -->
     <div class="flex flex-col items-center md:items-stretch space-y-2 w-full">
       <router-link
-        v-slot="{ isActive }"
         :to="{ name: 'Home' }"
         class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-200 hover-lift group"
-        :class="isActive ? 'bg-gradient-to-r from-accent-500/20 to-solana-500/20 border border-accent-500/30' : ''"
+        :class="route.name === 'Home' ? 'bg-gradient-to-r from-primary-500/20 to-solana-500/20 border border-primary-500/30' : ''"
       >
         <div class="flex items-center justify-center w-8 h-8 rounded-xl"
-             :class="isActive ? 'bg-gradient-to-r from-accent-500 to-solana-500' : 'bg-dark-700 group-hover:bg-dark-600'">
+             :class="route.name === 'Home' ? 'bg-gradient-to-r from-primary-500 to-solana-500' : 'bg-dark-700 group-hover:bg-dark-600'">
           <svg
-            v-if="isActive"
+            v-if="route.name === 'Home'"
             xmlns="http://www.w3.org/2000/svg"
             class="h-5 w-5 text-white"
             viewBox="0 0 20 20"
@@ -55,18 +56,18 @@
           </svg>
         </div>
         <div class="text-lg font-medium hidden md:block"
-             :class="isActive ? 'text-white' : 'text-dark-300 group-hover:text-white'">Home</div>
+             :class="route.name === 'Home' ? 'text-white' : 'text-dark-300 group-hover:text-white'">Home</div>
       </router-link>
+      
       <router-link
-        v-slot="{ isActive }"
         :to="{ name: 'Topics' }"
         class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-200 hover-lift group"
-        :class="isActive ? 'bg-gradient-to-r from-accent-500/20 to-solana-500/20 border border-accent-500/30' : ''"
+        :class="route.name === 'Topics' ? 'bg-gradient-to-r from-primary-500/20 to-solana-500/20 border border-primary-500/30' : ''"
       >
         <div class="flex items-center justify-center w-8 h-8 rounded-xl"
-             :class="isActive ? 'bg-gradient-to-r from-accent-500 to-solana-500' : 'bg-dark-700 group-hover:bg-dark-600'">
+             :class="route.name === 'Topics' ? 'bg-gradient-to-r from-primary-500 to-solana-500' : 'bg-dark-700 group-hover:bg-dark-600'">
           <svg
-            v-if="isActive"
+            v-if="route.name === 'Topics'"
             xmlns="http://www.w3.org/2000/svg"
             class="h-5 w-5 text-white"
             viewBox="0 0 20 20"
@@ -96,18 +97,18 @@
           </svg>
         </div>
         <div class="text-lg font-medium hidden md:block"
-             :class="isActive ? 'text-white' : 'text-dark-300 group-hover:text-white'">Topics</div>
+             :class="route.name === 'Topics' ? 'text-white' : 'text-dark-300 group-hover:text-white'">Topics</div>
       </router-link>
+      
       <router-link
-        v-slot="{ isActive }"
         :to="{ name: 'Users' }"
         class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-200 hover-lift group"
-        :class="isActive ? 'bg-gradient-to-r from-accent-500/20 to-solana-500/20 border border-accent-500/30' : ''"
+        :class="route.name === 'Users' ? 'bg-gradient-to-r from-primary-500/20 to-solana-500/20 border border-accent-500/30' : ''"
       >
         <div class="flex items-center justify-center w-8 h-8 rounded-xl"
-             :class="isActive ? 'bg-gradient-to-r from-accent-500 to-solana-500' : 'bg-dark-700 group-hover:bg-dark-600'">
+             :class="route.name === 'Users' ? 'bg-gradient-to-r from-primary-500 to-solana-500' : 'bg-dark-700 group-hover:bg-dark-600'">
           <svg
-            v-if="isActive"
+            v-if="route.name === 'Users'"
             xmlns="http://www.w3.org/2000/svg"
             class="h-5 w-5 text-white"
             viewBox="0 0 20 20"
@@ -134,21 +135,20 @@
           </svg>
         </div>
         <div class="text-lg font-medium hidden md:block"
-             :class="isActive ? 'text-white' : 'text-dark-300 group-hover:text-white'">Users</div>
+             :class="route.name === 'Users' ? 'text-white' : 'text-dark-300 group-hover:text-white'">Users</div>
       </router-link>
       
       <!-- Profile Link (only when connected) -->
       <router-link
         v-if="connected"
-        v-slot="{ isActive }"
         :to="{ name: 'Profile' }"
         class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-200 hover-lift group"
-        :class="isActive ? 'bg-gradient-to-r from-accent-500/20 to-solana-500/20 border border-accent-500/30' : ''"
+        :class="route.name === 'Profile' ? 'bg-gradient-to-r from-primary-500/20 to-solana-500/20 border border-accent-500/30' : ''"
       >
         <div class="flex items-center justify-center w-8 h-8 rounded-xl"
-             :class="isActive ? 'bg-gradient-to-r from-accent-500 to-solana-500' : 'bg-dark-700 group-hover:bg-dark-600'">
+             :class="route.name === 'Profile' ? 'bg-gradient-to-r from-primary-500 to-solana-500' : 'bg-dark-700 group-hover:bg-dark-600'">
           <svg
-            v-if="isActive"
+            v-if="route.name === 'Profile'"
             xmlns="http://www.w3.org/2000/svg"
             class="h-5 w-5 text-white"
             viewBox="0 0 20 20"
@@ -177,7 +177,7 @@
           </svg>
         </div>
         <div class="text-lg font-medium hidden md:block"
-             :class="isActive ? 'text-white' : 'text-dark-300 group-hover:text-white'">Profile</div>
+             :class="route.name === 'Profile' ? 'text-white' : 'text-dark-300 group-hover:text-white'">Profile</div>
       </router-link>
     </div>
     

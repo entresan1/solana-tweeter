@@ -69,17 +69,17 @@
   
   .gradient-border::before {
     content: '';
-    @apply absolute inset-0 rounded-lg p-[1px] bg-gradient-to-r from-accent-500 to-solana-500;
+    @apply absolute inset-0 rounded-lg p-[1px] bg-gradient-to-r from-primary-500 to-solana-500;
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask-composite: exclude;
   }
   
   .text-gradient {
-    @apply bg-gradient-to-r from-accent-400 to-solana-400 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-primary-400 to-solana-400 bg-clip-text text-transparent;
   }
   
   .btn-primary {
-    @apply bg-gradient-to-r from-accent-500 to-solana-500 hover:from-accent-600 hover:to-solana-600 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5;
+    @apply bg-gradient-to-r from-primary-500 to-solana-500 hover:from-primary-600 hover:to-solana-600 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5;
   }
   
   .btn-secondary {
@@ -105,7 +105,7 @@
 }
 
 .swv-button-trigger {
-  @apply bg-gradient-to-r from-accent-500 to-solana-500 hover:from-accent-600 hover:to-solana-600 justify-center text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 !important;
+  @apply bg-gradient-to-r from-primary-500 to-solana-500 hover:from-primary-600 hover:to-solana-600 justify-center text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 !important;
 }
 
 .swv-dropdown-list {
