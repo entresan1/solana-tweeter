@@ -9,9 +9,15 @@ import idl from '@src/idl/solana_twitter.json';
 const preflightCommitment = 'confirmed';
 const commitment = 'confirmed';
 const programId = new PublicKey((idl as Idl).metadata.address);
-let workspace: IWorkspace;
+let workspace: IWorkspace | undefined;
 
-export const useWorkspace = () => workspace;
+export const useWorkspace = () => {
+  if (!workspace) {
+    console.warn('⚠️ Workspace not initialized yet, initializing now...');
+    initWorkspace();
+  }
+  return workspace!; // Non-null assertion since we just initialized it
+};
 
 export const initWorkspace = () => {
   const wallet = useAnchorWallet();

@@ -1,5 +1,5 @@
 <template>
-  <div class="fixed bottom-4 right-4 bg-dark-900 border border-dark-700 rounded-lg p-4 max-w-md z-50">
+  <div v-if="isAdmin" class="fixed bottom-4 right-4 bg-dark-900 border border-dark-700 rounded-lg p-4 max-w-md z-50">
     <h3 class="text-white font-semibold mb-2">Database Debug</h3>
     <div class="space-y-2 text-sm">
       <div class="text-dark-300">
@@ -29,8 +29,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { supabase } from '@src/lib/supabase';
+import { useWorkspace } from '@src/hooks';
+
+const { wallet } = useWorkspace();
+
+// Admin wallet address
+const ADMIN_WALLET = 'J3Auwtoj7RiPEkicM3tLhEsKcghXoMhV9utMYV6yKGVM';
+
+// Only show debug panel for admin
+const isAdmin = computed(() => {
+  return wallet.value?.publicKey?.toBase58() === ADMIN_WALLET;
+});
 
 const environment = ref(process.env.NODE_ENV);
 const connectionStatus = ref('unknown');

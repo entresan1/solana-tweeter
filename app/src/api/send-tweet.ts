@@ -89,17 +89,18 @@ export const sendTweet = async (topic: string, content: string) => {
     mockKeyBytes[0] = 1; // Mark as beacon
     mockKeyBytes[31] = 0x42; // Mark as beacon
     
-    // Return a mock TweetModel for compatibility
-    return {
-      publicKey: new PublicKey(mockKeyBytes),
-      account: {
-        author: wallet.value.publicKey,
-        timestamp: new Date(),
-        topic,
-        content,
-      },
-      treasuryTransaction: signature // Include the transaction signature
-    };
+    // Return a proper TweetModel instance
+    const tweetModel = new TweetModel(new PublicKey(mockKeyBytes), {
+      author: wallet.value.publicKey,
+      timestamp: { toNumber: () => Date.now() / 1000 },
+      topic,
+      content,
+      treasuryTransaction: signature,
+      author_display: wallet.value.publicKey.toBase58().slice(0, 8) + '...'
+    });
+    
+    console.log('✅ Created TweetModel for new beacon:', tweetModel);
+    return tweetModel;
   } catch (error: any) {
     console.error('Send beacon error:', error);
     

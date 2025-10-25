@@ -19,7 +19,11 @@
       .finally(() => (loading.value = false));
   });
 
-  const addTweet = (tweet: TweetModel) => tweets.value.push(tweet);
+  const addTweet = (tweet: TweetModel) => {
+    console.log('📝 Adding new tweet to list:', tweet);
+    tweets.value.unshift(tweet); // Add to beginning of list
+    console.log('📝 Updated tweets list length:', tweets.value.length);
+  };
 </script>
 
 <template>

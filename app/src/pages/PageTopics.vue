@@ -49,33 +49,38 @@
 </script>
 
 <template>
-  <tweet-search
-    placeholder="topic"
-    :disabled="!slugTopic"
-    :model-value="slugTopic"
-    @update:model-value="(value) => (topic = value)"
-    @search="search"
-  >
-    <template #icon>
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        class="h-5 w-5"
-        viewBox="0 0 20 20"
-        fill="currentColor"
-      >
-        <path
-          fill-rule="evenodd"
-          d="M9.243 3.03a1 1 0 01.727 1.213L9.53 6h2.94l.56-2.243a1 1 0 111.94.486L14.53 6H17a1 1 0 110 2h-2.97l-1 4H15a1 1 0 110 2h-2.47l-.56 2.242a1 1 0 11-1.94-.485L10.47 14H7.53l-.56 2.242a1 1 0 11-1.94-.485L5.47 14H3a1 1 0 110-2h2.97l1-4H5a1 1 0 110-2h2.47l.56-2.243a1 1 0 011.213-.727zM9.03 8l-1 4h2.938l1-4H9.031z"
-          clip-rule="evenodd"
-        />
-      </svg>
-    </template>
-  </tweet-search>
-  <div v-if="viewedTopic">
-    <tweet-form :forced-topic="viewedTopic" @added="addTweet"></tweet-form>
-    <tweet-list :tweets="tweets" :loading="loading"></tweet-list>
-    <div v-if="tweets.length === 0" class="p-8 text-dark-400 text-center">
-      No beacons were found in this topic...
+  <div>
+    <!-- Search bar - always visible -->
+    <tweet-search
+      placeholder="topic"
+      :disabled="!slugTopic"
+      :model-value="slugTopic"
+      @update:model-value="(value) => (topic = value)"
+      @search="search"
+    >
+      <template #icon>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M9.243 3.03a1 1 0 01.727 1.213L9.53 6h2.94l.56-2.243a1 1 0 111.94.486L14.53 6H17a1 1 0 110 2h-2.97l-1 4H15a1 1 0 110 2h-2.47l-.56 2.242a1 1 0 11-1.94-.485L10.47 14H7.53l-.56 2.242a1 1 0 11-1.94-.485L5.47 14H3a1 1 0 110-2h2.97l1-4H5a1 1 0 110-2h2.47l.56-2.243a1 1 0 011.213-.727zM9.03 8l-1 4h2.938l1-4H9.031z"
+            clip-rule="evenodd"
+          />
+        </svg>
+      </template>
+    </tweet-search>
+    
+    <!-- Content - only shown when topic is selected -->
+    <div v-if="viewedTopic">
+      <tweet-form :forced-topic="viewedTopic" @added="addTweet"></tweet-form>
+      <tweet-list :tweets="tweets" :loading="loading"></tweet-list>
+      <div v-if="tweets.length === 0" class="p-8 text-dark-400 text-center">
+        No beacons were found in this topic...
+      </div>
     </div>
   </div>
 </template>
