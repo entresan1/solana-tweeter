@@ -1,14 +1,13 @@
 use solana_program::{
-    account_info::{next_account_info, AccountInfo},
     entrypoint,
     entrypoint::ProgramResult,
-    program_error::ProgramError,
     pubkey::Pubkey,
+    account_info::AccountInfo,
     declare_id,
 };
 
-// Ultra minimal program ID
-declare_id!("3wkkNRHZCCMh1Ai1CoysC5vNEWS5e7ij2ztY19pwDuS3");
+// New program ID for mainnet
+declare_id!("AonWQULtvJvuDLwph5CSEACVeAerbYYnUvNkdtzwvGfQ");
 
 entrypoint!(process_instruction);
 

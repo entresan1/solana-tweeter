@@ -9,8 +9,13 @@
   const loading = ref(true);
 
   onBeforeMount(() => {
+    console.log('PageHome: Fetching tweets...');
     fetchTweets()
-      .then((fetchedTweets) => (tweets.value = fetchedTweets))
+      .then((fetchedTweets) => {
+        console.log('PageHome: Fetched tweets:', fetchedTweets);
+        console.log('PageHome: Number of tweets:', fetchedTweets.length);
+        tweets.value = fetchedTweets;
+      })
       .finally(() => (loading.value = false));
   });
 

@@ -58,10 +58,12 @@
       console.error('Beacon error:', error);
       
       // Handle specific error cases
-      if (error.message?.includes('insufficient funds') || error.message?.includes('Insufficient')) {
+      if (error.message?.includes('Transaction was cancelled by user')) {
+        errorMessage.value = 'Transaction cancelled. You can try again when ready.';
+      } else if (error.message?.includes('insufficient funds') || error.message?.includes('Insufficient')) {
         errorMessage.value = 'Insufficient SOL balance. Please add funds to your wallet.';
-      } else if (error.message?.includes('User rejected') || error.message?.includes('rejected')) {
-        errorMessage.value = 'Transaction was cancelled by user.';
+      } else if (error.message?.includes('Invalid treasury address')) {
+        errorMessage.value = 'Configuration error. Please contact support.';
       } else if (error.message?.includes('network') || error.message?.includes('connection')) {
         errorMessage.value = 'Network error. Please check your connection and try again.';
       } else if (error.message?.includes('wallet') || error.message?.includes('Wallet')) {
@@ -89,6 +91,16 @@
   <div v-if="connected" class="card mb-6 group relative overflow-hidden">
     
     <div class="relative z-10">
+      <!-- Treasury Info -->
+      <div class="mb-4 p-3 bg-primary-500/10 border border-primary-500/20 rounded-lg text-primary-300 text-sm">
+        <div class="flex items-center space-x-2">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+          </svg>
+          <span>Each beacon costs 0.001 SOL and creates an on-chain transaction. Transaction signature becomes your beacon ID!</span>
+        </div>
+      </div>
+
       <!-- Error Message -->
       <div v-if="errorMessage" class="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
         <div class="flex items-center space-x-2">
@@ -187,6 +199,12 @@
       <div class="space-y-2">
         <h3 class="text-lg font-semibold text-dark-200">Connect Your Wallet</h3>
         <p class="text-dark-400">Connect your Solana wallet to start beaming on the blockchain</p>
+        <div class="mt-4 p-3 bg-primary-500/10 border border-primary-500/20 rounded-lg">
+          <p class="text-sm text-primary-300">
+            Each beacon costs 0.001 SOL and creates an on-chain transaction to our treasury. 
+            The transaction signature becomes your beacon's unique ID on Solscan!
+          </p>
+        </div>
       </div>
     </div>
   </div>

@@ -1,3 +1,4 @@
+
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     entrypoint,
@@ -7,8 +8,7 @@ use solana_program::{
     declare_id,
 };
 
-// Ultra minimal program ID
-declare_id!("3wkkNRHZCCMh1Ai1CoysC5vNEWS5e7ij2ztY19pwDuS3");
+declare_id!("11111111111111111111111111111112");
 
 entrypoint!(process_instruction);
 
@@ -17,6 +17,5 @@ pub fn process_instruction(
     _accounts: &[AccountInfo],
     _instruction_data: &[u8],
 ) -> ProgramResult {
-    // Ultra minimal program - just return success
     Ok(())
 }

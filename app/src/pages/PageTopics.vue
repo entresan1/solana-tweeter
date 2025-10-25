@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { ref } from 'vue';
   import { useRouter } from 'vue-router';
-  import { fetchTweets, topicFilter } from '@src/api';
+  import { fetchTweets, topicFilter, searchBeacons } from '@src/api';
   import { TweetModel } from '@src/models/tweet.model';
   import { useSlug, useFromRoute } from '@src/hooks';
   import TweetForm from '@src/components/TweetForm.vue';
@@ -26,7 +26,8 @@
 
     try {
       loading.value = true;
-      tweets.value = await fetchTweets([topicFilter(slugTopic.value)]);
+      // Use searchBeacons to search through all beacons for the topic
+      tweets.value = await searchBeacons(slugTopic.value);
       viewedTopic.value = slugTopic.value;
     } finally {
       loading.value = false;
