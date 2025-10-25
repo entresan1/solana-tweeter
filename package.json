@@ -1,5 +1,11 @@
 {
+    "name": "solana-tweeter",
+    "version": "1.0.0",
+    "description": "Decentralized Twitter on Solana",
     "scripts": {
+        "dev": "cd app && yarn dev",
+        "build": "cd app && yarn build",
+        "preview": "cd app && yarn preview",
         "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
         "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
     },

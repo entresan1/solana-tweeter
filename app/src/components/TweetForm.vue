@@ -29,9 +29,9 @@
   // Character limit / count-down
   const characterLimit = useCountCharacterLimit(content, 200);
   const characterLimitColour = computed(() => {
-    if (characterLimit.value < 0) return 'text-red-500';
-    if (characterLimit.value <= 10) return 'text-yellow-500';
-    return 'text-gray-400';
+    if (characterLimit.value < 0) return 'text-red-400';
+    if (characterLimit.value <= 10) return 'text-yellow-400';
+    return 'text-dark-400';
   });
 
   // Permissions
@@ -55,23 +55,25 @@
 </script>
 
 <template>
-  <div v-if="connected" class="px-8 py-4 border-b">
-    <!-- Content field. -->
-    <textarea
-      ref="textarea"
-      v-model="content"
-      rows="1"
-      class="text-xl w-full focus:outline-none resize-none mb-3"
-      placeholder="What's happening?"
-    ></textarea>
+  <div v-if="connected" class="card mb-6 animate-fade-in">
+    <!-- Content field -->
+    <div class="mb-4">
+      <textarea
+        ref="textarea"
+        v-model="content"
+        rows="1"
+        class="w-full text-xl text-dark-100 placeholder-dark-400 bg-transparent focus:outline-none resize-none"
+        placeholder="What's happening on Solana?"
+      ></textarea>
+    </div>
 
-    <div class="flex flex-wrap items-center justify-between -m-2">
-      <!-- Topic field. -->
-      <div class="relative m-2 mr-4">
+    <div class="flex flex-wrap items-center justify-between">
+      <!-- Topic field -->
+      <div class="relative flex-1 max-w-xs">
         <input
           type="text"
-          placeholder="topic"
-          class="text-pink-500 rounded-full pl-10 pr-4 py-2 bg-gray-100"
+          placeholder="Add a topic..."
+          class="input-field pl-10 pr-4 py-2 text-sm"
           :value="effectiveTopic"
           :disabled="forcedTopic != null"
           @input="handleTopicChange"
@@ -80,7 +82,7 @@
           <svg
             xmlns="http://www.w3.org/2000/svg"
             class="h-5 w-5 m-auto"
-            :class="effectiveTopic ? 'text-pink-500' : 'text-gray-400'"
+            :class="effectiveTopic ? 'text-accent-400' : 'text-dark-400'"
             viewBox="0 0 20 20"
             fill="currentColor"
           >
@@ -92,23 +94,42 @@
           </svg>
         </div>
       </div>
-      <div class="flex items-center space-x-6 m-2 ml-auto">
-        <!-- Character limit. -->
-        <div :class="characterLimitColour">{{ characterLimit }} left</div>
+      
+      <div class="flex items-center space-x-4">
+        <!-- Character limit -->
+        <div class="text-sm font-medium" :class="characterLimitColour">
+          {{ characterLimit }} left
+        </div>
 
-        <!-- Tweet button. -->
+        <!-- Tweet button -->
         <button
-          class="text-white px-4 py-2 rounded-full font-semibold"
+          class="btn-primary text-sm px-6 py-2"
           :disabled="!canTweet"
-          :class="canTweet ? 'bg-pink-500' : 'bg-pink-300 cursor-not-allowed'"
+          :class="!canTweet ? 'opacity-50 cursor-not-allowed' : 'hover-glow'"
           @click="send"
         >
-          Tweet
+          <span class="flex items-center space-x-2">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+            </svg>
+            <span>Tweet</span>
+          </span>
         </button>
       </div>
     </div>
   </div>
-  <div v-else class="px-8 py-4 bg-gray-50 text-gray-500 text-center border-b">
-    Connect your wallet to start tweeting...
+  
+  <div v-else class="card mb-6 text-center">
+    <div class="flex flex-col items-center space-y-4 py-8">
+      <div class="w-16 h-16 rounded-full bg-gradient-to-r from-accent-500/20 to-solana-500/20 flex items-center justify-center">
+        <svg class="w-8 h-8 text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-lg font-semibold text-dark-200 mb-2">Connect Your Wallet</h3>
+        <p class="text-dark-400">Connect your Solana wallet to start tweeting on the blockchain</p>
+      </div>
+    </div>
   </div>
 </template>

@@ -7,7 +7,7 @@
 /* Dark theme base styles */
 @layer base {
   html {
-    @apply dark;
+    color-scheme: dark;
   }
   
   body {

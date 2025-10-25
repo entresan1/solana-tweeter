@@ -101,79 +101,91 @@
       <router-link
         v-slot="{ isActive }"
         :to="{ name: 'Users' }"
-        class="rounded-full hover:bg-gray-100 p-3 md:w-full inline-flex items-center space-x-4"
-        active-class="font-bold"
+        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-200 hover-lift group"
+        :class="isActive ? 'bg-gradient-to-r from-accent-500/20 to-solana-500/20 border border-accent-500/30' : ''"
       >
-        <svg
-          v-if="isActive"
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-8 w-8 text-gray-700"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-        >
-          <path
-            d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"
-          />
-        </svg>
-        <svg
-          v-else
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-8 w-8 text-gray-700"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-          />
-        </svg>
-        <div class="text-xl hidden md:block">Users</div>
+        <div class="flex items-center justify-center w-8 h-8 rounded-xl"
+             :class="isActive ? 'bg-gradient-to-r from-accent-500 to-solana-500' : 'bg-dark-700 group-hover:bg-dark-600'">
+          <svg
+            v-if="isActive"
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 text-white"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"
+            />
+          </svg>
+          <svg
+            v-else
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 text-dark-300 group-hover:text-white"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+            />
+          </svg>
+        </div>
+        <div class="text-lg font-medium hidden md:block"
+             :class="isActive ? 'text-white' : 'text-dark-300 group-hover:text-white'">Users</div>
       </router-link>
-      <!-- TODO: Check connected wallet. -->
+      
+      <!-- Profile Link (only when connected) -->
       <router-link
         v-if="connected"
         v-slot="{ isActive }"
         :to="{ name: 'Profile' }"
-        class="rounded-full hover:bg-gray-100 p-3 md:w-full inline-flex items-center space-x-4"
-        active-class="font-bold"
+        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-200 hover-lift group"
+        :class="isActive ? 'bg-gradient-to-r from-accent-500/20 to-solana-500/20 border border-accent-500/30' : ''"
       >
-        <svg
-          v-if="isActive"
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-8 w-8 text-gray-700"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-        >
-          <path
-            fill-rule="evenodd"
-            d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-            clip-rule="evenodd"
-          />
-        </svg>
-        <svg
-          v-else
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-8 w-8 text-gray-700"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-          />
-        </svg>
-        <div class="text-xl hidden md:block">Profile</div>
+        <div class="flex items-center justify-center w-8 h-8 rounded-xl"
+             :class="isActive ? 'bg-gradient-to-r from-accent-500 to-solana-500' : 'bg-dark-700 group-hover:bg-dark-600'">
+          <svg
+            v-if="isActive"
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 text-white"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          <svg
+            v-else
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 text-dark-300 group-hover:text-white"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+            />
+          </svg>
+        </div>
+        <div class="text-lg font-medium hidden md:block"
+             :class="isActive ? 'text-white' : 'text-dark-300 group-hover:text-white'">Profile</div>
       </router-link>
     </div>
-    <div class="fixed bottom-8 right-8 md:static w-48 md:w-full">
-      <!-- TODO: Connect wallet -->
-      <wallet-multi-button></wallet-multi-button>
+    
+    <!-- Wallet Connection -->
+    <div class="mt-auto pt-6 w-full">
+      <div class="glass rounded-2xl p-4 hover-glow">
+        <wallet-multi-button></wallet-multi-button>
+      </div>
     </div>
   </aside>
 </template>

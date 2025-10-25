@@ -1,0 +1,7 @@
+{
+  "buildCommand": "cd app && yarn build",
+  "outputDirectory": "app/dist",
+  "installCommand": "cd app && yarn install",
+  "devCommand": "cd app && yarn dev",
+  "framework": "vite"
+}
