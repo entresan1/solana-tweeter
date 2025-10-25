@@ -15,8 +15,9 @@ export const useWorkspace = () => workspace;
 
 export const initWorkspace = () => {
   const wallet = useAnchorWallet();
+  // Using QuickNode paid APIs for better performance and reliability
   const connection = new Connection(
-    import.meta.env.VITE_CLUSTER ?? 'http://127.0.0.1:8899',
+    'https://small-twilight-sponge.solana-mainnet.quiknode.pro/71bdb31dd3e965467b1393cebaaebe69d481dbeb/',
     commitment
   );
   const provider = computed(
