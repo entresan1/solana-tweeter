@@ -4,98 +4,99 @@
 </script>
 
 <template>
-  <aside
-    class="flex flex-col items-center md:items-stretch space-y-2 md:space-y-4"
-  >
-    <router-link
-      :to="{ name: 'Home' }"
-      class="inline-block rounded-full hover:bg-gray-100 p-3 md:self-start"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        class="h-8 md:h-10 w-8 md:w-10 text-pink-500"
-        viewBox="0 0 20 20"
-        fill="currentColor"
+  <aside class="flex flex-col items-center md:items-stretch space-y-2 md:space-y-4 h-full">
+    <!-- Logo -->
+    <div class="mb-8">
+      <router-link
+        :to="{ name: 'Home' }"
+        class="inline-block rounded-2xl hover:bg-dark-800/50 p-4 md:self-start transition-all duration-200 hover-lift group"
       >
-        <path
-          d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"
-        />
-        <path
-          d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z"
-        />
-      </svg>
-    </router-link>
-    <div class="flex flex-col items-center md:items-stretch space-y-2">
+        <div class="flex items-center space-x-3">
+          <img src="/logo.png" alt="Solana Tweeter" class="h-8 w-8 rounded-lg" />
+          <span class="hidden md:block text-xl font-bold text-gradient">Solana Tweeter</span>
+        </div>
+      </router-link>
+    </div>
+    <!-- Navigation -->
+    <div class="flex flex-col items-center md:items-stretch space-y-2 w-full">
       <router-link
         v-slot="{ isActive }"
         :to="{ name: 'Home' }"
-        class="rounded-full hover:bg-gray-100 p-3 md:w-full inline-flex items-center space-x-4"
-        active-class="font-bold"
+        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-200 hover-lift group"
+        :class="isActive ? 'bg-gradient-to-r from-accent-500/20 to-solana-500/20 border border-accent-500/30' : ''"
       >
-        <svg
-          v-if="isActive"
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-8 w-8 text-gray-700"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-        >
-          <path
-            d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"
-          />
-        </svg>
-        <svg
-          v-else
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-8 w-8 text-gray-700"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-          />
-        </svg>
-        <div class="text-xl hidden md:block">Home</div>
+        <div class="flex items-center justify-center w-8 h-8 rounded-xl"
+             :class="isActive ? 'bg-gradient-to-r from-accent-500 to-solana-500' : 'bg-dark-700 group-hover:bg-dark-600'">
+          <svg
+            v-if="isActive"
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 text-white"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"
+            />
+          </svg>
+          <svg
+            v-else
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 text-dark-300 group-hover:text-white"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+            />
+          </svg>
+        </div>
+        <div class="text-lg font-medium hidden md:block"
+             :class="isActive ? 'text-white' : 'text-dark-300 group-hover:text-white'">Home</div>
       </router-link>
       <router-link
         v-slot="{ isActive }"
         :to="{ name: 'Topics' }"
-        class="rounded-full hover:bg-gray-100 p-3 md:w-full inline-flex items-center space-x-4"
-        active-class="font-bold"
+        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-200 hover-lift group"
+        :class="isActive ? 'bg-gradient-to-r from-accent-500/20 to-solana-500/20 border border-accent-500/30' : ''"
       >
-        <svg
-          v-if="isActive"
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-8 w-8 text-gray-700"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-        >
-          <path
-            d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"
-          />
-          <path
-            d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z"
-          />
-        </svg>
-        <svg
-          v-else
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-8 w-8 text-gray-700"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"
-          />
-        </svg>
-        <div class="text-xl hidden md:block">Topics</div>
+        <div class="flex items-center justify-center w-8 h-8 rounded-xl"
+             :class="isActive ? 'bg-gradient-to-r from-accent-500 to-solana-500' : 'bg-dark-700 group-hover:bg-dark-600'">
+          <svg
+            v-if="isActive"
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 text-white"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"
+            />
+            <path
+              d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z"
+            />
+          </svg>
+          <svg
+            v-else
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 text-dark-300 group-hover:text-white"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"
+            />
+          </svg>
+        </div>
+        <div class="text-lg font-medium hidden md:block"
+             :class="isActive ? 'text-white' : 'text-dark-300 group-hover:text-white'">Topics</div>
       </router-link>
       <router-link
         v-slot="{ isActive }"

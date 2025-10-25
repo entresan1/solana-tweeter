@@ -1,23 +1,135 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Dark theme base styles */
+@layer base {
+  html {
+    @apply dark;
+  }
+  
+  body {
+    @apply bg-dark-950 text-dark-100 font-sans antialiased;
+    background: linear-gradient(135deg, #020617 0%, #0f172a 50%, #1e293b 100%);
+    min-height: 100vh;
+  }
+  
+  * {
+    @apply border-dark-800;
+  }
+}
+
+/* Custom scrollbar */
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #334155 #1e293b;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-dark-800;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-dark-600 rounded-full;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    @apply bg-dark-500;
+  }
+}
+
+/* Glass morphism effects */
+@layer components {
+  .glass {
+    @apply bg-dark-900/80 backdrop-blur-xl border border-dark-700/50;
+  }
+  
+  .glass-light {
+    @apply bg-dark-800/60 backdrop-blur-lg border border-dark-600/30;
+  }
+  
+  .gradient-border {
+    @apply relative;
+  }
+  
+  .gradient-border::before {
+    content: '';
+    @apply absolute inset-0 rounded-lg p-[1px] bg-gradient-to-r from-accent-500 to-solana-500;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+  }
+  
+  .text-gradient {
+    @apply bg-gradient-to-r from-accent-400 to-solana-400 bg-clip-text text-transparent;
+  }
+  
+  .btn-primary {
+    @apply bg-gradient-to-r from-accent-500 to-solana-500 hover:from-accent-600 hover:to-solana-600 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5;
+  }
+  
+  .btn-secondary {
+    @apply bg-dark-800 hover:bg-dark-700 text-dark-200 border border-dark-600 hover:border-dark-500 font-medium px-6 py-3 rounded-xl transition-all duration-200;
+  }
+  
+  .card {
+    @apply glass rounded-2xl p-6 shadow-2xl;
+  }
+  
+  .input-field {
+    @apply bg-dark-800 border border-dark-600 text-dark-100 placeholder-dark-400 rounded-xl px-4 py-3 focus:border-accent-500 focus:ring-2 focus:ring-accent-500/20 transition-all duration-200;
+  }
+}
+
+/* Wallet adapter styles */
 .swv-dropdown {
   @apply w-full;
 }
 
 .swv-button {
-  @apply rounded-full w-full;
+  @apply rounded-xl w-full font-medium transition-all duration-200;
 }
 
 .swv-button-trigger {
-  @apply bg-pink-500 justify-center !important;
+  @apply bg-gradient-to-r from-accent-500 to-solana-500 hover:from-accent-600 hover:to-solana-600 justify-center text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 !important;
 }
 
 .swv-dropdown-list {
-  @apply top-auto bottom-full md:top-full md:bottom-auto md:left-0 md:right-auto;
+  @apply top-auto bottom-full md:top-full md:bottom-auto md:left-0 md:right-auto glass rounded-xl border border-dark-600/50 shadow-2xl;
 }
 
 .swv-dropdown-list-active {
   @apply transform -translate-y-3 md:translate-y-3;
+}
+
+/* Animation classes */
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+/* Hover effects */
+.hover-lift {
+  @apply transition-all duration-200 hover:transform hover:-translate-y-1 hover:shadow-xl;
+}
+
+.hover-glow {
+  @apply transition-all duration-200 hover:shadow-lg hover:shadow-accent-500/25;
 }
