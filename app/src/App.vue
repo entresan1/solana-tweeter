@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { useRoute } from 'vue-router';
   import TheSidebar from './components/TheSidebar.vue';
+  import DatabaseDebug from './components/DatabaseDebug.vue';
   import {
     PhantomWalletAdapter,
     SolflareWalletAdapter,
@@ -76,6 +77,9 @@
         <div>
           <router-view></router-view>
         </div>
+        
+        <!-- Database Debug Component -->
+        <DatabaseDebug />
       </main>
     </div>
   </div>

@@ -4,11 +4,29 @@ const supabaseUrl = 'https://voskmcxmtvophehityoa.supabase.co'
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZvc2ttY3htdHZvcGhlaGl0eW9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1NTI1MDQsImV4cCI6MjA3NDEyODUwNH0.4sZOl1G7ZgCh0R_VSAULPm-KuPtLQ-013ivFn19VYVQ'
 
 console.log('🔧 Initializing Supabase client...');
+console.log('🔧 Environment:', process.env.NODE_ENV);
 console.log('🔧 SUPABASE_URL:', supabaseUrl);
 console.log('🔧 SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Present' : 'Missing');
+console.log('🔧 Full URL:', supabaseUrl);
+console.log('🔧 Key length:', supabaseAnonKey?.length);
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 console.log('✅ Supabase client initialized');
+
+// Test the connection
+(async () => {
+  try {
+    const { data, error } = await supabase.from('beacons').select('count');
+    console.log('🔧 Supabase connection test:', { data, error });
+    if (error) {
+      console.error('❌ Supabase connection failed:', error);
+    } else {
+      console.log('✅ Supabase connection successful');
+    }
+  } catch (err: any) {
+    console.error('❌ Supabase connection error:', err);
+  }
+})();
 
 // Database schema for beacons
 export interface Beacon {
@@ -49,6 +67,8 @@ export const beaconService = {
 
   // Fetch all beacons
   async fetchBeacons(filters: any[] = []) {
+    console.log('🗄️ fetchBeacons called with filters:', filters);
+    
     let query = supabase
       .from('beacons')
       .select('*')
@@ -63,10 +83,17 @@ export const beaconService = {
       }
     }
 
-    const { data, error } = await query
+    console.log('🗄️ Executing Supabase query...');
+    const { data, error } = await query;
+    console.log('🗄️ Supabase query result:', { data, error });
+
+    if (error) {
+      console.error('❌ Supabase query error:', error);
+      throw error;
+    }
     
-    if (error) throw error
-    return data || []
+    console.log('🗄️ Returning beacons:', data || []);
+    return data || [];
   },
 
   // Fetch beacons by author

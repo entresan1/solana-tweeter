@@ -19,7 +19,7 @@
   const likeCount = ref(0);
   const showReplyModal = ref(false);
   const replyContent = ref('');
-  const replies = ref([]);
+  const replies = ref<any[]>([]);
   const showReplies = ref(false);
   const loadingReplies = ref(false);
 
@@ -77,7 +77,7 @@
       isLiked.value = liked;
       likeCount.value = count;
       console.log('✅ Like data loaded successfully:', { liked, count });
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error loading like data:', error);
       console.error('❌ Error details:', error.message);
       console.error('❌ Error stack:', error.stack);
@@ -94,7 +94,7 @@
       const beaconReplies = await interactionService.getBeaconReplies(tweet.value.id);
       replies.value = beaconReplies;
       console.log('💬 Loaded replies:', beaconReplies);
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error loading replies:', error);
     } finally {
       loadingReplies.value = false;
@@ -158,7 +158,7 @@
         likeCount.value++;
         console.log('✅ Liked beacon successfully');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error toggling like:', error);
       console.error('❌ Error details:', error.message);
       console.error('❌ Error stack:', error.stack);
@@ -209,7 +209,7 @@
       if (showReplies.value) {
         await loadReplies();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error submitting reply:', error);
       console.error('❌ Error details:', error.message);
       console.error('❌ Error stack:', error.stack);
