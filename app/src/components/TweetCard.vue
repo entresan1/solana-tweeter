@@ -202,19 +202,19 @@ Come beacon at @https://trenchbeacon.com/`;
         
         <!-- Enhanced Tweet Content -->
         <div class="text-dark-100 leading-relaxed mb-4 group-hover:text-white transition-colors duration-300">
-          <p class="whitespace-pre-wrap" v-text="tweet?.account?.content || tweet?.content || 'No content available'"></p>
+          <p class="whitespace-pre-wrap" v-text="tweet?.content || 'No content available'"></p>
         </div>
         
         <!-- Enhanced Topic Tag -->
         <router-link
-          v-if="tweet?.account?.topic || tweet?.topic"
-          :to="{ name: 'Topics', params: { topic: tweet?.account?.topic || tweet?.topic } }"
+          v-if="tweet?.topic"
+          :to="{ name: 'Topics', params: { topic: tweet?.topic } }"
           class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-gradient-to-r from-primary-500/20 to-solana-500/20 text-primary-400 hover:from-primary-500/30 hover:to-solana-500/30 transition-all duration-300 hover-lift hover-scale border border-primary-500/20 hover:border-primary-500/40"
         >
           <svg class="w-4 h-4 mr-1.5 transition-transform duration-300 group-hover:rotate-12" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M9.243 3.03a1 1 0 01.727 1.213L9.53 6h2.94l.56-2.243a1 1 0 111.94.486L14.53 6H17a1 1 0 110 2h-2.97l-1 4H15a1 1 0 110 2h-2.47l-.56 2.242a1 1 0 11-1.94-.485L10.47 14H7.53l-.56 2.242a1 1 0 11-1.94-.485L5.47 14H3a1 1 0 110-2h2.97l1-4H5a1 1 0 110-2h2.47l.56-2.243a1 1 0 011.213-.727zM9.03 8l-1 4h2.938l1-4H9.031z" clip-rule="evenodd" />
           </svg>
-          #{{ tweet?.account?.topic || tweet?.topic }}
+          #{{ tweet?.topic }}
         </router-link>
         
         <!-- Treasury Transaction Link -->

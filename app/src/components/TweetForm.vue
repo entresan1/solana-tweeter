@@ -201,7 +201,7 @@
         <p class="text-dark-400">Connect your Solana wallet to start beaming on the blockchain</p>
         <div class="mt-4 p-3 bg-primary-500/10 border border-primary-500/20 rounded-lg">
           <p class="text-sm text-primary-300">
-            Each beacon costs 0.001 SOL and creates an on-chain transaction to our treasury. 
+            Each beacon costs 0.001 SOL and creates an on-chain transaction.
             The transaction signature becomes your beacon's unique ID on Solscan!
           </p>
         </div>

@@ -85,18 +85,20 @@ export const authorFilter = async (authorBase58PublicKey: string) => {
       mockKeyBytes[0] = index + 1;
       mockKeyBytes[31] = 0x42;
       
-      return {
-        id: beacon.id, // Include the database ID
-        publicKey: new PublicKey(mockKeyBytes),
-        account: {
-          author: new PublicKey(beacon.author),
-          timestamp: new Date(beacon.timestamp),
-          topic: beacon.topic,
-          content: beacon.content,
-        },
-        treasuryTransaction: beacon.treasury_transaction || beacon.id,
-        author_display: beacon.author_display || beacon.author?.toString()?.slice(0, 8) + '...' || 'Unknown User'
-      };
+      // Create TweetModel instance
+      const tweetModel = new TweetModel(new PublicKey(mockKeyBytes), {
+        author: new PublicKey(beacon.author),
+        timestamp: { toNumber: () => beacon.timestamp / 1000 },
+        topic: beacon.topic,
+        content: beacon.content,
+      });
+      
+      // Add additional properties
+      tweetModel.id = beacon.id;
+      tweetModel.treasuryTransaction = beacon.treasury_transaction || beacon.id;
+      tweetModel.authorDisplay = beacon.author_display || beacon.author?.toString()?.slice(0, 8) + '...' || 'Unknown User';
+      
+      return tweetModel;
     });
   } catch (error) {
     console.error('Error fetching beacons by author:', error);
@@ -116,18 +118,20 @@ export const topicFilter = async (topic: string) => {
       mockKeyBytes[0] = index + 1;
       mockKeyBytes[31] = 0x42;
       
-      return {
-        id: beacon.id, // Include the database ID
-        publicKey: new PublicKey(mockKeyBytes),
-        account: {
-          author: new PublicKey(beacon.author),
-          timestamp: new Date(beacon.timestamp),
-          topic: beacon.topic,
-          content: beacon.content,
-        },
-        treasuryTransaction: beacon.treasury_transaction || beacon.id,
-        author_display: beacon.author_display || beacon.author?.toString()?.slice(0, 8) + '...' || 'Unknown User'
-      };
+      // Create TweetModel instance
+      const tweetModel = new TweetModel(new PublicKey(mockKeyBytes), {
+        author: new PublicKey(beacon.author),
+        timestamp: { toNumber: () => beacon.timestamp / 1000 },
+        topic: beacon.topic,
+        content: beacon.content,
+      });
+      
+      // Add additional properties
+      tweetModel.id = beacon.id;
+      tweetModel.treasuryTransaction = beacon.treasury_transaction || beacon.id;
+      tweetModel.authorDisplay = beacon.author_display || beacon.author?.toString()?.slice(0, 8) + '...' || 'Unknown User';
+      
+      return tweetModel;
     });
   } catch (error) {
     console.error('Error fetching beacons by topic:', error);
@@ -154,18 +158,20 @@ export const searchBeacons = async (searchTerm: string) => {
       mockKeyBytes[0] = index + 1;
       mockKeyBytes[31] = 0x42;
       
-      return {
-        id: beacon.id, // Include the database ID
-        publicKey: new PublicKey(mockKeyBytes),
-        account: {
-          author: new PublicKey(beacon.author),
-          timestamp: new Date(beacon.timestamp),
-          topic: beacon.topic,
-          content: beacon.content,
-        },
-        treasuryTransaction: beacon.treasury_transaction || beacon.id,
-        author_display: beacon.author_display || beacon.author?.toString()?.slice(0, 8) + '...' || 'Unknown User'
-      };
+      // Create TweetModel instance
+      const tweetModel = new TweetModel(new PublicKey(mockKeyBytes), {
+        author: new PublicKey(beacon.author),
+        timestamp: { toNumber: () => beacon.timestamp / 1000 },
+        topic: beacon.topic,
+        content: beacon.content,
+      });
+      
+      // Add additional properties
+      tweetModel.id = beacon.id;
+      tweetModel.treasuryTransaction = beacon.treasury_transaction || beacon.id;
+      tweetModel.authorDisplay = beacon.author_display || beacon.author?.toString()?.slice(0, 8) + '...' || 'Unknown User';
+      
+      return tweetModel;
     });
   } catch (error) {
     console.error('Error searching beacons:', error);

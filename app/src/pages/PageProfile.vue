@@ -4,6 +4,7 @@
   import { profileService, UserProfile } from '@src/lib/supabase';
   import { fetchTweets, authorFilter } from '@src/api';
   import TweetList from '@src/components/TweetList.vue';
+  import { TweetModel } from '@src/models/tweet.model';
 
   const { wallet } = useWorkspace();
   const profile = ref<UserProfile | null>(null);
@@ -12,7 +13,7 @@
   const nickname = ref('');
   const bio = ref('');
   const profilePictureUrl = ref('');
-  const userTweets = ref([]);
+  const userTweets = ref<TweetModel[]>([]);
 
   const isOwnProfile = computed(() => {
     return wallet.value?.publicKey?.toBase58() === profile.value?.wallet_address;
