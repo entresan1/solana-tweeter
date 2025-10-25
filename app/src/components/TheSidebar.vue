@@ -23,7 +23,7 @@
     <div class="flex flex-col items-center md:items-stretch space-y-2 w-full">
       <router-link
         :to="{ name: 'Home' }"
-        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-200 hover-lift group"
+        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-300 group"
         :class="route.name === 'Home' ? 'bg-gradient-to-r from-primary-500/20 to-solana-500/20 border border-primary-500/30' : ''"
       >
         <div class="flex items-center justify-center w-8 h-8 rounded-xl"
@@ -61,7 +61,7 @@
       
       <router-link
         :to="{ name: 'Topics' }"
-        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-200 hover-lift group"
+        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-300 group"
         :class="route.name === 'Topics' ? 'bg-gradient-to-r from-primary-500/20 to-solana-500/20 border border-primary-500/30' : ''"
       >
         <div class="flex items-center justify-center w-8 h-8 rounded-xl"
@@ -102,7 +102,7 @@
       
       <router-link
         :to="{ name: 'Users' }"
-        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-200 hover-lift group"
+        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-300 group"
         :class="route.name === 'Users' ? 'bg-gradient-to-r from-primary-500/20 to-solana-500/20 border border-accent-500/30' : ''"
       >
         <div class="flex items-center justify-center w-8 h-8 rounded-xl"
@@ -142,7 +142,7 @@
       <router-link
         v-if="connected"
         :to="{ name: 'Profile' }"
-        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-200 hover-lift group"
+        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-300 group"
         :class="route.name === 'Profile' ? 'bg-gradient-to-r from-primary-500/20 to-solana-500/20 border border-accent-500/30' : ''"
       >
         <div class="flex items-center justify-center w-8 h-8 rounded-xl"

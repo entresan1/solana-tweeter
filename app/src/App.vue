@@ -47,7 +47,7 @@
     
     <div class="relative w-full max-w-6xl mx-auto">
       <!-- Sidebar -->
-      <the-sidebar class="py-4 md:py-8 md:pl-4 md:pr-8 fixed w-20 md:w-64 z-10 animate-slide-down" />
+      <the-sidebar class="py-4 md:py-8 md:pl-4 md:pr-8 fixed w-20 md:w-64 z-10" />
 
       <!-- Main Content -->
       <main class="flex-1 ml-20 md:ml-64 min-h-screen">
@@ -60,20 +60,20 @@
             </div>
             <div class="flex items-center space-x-4">
               <div class="hidden md:flex items-center space-x-2 text-sm text-dark-400">
-                <div class="w-2 h-2 bg-solana-500 rounded-full animate-pulse-slow"></div>
+                <div class="w-2 h-2 bg-solana-500 rounded-full"></div>
                 <span>Solana Network</span>
               </div>
               <!-- Status Indicator -->
               <div class="hidden md:flex items-center space-x-2 px-3 py-1 rounded-full bg-dark-800/50 border border-dark-600/50">
-                <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <div class="w-2 h-2 bg-green-400 rounded-full"></div>
                 <span class="text-xs text-dark-300">Live</span>
               </div>
             </div>
           </div>
         </header>
         
-        <!-- Router View with Enhanced Animation -->
-        <div class="animate-fade-in">
+        <!-- Router View -->
+        <div>
           <router-view></router-view>
         </div>
       </main>
