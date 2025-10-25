@@ -6,8 +6,8 @@ import { SolanaTwitter } from '@src/idl/solana_twitter';
 import { IWorkspace } from '@src/interface';
 import idl from '@src/idl/solana_twitter.json';
 
-const preflightCommitment = 'finalized';
-const commitment = 'finalized';
+const preflightCommitment = 'confirmed';
+const commitment = 'confirmed';
 const programId = new PublicKey((idl as Idl).metadata.address);
 let workspace: IWorkspace;
 
@@ -18,10 +18,7 @@ export const initWorkspace = () => {
   // Using QuickNode paid APIs for better performance and reliability
   const connection = new Connection(
     'https://small-twilight-sponge.solana-mainnet.quiknode.pro/71bdb31dd3e965467b1393cebaaebe69d481dbeb/',
-    {
-      commitment: commitment,
-      wsEndpoint: 'wss://small-twilight-sponge.solana-mainnet.quiknode.pro/71bdb31dd3e965467b1393cebaaebe69d481dbeb/',
-    }
+    commitment
   );
   const provider = computed(
     () =>
