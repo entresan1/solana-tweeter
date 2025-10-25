@@ -128,7 +128,7 @@
               <svg class="w-4 h-4 transition-transform duration-300 group-hover/btn:rotate-12" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
               </svg>
-              <span>Tweet</span>
+              <span>Beacon</span>
             </span>
             <!-- Button Shimmer Effect -->
             <div v-if="canTweet" class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 animate-shimmer"></div>
@@ -151,7 +151,7 @@
       </div>
       <div class="space-y-2">
         <h3 class="text-lg font-semibold text-dark-200 animate-fade-in">Connect Your Wallet</h3>
-        <p class="text-dark-400 animate-fade-in" style="animation-delay: 0.2s;">Connect your Solana wallet to start tweeting on the blockchain</p>
+        <p class="text-dark-400 animate-fade-in" style="animation-delay: 0.2s;">Connect your Solana wallet to start beaming on the blockchain</p>
       </div>
     </div>
   </div>

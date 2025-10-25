@@ -1,6 +1,6 @@
-# Solana Tweeter 🌐
+# Trench Beacon 🌐
 
-A decentralized Twitter clone built on the Solana blockchain with a beautiful dark, elegant, and professional UI.
+A decentralized social network built on the Solana blockchain with a beautiful dark, elegant, and professional UI.
 
 ## Features ✨
 
@@ -65,13 +65,14 @@ This project is configured for Vercel deployment with the following setup:
 
 1. **Connect to Vercel**:
    - Import your GitHub repository to Vercel
+   - Set the **Root Directory** to `app/` in Vercel settings
    - Vercel will automatically detect the `vercel.json` configuration
 
 2. **Build Settings** (if needed):
-   - **Root Directory**: Leave empty (uses root)
-   - **Build Command**: `cd app && yarn build`
-   - **Output Directory**: `app/dist`
-   - **Install Command**: `cd app && yarn install`
+   - **Root Directory**: `app/`
+   - **Build Command**: `yarn build`
+   - **Output Directory**: `dist`
+   - **Install Command**: `yarn install`
 
 3. **Environment Variables** (if needed):
    - Add any required environment variables in Vercel dashboard

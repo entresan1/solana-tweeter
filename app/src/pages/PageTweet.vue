@@ -26,7 +26,7 @@
 <template>
   <div v-if="loading" class="p-8 text-dark-400 text-center">Loading...</div>
   <div v-else-if="!tweet" class="p-8 text-dark-400 text-center">
-    Tweet not found
+    Beacon not found
   </div>
   <tweet-card v-else :tweet="tweet"></tweet-card>
 </template>

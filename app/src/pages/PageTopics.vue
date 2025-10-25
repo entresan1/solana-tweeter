@@ -74,7 +74,7 @@
     <tweet-form :forced-topic="viewedTopic" @added="addTweet"></tweet-form>
     <tweet-list :tweets="tweets" :loading="loading"></tweet-list>
     <div v-if="tweets.length === 0" class="p-8 text-dark-400 text-center">
-      No tweets were found in this topic...
+      No beacons were found in this topic...
     </div>
   </div>
 </template>

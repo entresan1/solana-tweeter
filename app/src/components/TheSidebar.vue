@@ -14,8 +14,8 @@
         class="inline-block rounded-2xl hover:bg-dark-800/50 p-4 md:self-start transition-all duration-200 hover-lift group"
       >
         <div class="flex items-center space-x-3">
-          <img src="/logo.png" alt="Solana Tweeter" class="h-8 w-8 rounded-lg" />
-          <span class="hidden md:block text-xl font-bold text-gradient">Solana Tweeter</span>
+            <img src="/logo.png" alt="Trench Beacon" class="h-8 w-8 rounded-lg" />
+            <span class="hidden md:block text-xl font-bold text-gradient">Trench Beacon</span>
         </div>
       </router-link>
     </div>

@@ -55,7 +55,7 @@
         <header class="glass border-b border-dark-700/50 backdrop-blur-xl">
           <div class="flex items-center justify-between px-8 py-6">
             <div class="flex items-center space-x-4">
-              <img src="/logo.png" alt="Solana Tweeter" class="h-8 w-8 rounded-lg" />
+              <img src="/logo.png" alt="Trench Beacon" class="h-8 w-8 rounded-lg" />
               <h1 class="text-2xl font-bold text-gradient" v-text="route.name"></h1>
             </div>
             <div class="flex items-center space-x-4">
