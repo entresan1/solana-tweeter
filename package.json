@@ -6,6 +6,7 @@
         "dev": "cd app && yarn dev",
         "build": "cd app && yarn build",
         "preview": "cd app && yarn preview",
+        "start": "cd app && yarn preview",
         "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
         "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
     },

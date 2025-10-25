@@ -65,13 +65,19 @@ This project is configured for Vercel deployment with the following setup:
 
 1. **Connect to Vercel**:
    - Import your GitHub repository to Vercel
-   - Vercel will automatically detect the configuration
+   - Vercel will automatically detect the `vercel.json` configuration
 
-2. **Environment Variables** (if needed):
+2. **Build Settings** (if needed):
+   - **Root Directory**: Leave empty (uses root)
+   - **Build Command**: `cd app && yarn build`
+   - **Output Directory**: `app/dist`
+   - **Install Command**: `cd app && yarn install`
+
+3. **Environment Variables** (if needed):
    - Add any required environment variables in Vercel dashboard
 
-3. **Deploy**:
-   - Vercel will automatically build and deploy from the `app/` directory
+4. **Deploy**:
+   - Vercel will automatically build and deploy using the configuration
 
 ## Project Structure 📁
 

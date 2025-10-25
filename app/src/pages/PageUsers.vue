@@ -69,7 +69,7 @@
   </tweet-search>
   <div v-if="viewedAuthor">
     <tweet-list :tweets="tweets" :loading="loading"></tweet-list>
-    <div v-if="tweets.length === 0" class="p-8 text-gray-500 text-center">
+    <div v-if="tweets.length === 0" class="p-8 text-dark-400 text-center">
       User not found...
     </div>
   </div>

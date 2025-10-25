@@ -56,7 +56,7 @@
           </svg>
         </div>
         <div class="text-lg font-medium hidden md:block"
-             :class="route.name === 'Home' ? 'text-white' : 'text-dark-300 group-hover:text-white'">Home</div>
+             :class="route.name === 'Home' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">Home</div>
       </router-link>
       
       <router-link
@@ -97,7 +97,7 @@
           </svg>
         </div>
         <div class="text-lg font-medium hidden md:block"
-             :class="route.name === 'Topics' ? 'text-white' : 'text-dark-300 group-hover:text-white'">Topics</div>
+             :class="route.name === 'Topics' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">Topics</div>
       </router-link>
       
       <router-link
@@ -135,7 +135,7 @@
           </svg>
         </div>
         <div class="text-lg font-medium hidden md:block"
-             :class="route.name === 'Users' ? 'text-white' : 'text-dark-300 group-hover:text-white'">Users</div>
+             :class="route.name === 'Users' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">Users</div>
       </router-link>
       
       <!-- Profile Link (only when connected) -->
@@ -177,7 +177,7 @@
           </svg>
         </div>
         <div class="text-lg font-medium hidden md:block"
-             :class="route.name === 'Profile' ? 'text-white' : 'text-dark-300 group-hover:text-white'">Profile</div>
+             :class="route.name === 'Profile' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">Profile</div>
       </router-link>
     </div>
     

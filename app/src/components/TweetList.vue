@@ -17,7 +17,7 @@
 </script>
 
 <template>
-  <div v-if="loading" class="p-8 text-gray-500 text-center">Loading...</div>
+  <div v-if="loading" class="p-8 text-dark-400 text-center">Loading...</div>
   <div v-else class="divide-y">
     <tweet-card
       v-for="tweet in orderedTweets"

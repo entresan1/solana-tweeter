@@ -23,7 +23,7 @@
 
 <template>
   <!-- TODO: Check connected wallet -->
-  <div v-if="wallet" class="border-b px-8 py-4 bg-gray-50">
+  <div v-if="wallet" class="border-b border-dark-700 px-8 py-4 bg-dark-800/50">
     {{ wallet.publicKey.toBase58() }}
   </div>
   <tweet-form @added="addTweet"></tweet-form>
