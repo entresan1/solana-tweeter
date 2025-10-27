@@ -20,34 +20,42 @@ export async function payForX402AndRetry(
   wallet: any
 ): Promise<any> {
   try {
-    // First attempt - might get 402
-    console.log('🔄 First request attempt:', { endpoint, payload });
-    const firstResponse = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
-
-    // If not 402, return the response
-    if (firstResponse.status !== 402) {
-      return await firstResponse.json();
+    // Helper to post beacon with optional x402 headers
+    async function postBeacon(proofHeaders?: Record<string, string>) {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(proofHeaders ?? {})
+        },
+        body: JSON.stringify(payload) // ROOT FIELDS ONLY - same body for both requests
+      });
+      return res;
     }
 
-    // Parse 402 response to get payment details
-    const paymentRequest = await firstResponse.json();
-    console.log('💰 Payment required:', paymentRequest);
+    // 1) Try without payment (will 402 the first time)
+    console.log('🔄 First request attempt:', { endpoint, payload });
+    let res = await postBeacon();
+    
+    if (res.status !== 402) {
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(`Beacon failed: ${res.status} ${errorData.message || res.statusText}`);
+      }
+      return await res.json();
+    }
+
+    // 2) Parse payment requirements
+    const { payment } = await res.json();
+    console.log('💰 Payment required:', payment);
 
     // Check if wallet is connected
     if (!wallet?.publicKey) {
       throw new Error('Wallet not connected');
     }
 
-    // Create payment transaction
+    // 3) Create + send the x402 payment tx for 0.01 SOL (on mainnet)
     const paymentTx = await createPaymentTransaction(wallet.publicKey);
-    
-    // Sign and send transaction
     const signedTx = await wallet.signTransaction(paymentTx);
     const signature = await connection.sendRawTransaction(signedTx.serialize(), {
       skipPreflight: false,
@@ -58,26 +66,22 @@ export async function payForX402AndRetry(
     await connection.confirmTransaction(signature, 'confirmed');
     console.log('✅ Payment transaction confirmed:', signature);
 
-    // Create x402 proof
+    // 4) Build proof from the confirmed tx
     const proof = createX402Proof(signature, X402_CONFIG.priceSOL);
+    const proofHeaders = {
+      'x-402-proof': JSON.stringify(proof),
+    };
 
-    // Retry request with proof
+    // 5) Retry with the **same body** and the **proof headers**
     console.log('🔄 Retrying request with proof:', { endpoint, payload, proof });
-    const retryResponse = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-402-proof': JSON.stringify(proof),
-      },
-      body: JSON.stringify(payload),
-    });
+    res = await postBeacon(proofHeaders);
 
-    if (!retryResponse.ok) {
-      const errorData = await retryResponse.json();
-      throw new Error(`Request failed: ${errorData.message || retryResponse.statusText}`);
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(`Beacon retry failed: ${res.status} ${errorData.message || res.statusText}`);
     }
-
-    return await retryResponse.json();
+    
+    return await res.json();
   } catch (error) {
     console.error('❌ x402 payment error:', error);
     throw error;

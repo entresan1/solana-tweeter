@@ -56,9 +56,6 @@ async function verifyX402Payment(proof, connection) {
     const treasuryPubkey = X402_CONFIG.treasury;
     const expectedAmount = X402_CONFIG.priceSOL * LAMPORTS_PER_SOL;
 
-    console.log('🔍 Verifying payment to treasury:', treasuryPubkey.toBase58());
-    console.log('🔍 Expected amount:', expectedAmount, 'lamports');
-
     // Check if transaction contains transfer to treasury
     let paymentFound = false;
     let actualAmount = 0;
@@ -67,14 +64,10 @@ async function verifyX402Payment(proof, connection) {
       const accounts = transaction.transaction.message.accountKeys;
       const treasuryIndex = accounts.findIndex(key => key.equals(treasuryPubkey));
       
-      console.log('🔍 Treasury account index:', treasuryIndex);
-      
       if (treasuryIndex !== -1) {
         const preBalance = transaction.meta.preBalances[treasuryIndex];
         const postBalance = transaction.meta.postBalances[treasuryIndex];
         actualAmount = postBalance - preBalance;
-        
-        console.log('🔍 Balance change:', actualAmount, 'lamports');
         
         if (actualAmount >= expectedAmount) {
           paymentFound = true;
@@ -85,19 +78,15 @@ async function verifyX402Payment(proof, connection) {
 
     // Alternative verification: check transaction instructions
     if (!paymentFound && transaction.transaction?.message?.instructions) {
-      console.log('🔍 Checking transaction instructions...');
       const accounts = transaction.transaction.message.accountKeys;
       for (const instruction of transaction.transaction.message.instructions) {
         // Get the program ID from the accounts array
         const programId = accounts[instruction.programIdIndex];
-        console.log('🔍 Instruction program ID:', programId?.toBase58());
         
         if (programId && programId.equals(SystemProgram.programId)) {
-          console.log('🔍 Found system program instruction');
           // This is a system program instruction, check if it's a transfer
           if (instruction.accounts && instruction.accounts.length >= 2) {
             const toAccount = accounts[instruction.accounts[1]];
-            console.log('🔍 Transfer to account:', toAccount?.toBase58());
             
             if (toAccount && toAccount.equals(treasuryPubkey)) {
               // This is a transfer to our treasury
@@ -169,7 +158,6 @@ module.exports = async (req, res) => {
       'confirmed'
     );
 
-    console.log('🔍 Request headers:', req.headers);
     console.log('🔍 Request body:', req.body);
 
     // Check for x402 proof in headers
