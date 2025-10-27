@@ -1,4 +1,5 @@
 import { Connection, Transaction, SystemProgram, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { createX402Proof } from './x402';
 
 // Solana connection (same as existing)
 const connection = new Connection(
