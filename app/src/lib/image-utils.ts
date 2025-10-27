@@ -56,13 +56,19 @@ export function validateImageUrl(url: string): { valid: boolean; error?: string 
 export function getSafeImageUrl(url: string): string | undefined {
   if (!url) return undefined;
   
-  const validation = validateImageUrl(url);
-  if (!validation.valid) {
-    console.warn('Invalid image URL:', validation.error);
-    return undefined;
+  // For base64 URLs, return them directly without any processing
+  // This prevents the browser from trying to make GET requests to them
+  if (isBase64DataUrl(url)) {
+    return url;
   }
   
-  return url;
+  // For HTTP URLs, validate them
+  if (isHttpUrl(url)) {
+    return url;
+  }
+  
+  // If it's neither base64 nor HTTP, return undefined
+  return undefined;
 }
 
 /**
@@ -71,6 +77,11 @@ export function getSafeImageUrl(url: string): string | undefined {
 export function shouldDisplayImage(url: string): boolean {
   if (!url) return false;
   
-  const validation = validateImageUrl(url);
-  return validation.valid;
+  // For base64 URLs, always allow display
+  if (isBase64DataUrl(url)) {
+    return true;
+  }
+  
+  // For HTTP URLs, check if they're valid
+  return isHttpUrl(url);
 }
