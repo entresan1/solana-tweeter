@@ -12,10 +12,9 @@ This project now includes x402 payment gating for beacon (tweet) creation. Users
 
 ## Architecture
 
-### Backend (Express Server)
-- `server.js` - Express server with x402 middleware
-- `src/lib/x402.ts` - x402 payment verification logic
-- `api/beacon.ts` - Next.js API route (alternative)
+### Backend (Vercel Serverless)
+- `api/beacon.js` - Vercel serverless function with x402 middleware
+- `src/lib/x402.ts` - x402 payment verification logic (TypeScript)
 
 ### Frontend
 - `src/lib/x402-client.ts` - Client-side payment helper
@@ -44,12 +43,10 @@ export const TREASURY_SOL_ADDRESS = 'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6
 # Install dependencies
 yarn install
 
-# Start both frontend and backend
-yarn dev:full
+# Start frontend development server
+yarn dev
 
-# Or start separately
-yarn server  # Backend on port 3001
-yarn dev     # Frontend on port 3000
+# The API will be available at /api/beacon when deployed to Vercel
 ```
 
 ### Production

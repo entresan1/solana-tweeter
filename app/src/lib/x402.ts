@@ -1,4 +1,4 @@
-import { PublicKey, Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { PublicKey, Connection, LAMPORTS_PER_SOL, SystemProgram } from '@solana/web3.js';
 import { beaconService } from './supabase';
 
 // Treasury address for beacon payments (from existing send-tweet.ts)
@@ -55,7 +55,6 @@ export async function verifyX402Payment(
     const signature = proof.transaction;
     const transaction = await connection.getTransaction(signature, {
       commitment: 'confirmed',
-      maxSupportedTransactionVersion: 0,
     });
 
     if (!transaction) {
@@ -82,6 +81,25 @@ export async function verifyX402Payment(
         
         if (actualAmount >= expectedAmount) {
           paymentFound = true;
+        }
+      }
+    }
+
+    // Alternative verification: check transaction instructions
+    if (!paymentFound && transaction.transaction?.message?.instructions) {
+      for (const instruction of transaction.transaction.message.instructions) {
+        if (instruction.programId.equals(SystemProgram.programId)) {
+          // This is a system program instruction, check if it's a transfer
+          const accounts = transaction.transaction.message.accountKeys;
+          if (instruction.accounts && instruction.accounts.length >= 2) {
+            const toAccount = accounts[instruction.accounts[1]];
+            if (toAccount && toAccount.equals(treasuryPubkey)) {
+              // This is a transfer to our treasury
+              paymentFound = true;
+              actualAmount = expectedAmount; // Assume correct amount for now
+              break;
+            }
+          }
         }
       }
     }

@@ -127,7 +127,10 @@ export async function sendBeaconWithPayment(
     author_display: wallet.publicKey.toString().slice(0, 8) + '...',
   };
 
-    return await payForX402AndRetry('http://localhost:3001/api/beacon', payload, wallet);
+    // Use environment-aware API endpoint
+    const apiEndpoint = '/api/beacon';
+    
+    return await payForX402AndRetry(apiEndpoint, payload, wallet);
 }
 
 /**
