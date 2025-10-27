@@ -16,12 +16,21 @@ const CSRF_TOKEN_TTL = 3600000; // 1 hour
 function sanitizeInput(input) {
   if (typeof input !== 'string') return input;
   
+  // For base64 data URLs, don't apply length limits as they can be very long
+  if (input.startsWith('data:image/')) {
+    return input
+      .replace(/[<>]/g, '') // Remove potential HTML tags
+      .replace(/javascript:/gi, '') // Remove javascript: protocol
+      .replace(/on\w+=/gi, '') // Remove event handlers
+      .trim();
+  }
+  
   return input
     .replace(/[<>]/g, '') // Remove potential HTML tags
     .replace(/javascript:/gi, '') // Remove javascript: protocol
     .replace(/on\w+=/gi, '') // Remove event handlers
     .trim()
-    .substring(0, 1000); // Limit length
+    .substring(0, 1000); // Limit length for regular inputs
 }
 
 // Validate wallet address format

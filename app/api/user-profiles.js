@@ -29,7 +29,7 @@ function validateProfileData(profile) {
   const sanitizedProfile = {
     wallet_address: profile.wallet_address,
     nickname: profile.nickname ? sanitizeInput(profile.nickname).substring(0, 50) : null,
-    profile_picture_url: profile.profile_picture_url ? sanitizeInput(profile.profile_picture_url).substring(0, 500) : null,
+    profile_picture_url: profile.profile_picture_url ? sanitizeInput(profile.profile_picture_url) : null,
     bio: profile.bio ? sanitizeInput(profile.bio).substring(0, 500) : null
   };
   
