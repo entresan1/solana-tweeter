@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { useWallet, WalletMultiButton } from 'solana-wallets-vue';
   import { useRoute } from 'vue-router';
-  import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
+  import { ref, onMounted, watch } from 'vue';
   import { platformWalletService } from '@src/lib/platform-wallet';
   
   const { connected, wallet } = useWallet();
@@ -9,47 +9,7 @@
   
   const platformWalletAddress = ref('');
   const platformBalance = ref(0);
-  const isMobileMenuOpen = ref(false);
   const isPlatformWalletDropdownOpen = ref(false);
-  
-  // Mobile detection
-  const isMobile = computed(() => window.innerWidth < 768);
-  
-  // Close mobile menu when route changes
-  watch(route, () => {
-    isMobileMenuOpen.value = false;
-  });
-  
-  // Close mobile menu when clicking outside
-  const closeMobileMenu = () => {
-    isMobileMenuOpen.value = false;
-  };
-
-  // Toggle platform wallet dropdown
-  const togglePlatformWalletDropdown = () => {
-    isPlatformWalletDropdownOpen.value = !isPlatformWalletDropdownOpen.value;
-  };
-
-  // Close platform wallet dropdown
-  const closePlatformWalletDropdown = () => {
-    isPlatformWalletDropdownOpen.value = false;
-  };
-
-  // Handle window resize
-  const handleResize = () => {
-    if (window.innerWidth >= 768) {
-      isMobileMenuOpen.value = false;
-    }
-  };
-
-  onMounted(() => {
-    window.addEventListener('resize', handleResize);
-  });
-
-  // Cleanup
-  onUnmounted(() => {
-    window.removeEventListener('resize', handleResize);
-  });
   
   // Load platform wallet data when wallet connects
   const loadPlatformWalletData = async () => {
@@ -112,66 +72,37 @@
     }
   };
 
+  // Toggle platform wallet dropdown
+  const togglePlatformWalletDropdown = () => {
+    isPlatformWalletDropdownOpen.value = !isPlatformWalletDropdownOpen.value;
+  };
+
+  // Close platform wallet dropdown
+  const closePlatformWalletDropdown = () => {
+    isPlatformWalletDropdownOpen.value = false;
+  };
+
 </script>
 
 <template>
-  <!-- Mobile Menu Button -->
-  <button
-    v-if="isMobile"
-    @click="isMobileMenuOpen = !isMobileMenuOpen"
-    class="fixed top-4 left-4 z-50 p-2 bg-dark-800/90 backdrop-blur-sm rounded-xl border border-dark-700 hover:bg-dark-700 transition-all duration-200"
-  >
-    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-    </svg>
-  </button>
-
-  <!-- Mobile Overlay -->
-  <div
-    v-if="isMobile && isMobileMenuOpen"
-    @click="closeMobileMenu"
-    class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-  ></div>
-
-  <!-- Sidebar -->
-  <aside 
-    :class="[
-      'flex flex-col items-center md:items-stretch space-y-2 md:space-y-4 h-full transition-all duration-300',
-      isMobile ? 'fixed top-0 left-0 z-50 w-80 h-full bg-dark-900/95 backdrop-blur-md border-r border-dark-700 transform' : '',
-      isMobile && !isMobileMenuOpen ? '-translate-x-full' : '',
-      isMobile && isMobileMenuOpen ? 'translate-x-0' : ''
-    ]"
-  >
-    <!-- Mobile Close Button -->
-    <button
-      v-if="isMobile"
-      @click="closeMobileMenu"
-      class="absolute top-4 right-4 p-2 text-dark-400 hover:text-white transition-colors"
-    >
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-      </svg>
-    </button>
-
+  <aside class="flex flex-col items-center md:items-stretch space-y-2 md:space-y-4 h-full">
     <!-- Logo -->
-    <div class="mb-8 mt-4 md:mt-0">
+    <div class="mb-8">
       <router-link
         :to="{ name: 'Home' }"
-        @click="closeMobileMenu"
         class="inline-block rounded-2xl hover:bg-dark-800/50 p-4 md:self-start transition-all duration-200 hover-lift group"
       >
         <div class="flex items-center space-x-3">
             <img src="/logo.png" alt="Trench Beacon" class="h-8 w-8 rounded-lg" />
-            <span class="text-xl font-bold text-gradient">Trench Beacon</span>
+            <span class="hidden md:block text-xl font-bold text-gradient">Trench Beacon</span>
         </div>
       </router-link>
     </div>
     <!-- Navigation -->
-    <div class="flex flex-col items-center md:items-stretch space-y-2 w-full px-4 md:px-0">
+    <div class="flex flex-col items-center md:items-stretch space-y-2 w-full">
       <router-link
         :to="{ name: 'Home' }"
-        @click="closeMobileMenu"
-        class="rounded-2xl hover:bg-dark-800/50 p-4 w-full inline-flex items-center space-x-4 transition-all duration-300 group"
+        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-300 group"
         :class="route.name === 'Home' ? 'bg-gradient-to-r from-primary-500/20 to-solana-500/20 border border-primary-500/30' : ''"
       >
         <div class="flex items-center justify-center w-8 h-8 rounded-xl"
@@ -203,14 +134,13 @@
             />
           </svg>
         </div>
-        <div class="text-lg font-medium"
+        <div class="text-lg font-medium hidden md:block"
              :class="route.name === 'Home' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">Home</div>
       </router-link>
       
       <router-link
         :to="{ name: 'Topics' }"
-        @click="closeMobileMenu"
-        class="rounded-2xl hover:bg-dark-800/50 p-4 w-full inline-flex items-center space-x-4 transition-all duration-300 group"
+        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-300 group"
         :class="route.name === 'Topics' ? 'bg-gradient-to-r from-primary-500/20 to-solana-500/20 border border-primary-500/30' : ''"
       >
         <div class="flex items-center justify-center w-8 h-8 rounded-xl"
@@ -245,7 +175,7 @@
             />
           </svg>
         </div>
-        <div class="text-lg font-medium"
+        <div class="text-lg font-medium hidden md:block"
              :class="route.name === 'Topics' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">Topics</div>
       </router-link>
       
@@ -253,8 +183,7 @@
       <router-link
         v-if="connected"
         :to="{ name: 'Profile' }"
-        @click="closeMobileMenu"
-        class="rounded-2xl hover:bg-dark-800/50 p-4 w-full inline-flex items-center space-x-4 transition-all duration-300 group"
+        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-300 group"
         :class="route.name === 'Profile' ? 'bg-gradient-to-r from-primary-500/20 to-solana-500/20 border border-accent-500/30' : ''"
       >
         <div class="flex items-center justify-center w-8 h-8 rounded-xl"
@@ -288,15 +217,14 @@
             />
           </svg>
         </div>
-        <div class="text-lg font-medium"
+        <div class="text-lg font-medium hidden md:block"
              :class="route.name === 'Profile' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">Profile</div>
       </router-link>
       
       <!-- X402 Proof Link -->
       <router-link
         :to="{ name: 'X402' }"
-        @click="closeMobileMenu"
-        class="rounded-2xl hover:bg-dark-800/50 p-4 w-full inline-flex items-center space-x-4 transition-all duration-300 group"
+        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-300 group"
         :class="route.name === 'X402' ? 'bg-gradient-to-r from-primary-500/20 to-solana-500/20 border border-primary-500/30' : ''"
       >
         <div class="flex items-center justify-center w-8 h-8 rounded-xl"
@@ -330,13 +258,13 @@
             />
           </svg>
         </div>
-        <div class="text-lg font-medium"
+        <div class="text-lg font-medium hidden md:block"
              :class="route.name === 'X402' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">x402</div>
       </router-link>
       
       
       <!-- Platform Wallet Dropdown (only when connected) -->
-      <div v-if="connected" class="mt-4 mx-4 md:mx-0">
+      <div v-if="connected" class="mt-4">
         <!-- Dropdown Trigger -->
         <button
           @click="togglePlatformWalletDropdown"
@@ -393,7 +321,7 @@
     </div>
     
     <!-- Wallet Connection -->
-    <div class="mt-auto pt-6 w-full px-4 md:px-0">
+    <div class="mt-auto pt-6 w-full">
       <div class="glass rounded-2xl p-4 hover-glow">
         <wallet-multi-button></wallet-multi-button>
       </div>

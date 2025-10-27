@@ -1,33 +1,5 @@
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseUrl = 'https://voskmcxmtvophehityoa.supabase.co'
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZvc2ttY3htdHZvcGhlaGl0eW9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1NTI1MDQsImV4cCI6MjA3NDEyODUwNH0.4sZOl1G7ZgCh0R_VSAULPm-KuPtLQ-013ivFn19VYVQ'
-
-console.log('🔧 Initializing Supabase client...');
-console.log('🔧 Environment:', process.env.NODE_ENV);
-console.log('🔧 SUPABASE_URL:', supabaseUrl);
-console.log('🔧 SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Present' : 'Missing');
-console.log('🔧 Full URL:', supabaseUrl);
-console.log('🔧 Key length:', supabaseAnonKey?.length);
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
-console.log('✅ Supabase client initialized');
-
-// Test the connection via server-side API
-(async () => {
-  try {
-    const response = await fetch('/api/beacons?limit=1');
-    const data = await response.json();
-    console.log('🔧 Server-side connection test:', { success: data.success });
-    if (data.success) {
-      console.log('✅ Server-side connection successful');
-    } else {
-      console.error('❌ Server-side connection failed:', data.error);
-    }
-  } catch (err: any) {
-    console.error('❌ Server-side connection error:', err);
-  }
-})();
+// SECURITY: All database operations now go through server-side APIs
+// No direct client-side Supabase access to prevent security vulnerabilities
 
 // Database schema for beacons
 export interface Beacon {

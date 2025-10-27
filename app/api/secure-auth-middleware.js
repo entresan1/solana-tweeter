@@ -5,6 +5,14 @@ const rateLimitMap = new Map();
 const RATE_LIMIT_WINDOW = 60000; // 1 minute
 const RATE_LIMIT_MAX_REQUESTS = 20; // 20 requests per minute per IP
 
+// Wallet address validation
+function validateWalletAddress(address) {
+  if (!address || typeof address !== 'string') return false;
+  // Basic Solana address validation (base58, 32-44 characters)
+  const base58Regex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+  return base58Regex.test(address);
+}
+
 // Audit logging
 const auditLog = [];
 
@@ -136,10 +144,22 @@ function secureAuthMiddleware(req, res, next) {
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // CORS headers - SECURITY: Restrict to specific origins
+  const allowedOrigins = [
+    'https://trenchbeacon.com',
+    'https://www.trenchbeacon.com',
+    'http://localhost:3000',
+    'http://localhost:5173'
+  ];
+  
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-CSRF-Token');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
   
   if (method === 'OPTIONS') {
     return res.status(200).end();
@@ -172,18 +192,18 @@ function secureAuthMiddleware(req, res, next) {
     }
   }
   
-  // CSRF protection for state-changing operations (temporarily disabled for debugging)
-  // if (['POST', 'PUT', 'DELETE'].includes(method) && req.body && Object.keys(req.body).length > 0) {
-  //   const csrfToken = req.headers['x-csrf-token'];
-  //   
-  //   if (!csrfToken || !verifyCSRFToken(csrfToken)) {
-  //     logAuditEvent(clientIP, method, endpoint, null, 'CSRF_TOKEN_INVALID');
-  //     return res.status(403).json({
-  //       error: 'CSRF Token Required',
-  //       message: 'Invalid or missing CSRF token for this operation.'
-  //     });
-  //   }
-  // }
+  // CSRF protection for state-changing operations
+  if (['POST', 'PUT', 'DELETE'].includes(method) && req.body && Object.keys(req.body).length > 0) {
+    const csrfToken = req.headers['x-csrf-token'];
+    
+    if (!csrfToken || !verifyCSRFToken(csrfToken)) {
+      logAuditEvent(clientIP, method, endpoint, null, 'CSRF_TOKEN_INVALID');
+      return res.status(403).json({
+        error: 'CSRF Token Required',
+        message: 'Invalid or missing CSRF token for this operation.'
+      });
+    }
+  }
   
   // Extract user wallet from request (if available)
   const userWallet = req.body?.userWallet || req.query?.userWallet || req.body?.walletAddress || req.query?.walletAddress;

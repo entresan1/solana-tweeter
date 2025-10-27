@@ -1,5 +1,4 @@
 import { ref, reactive } from 'vue';
-import { dataCache } from './data-cache';
 
 // SSE connection state
 const isConnected = ref(false);
@@ -160,12 +159,8 @@ function handleTweetsSSEMessage(data: any) {
     case 'initial_data':
       console.log('📊 Initial data received:', data.data);
       // Initial tweets load
-      const initialTweets = data.data.tweets || [];
-      tweets.value = initialTweets;
+      tweets.value = data.data.tweets || [];
       isInitialized.value = true;
-      
-      // Cache the tweets data
-      dataCache.cacheBeacons(initialTweets);
       
       console.log('📊 Loaded tweets count:', tweets.value.length);
       console.log('📊 First tweet:', tweets.value[0]);
@@ -188,9 +183,6 @@ function handleTweetsSSEMessage(data: any) {
       // Periodic tweets update (every 5 seconds)
       const newTweets = data.data.tweets || [];
       tweets.value = newTweets;
-      
-      // Cache the updated tweets data
-      dataCache.cacheBeacons(newTweets);
       
       console.log('🔄 Updated tweets count:', newTweets.length);
       

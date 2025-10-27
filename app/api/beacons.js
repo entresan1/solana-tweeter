@@ -21,8 +21,6 @@ module.exports = async (req, res) => {
     // Parse query parameters
     const limit = parseInt(req.query.limit) || 20;
     const offset = parseInt(req.query.offset) || 0;
-    const author = req.query.author;
-    const topic = req.query.topic;
 
     // Validate parameters
     if (limit < 1 || limit > 100) {
@@ -39,8 +37,8 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Get beacons from secure service with filters
-    const beacons = await treasuryService.getBeacons(limit, offset, author, topic);
+    // Get beacons from secure service
+    const beacons = await treasuryService.getBeacons(limit, offset);
 
     return res.status(200).json({
       success: true,
