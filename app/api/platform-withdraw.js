@@ -49,7 +49,7 @@ module.exports = async (req, res) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Get platform wallet address for user
-    const { platformWalletService } = require('@src/lib/platform-wallet');
+    const { platformWalletService } = require('./platform-wallet');
     const platformWalletAddress = platformWalletService.getPlatformWalletAddress(user);
 
     // Check platform wallet balance
