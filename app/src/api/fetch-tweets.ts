@@ -161,8 +161,8 @@ export const searchBeacons = async (searchTerm: string) => {
     
     // Filter beacons that contain the search term in content or topic
     const filteredBeacons = allBeacons.filter((beacon: any) => 
-      beacon.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      beacon.topic.toLowerCase().includes(searchTerm.toLowerCase())
+      (beacon.content || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (beacon.topic || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
     console.log('🔍 Filtered beacons:', filteredBeacons.length);
     

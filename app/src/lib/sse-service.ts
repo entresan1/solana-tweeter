@@ -249,7 +249,11 @@ export function getConnectionStatus() {
 
 // Auto-connect when module loads
 if (typeof window !== 'undefined') {
-  connectSSE();
+  // Delay connection to ensure DOM is ready
+  setTimeout(() => {
+    console.log('🔌 Auto-connecting SSE...');
+    connectSSE();
+  }, 1000);
   
   // Clean up on page unload
   window.addEventListener('beforeunload', () => {

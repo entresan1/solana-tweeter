@@ -10,7 +10,7 @@
   import { initWorkspace, useProfileAutoCreate } from '@src/hooks';
   import { onMounted, watch } from 'vue';
   import { notificationService } from '@src/lib/notification-service';
-  import { setCurrentUserAddress } from '@src/lib/sse-service';
+  import { setCurrentUserAddress, connectSSE, isSSEInitialized } from '@src/lib/sse-service';
 
   const route = useRoute();
   const wallets = [new PhantomWalletAdapter(), new SolflareWalletAdapter()];
@@ -23,6 +23,13 @@
   
   onMounted(() => {
     initWorkspace();
+    
+    // Ensure SSE is connected
+    if (!isSSEInitialized()) {
+      console.log('🔌 Manually connecting SSE...');
+      connectSSE();
+    }
+    
     // Start checking for new beacons with current user address
     const currentUserAddress = wallet.value?.publicKey?.toString();
     setCurrentUserAddress(currentUserAddress || null);
