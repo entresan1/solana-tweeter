@@ -24,15 +24,15 @@
   onMounted(() => {
     initWorkspace();
     // Start checking for new beacons with current user address
-    const currentUserAddress = wallet.value?.publicKey?.toString() || null;
-    setCurrentUserAddress(currentUserAddress);
+    const currentUserAddress = wallet.value?.publicKey?.toString();
+    setCurrentUserAddress(currentUserAddress || null);
     notificationService.startPeriodicCheck(currentUserAddress);
   });
 
   // Watch for wallet changes and update notification service
   watch(wallet, (newWallet) => {
-    const currentUserAddress = newWallet?.publicKey?.toString() || null;
-    setCurrentUserAddress(currentUserAddress);
+    const currentUserAddress = newWallet?.publicKey?.toString();
+    setCurrentUserAddress(currentUserAddress || null);
     // Restart periodic check with new user address
     notificationService.startPeriodicCheck(currentUserAddress);
   });
