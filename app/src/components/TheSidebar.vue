@@ -256,10 +256,10 @@
             <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
               <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" />
             </svg>
-            <span class="text-sm font-medium text-white">Platform Wallet</span>
+            <span class="text-sm font-medium text-white hidden md:block">Platform Wallet</span>
           </div>
           <svg 
-            class="w-4 h-4 text-dark-400 group-hover:text-white transition-all duration-300"
+            class="w-4 h-4 text-dark-400 group-hover:text-white transition-all duration-300 hidden md:block"
             :class="{ 'rotate-180': isPlatformWalletDropdownOpen }"
             fill="none" 
             stroke="currentColor" 
@@ -272,7 +272,7 @@
         <!-- Dropdown Content -->
         <div 
           v-if="isPlatformWalletDropdownOpen"
-          class="mt-2 p-4 bg-dark-800/30 border border-dark-700 rounded-2xl space-y-3"
+          class="mt-2 p-4 bg-dark-800/30 border border-dark-700 rounded-2xl space-y-3 hidden md:block"
         >
           <div class="text-xs text-dark-400">
             <div class="flex items-center justify-between mb-1">
@@ -305,7 +305,17 @@
     <!-- Wallet Connection -->
     <div class="mt-auto pt-6 w-full">
       <div class="glass rounded-2xl p-4 hover-glow">
-        <wallet-multi-button></wallet-multi-button>
+        <div class="md:block hidden">
+          <wallet-multi-button></wallet-multi-button>
+        </div>
+        <!-- Mobile: Just show wallet icon -->
+        <div class="md:hidden flex justify-center">
+          <div class="w-8 h-8 rounded-full bg-gradient-to-r from-primary-500 to-solana-500 flex items-center justify-center">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          </div>
+        </div>
       </div>
     </div>
     
