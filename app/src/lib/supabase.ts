@@ -125,6 +125,9 @@ export const beaconService = {
 const profileCache = new Map<string, { profile: any | null; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
+// Track ongoing requests to prevent duplicate API calls
+const pendingRequests = new Map<string, Promise<any>>();
+
 // Tip service
 export const tipService = {
   // Get tip totals for a beacon
@@ -160,8 +163,33 @@ export const profileService = {
       return cached.profile;
     }
     
+    // Check if there's already a pending request for this wallet
+    if (pendingRequests.has(walletAddress)) {
+      console.log('🎯 Waiting for pending request for wallet:', walletAddress.slice(0, 8) + '...');
+      return await pendingRequests.get(walletAddress);
+    }
+    
     console.log('🎯 Cache miss for wallet:', walletAddress.slice(0, 8) + '...');
+    
+    // Create a new request and store it
+    const requestPromise = this._fetchProfile(walletAddress);
+    pendingRequests.set(walletAddress, requestPromise);
+    
     try {
+      const result = await requestPromise;
+      return result;
+    } finally {
+      // Clean up the pending request
+      pendingRequests.delete(walletAddress);
+    }
+  },
+
+  // Internal method to actually fetch the profile
+  async _fetchProfile(walletAddress: string) {
+    try {
+      // Add a small delay to prevent rate limiting
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const response = await fetch(`/api/user-profiles?walletAddress=${encodeURIComponent(walletAddress)}`);
 
       if (!response.ok) {
@@ -220,6 +248,7 @@ export const profileService = {
   // Clear profile cache (useful for testing or manual cache invalidation)
   clearCache() {
     profileCache.clear();
+    pendingRequests.clear();
   },
 
   // Update profile picture
