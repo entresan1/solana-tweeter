@@ -19,6 +19,8 @@ import PlatformWalletModal from './PlatformWalletModal.vue';
   const authorAvatar = ref('');
   const isLiked = ref(false);
   const likeCount = ref(0);
+  const isRugged = ref(false);
+  const rugCount = ref(0);
   const showReplyModal = ref(false);
   const replyContent = ref('');
   const replies = ref<any[]>([]);
@@ -134,6 +136,7 @@ import PlatformWalletModal from './PlatformWalletModal.vue';
     
     // Profile data and tip data are now loaded by the watchers, so we just need to load like data
     await loadLikeData();
+    await loadRugData();
     
     // Load platform wallet data
     await loadPlatformWalletData();
@@ -170,6 +173,35 @@ import PlatformWalletModal from './PlatformWalletModal.vue';
       console.error('❌ Error loading like data:', error);
       console.error('❌ Error details:', error.message);
       console.error('❌ Error stack:', error.stack);
+    }
+  };
+
+  const loadRugData = async () => {
+    if (!tweet.value?.id) {
+      console.log('❌ Missing required data - tweet ID for rug data');
+      return;
+    }
+    
+    try {
+      const beaconId = tweet.value.id;
+      console.log('🔍 Loading rug data for beacon ID:', beaconId);
+      
+      const response = await fetch(`/api/beacon-rug-count?beaconId=${beaconId}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        rugCount.value = data.count;
+        isRugged.value = false; // We'll implement user-specific rug status later
+        console.log('✅ Rug data loaded successfully:', { count: data.count });
+      } else {
+        console.warn('⚠️ Failed to load rug data:', data.message);
+        rugCount.value = 0;
+        isRugged.value = false;
+      }
+    } catch (error: any) {
+      console.error('❌ Error loading rug data:', error);
+      rugCount.value = 0;
+      isRugged.value = false;
     }
   };
 
@@ -258,6 +290,71 @@ import PlatformWalletModal from './PlatformWalletModal.vue';
       console.error('❌ Error details:', error.message);
       console.error('❌ Error stack:', error.stack);
     }
+  };
+
+  const handleRug = async () => {
+    console.log('☠️ handleRug called');
+    console.log('☠️ wallet.value?.publicKey:', wallet.value?.publicKey);
+    console.log('☠️ tweet.value?.id:', tweet.value?.id);
+    console.log('☠️ isRugged.value:', isRugged.value);
+    
+    if (!wallet.value?.publicKey) {
+      console.log('❌ Wallet not connected. Please connect your wallet first.');
+      alert('Please connect your wallet first to report rugs.');
+      return;
+    }
+    
+    if (!tweet.value?.id) {
+      console.log('❌ Missing tweet ID');
+      return;
+    }
+    
+    try {
+      const beaconId = tweet.value.id;
+      const userWallet = wallet.value.publicKey.toBase58();
+      console.log('☠️ Toggling rug report for beacon ID:', beaconId);
+      console.log('☠️ User wallet:', userWallet);
+      
+      if (isRugged.value) {
+        console.log('☠️ Removing rug report...');
+        await reportRug(beaconId, userWallet, false);
+        isRugged.value = false;
+        rugCount.value--;
+        console.log('✅ Rug report removed successfully');
+      } else {
+        console.log('☠️ Reporting as rug...');
+        await reportRug(beaconId, userWallet, true);
+        isRugged.value = true;
+        rugCount.value++;
+        console.log('✅ Rug reported successfully');
+      }
+    } catch (error: any) {
+      console.error('❌ Error toggling rug report:', error);
+      console.error('❌ Error details:', error.message);
+      console.error('❌ Error stack:', error.stack);
+    }
+  };
+
+  const reportRug = async (beaconId: number, userWallet: string, isRug: boolean) => {
+    const response = await fetch('/api/rug-report', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        beaconId,
+        reporter: userWallet,
+        reporter_display: userWallet.slice(0, 8) + '...',
+        isRug
+      })
+    });
+    
+    const data = await response.json();
+    if (!data.success) {
+      throw new Error(data.message || 'Failed to report rug');
+    }
+    
+    return data;
   };
 
   const handleReply = () => {
@@ -562,6 +659,21 @@ Come beacon at @https://trenchbeacon.com/`;
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
               <span class="text-sm">{{ likeCount }}</span>
+            </button>
+            
+            <!-- Rug Button -->
+            <button 
+              @click="handleRug"
+              :class="[
+                'flex items-center space-x-2 transition-colors duration-300 hover:scale-110',
+                isRugged ? 'text-orange-500' : 'text-dark-400 hover:text-orange-500'
+              ]"
+              :title="isRugged ? 'Remove rug report' : 'Report as rug (scam)'"
+            >
+              <svg class="w-5 h-5" :fill="isRugged ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <span class="text-sm">{{ rugCount }}</span>
             </button>
             <button 
               @click="handleReply"
