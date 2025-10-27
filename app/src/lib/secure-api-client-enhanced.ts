@@ -10,15 +10,25 @@ async function getCSRFToken(): Promise<string> {
   }
 
   try {
-    const response = await fetch('/api/user-profiles', {
+    const response = await fetch('/api/beacons?limit=1', {
       method: 'GET',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
       }
     });
 
     if (response.ok) {
-      const token = response.headers.get('X-CSRF-Token');
+      // Try to get token from header first (check both cases)
+      let token = response.headers.get('X-CSRF-Token') || response.headers.get('X-Csrf-Token') || response.headers.get('X-XSRF-TOKEN');
+      
+      // If not in header, try response body
+      if (!token) {
+        const data = await response.json();
+        token = data?.token;
+      }
+      
       if (token) {
         csrfToken = token;
         return token;
@@ -54,6 +64,9 @@ async function secureFetch(url: string, options: RequestInit = {}): Promise<Resp
     'X-Requested-With': 'XMLHttpRequest',
     ...options.headers,
   };
+
+  // Add credentials for CSRF cookies
+  options.credentials = 'include';
 
   const response = await fetch(url, options);
 

@@ -81,6 +81,7 @@ function generateCSRFToken() {
   
   console.log('🔐 Generated CSRF token:', token);
   console.log('🔐 Total tokens in storage:', csrfTokens.size);
+  console.log('🔐 All stored tokens:', Array.from(csrfTokens.keys()));
   
   // Clean up old tokens
   const now = Date.now();
@@ -173,7 +174,7 @@ function secureAuthMiddleware(req, res, next) {
   }
   
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-CSRF-Token');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-CSRF-Token, X-XSRF-TOKEN, X-Requested-With, X-Wallet-Address, X-Wallet-Signature');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   
   if (method === 'OPTIONS') {
@@ -209,11 +210,20 @@ function secureAuthMiddleware(req, res, next) {
   
   // CSRF protection for state-changing operations
   if (['POST', 'PUT', 'DELETE'].includes(method) && req.body && Object.keys(req.body).length > 0) {
-    const csrfToken = req.headers['x-csrf-token'] || req.headers['X-CSRF-Token'];
+    // Check for CSRF token in multiple header formats
+    const csrfToken = req.headers['x-csrf-token'] || 
+                     req.headers['X-CSRF-Token'] || 
+                     req.headers['x-xsrf-token'] || 
+                     req.headers['X-XSRF-TOKEN'] ||
+                     req.headers['csrf-token'] ||
+                     req.headers['CSRF-Token'];
     
     console.log('🔐 CSRF validation for', method, endpoint);
     console.log('🔐 Received token:', csrfToken);
     console.log('🔐 Available tokens:', Array.from(csrfTokens.keys()));
+    console.log('🔐 All headers:', Object.keys(req.headers).filter(h => h.toLowerCase().includes('csrf')));
+    console.log('🔐 All request headers:', JSON.stringify(req.headers, null, 2));
+    console.log('🔐 Request body:', JSON.stringify(req.body, null, 2));
     
     if (!csrfToken || !verifyCSRFToken(csrfToken)) {
       console.log('❌ CSRF token validation failed');

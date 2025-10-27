@@ -22,20 +22,26 @@ async function fetchCsrf(): Promise<string> {
   console.debug('[csrf] Has cookies:', document.cookie.length > 0);
   console.debug('[csrf] XSRF cookie:', document.cookie.includes('XSRF-TOKEN='));
 
-  // Try JSON endpoint first (our API), falls back to cookie only
+  // Use beacons endpoint to get CSRF token (fallback until /api/csrf is deployed)
   const res = await fetch('/api/beacons?limit=1', {
     method: 'GET',
     credentials: 'include',
-    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+    headers: { 
+      'Accept': 'application/json', 
+      'X-Requested-With': 'XMLHttpRequest' 
+    },
   }).catch(() => null as any);
 
   let token = '';
   if (res && res.ok) {
-    // token may be in body OR header
-    const headerTok = res.headers.get('x-csrf-token') || res.headers.get('x-xsrf-token') || res.headers.get('X-CSRF-Token');
+    // token may be in body OR header (check both cases)
+    const headerTok = res.headers.get('x-csrf-token') || res.headers.get('X-Csrf-Token') || res.headers.get('x-xsrf-token') || res.headers.get('X-CSRF-Token');
     if (headerTok) token = headerTok;
     else {
-      try { token = (await res.json())?.token || ''; } catch { /* ignore */ }
+      try { 
+        const data = await res.json();
+        token = data?.token || ''; 
+      } catch { /* ignore */ }
     }
   }
 
@@ -57,15 +63,12 @@ async function fetchCsrf(): Promise<string> {
 export async function authFetch(url: string, init: RequestInit = {}, auth?: AuthContext) {
   const token = await fetchCsrf();
 
-  // Build headers with ALL common CSRF names to satisfy different backends
+  // Build headers with the primary CSRF header name that our server expects
   const base: Record<string, string> = {
     'Content-Type': 'application/json',
     'X-Requested-With': 'XMLHttpRequest',
-    // Common names (server will accept one it recognizes):
+    // Primary header name that our server expects
     'X-CSRF-Token': token,
-    'X-XSRF-TOKEN': token,
-    'CSRF-Token': token,
-    'X-CSRFToken': token,
   };
   
   if (auth?.bearerToken) base['Authorization'] = `Bearer ${auth.bearerToken}`;
@@ -75,6 +78,8 @@ export async function authFetch(url: string, init: RequestInit = {}, auth?: Auth
   console.debug('[csrf] Making request to:', url);
   console.debug('[csrf] Headers:', Object.keys(base));
   console.debug('[csrf] Auth context:', auth ? 'present' : 'none');
+  console.debug('[csrf] Full headers being sent:', JSON.stringify(base, null, 2));
+  console.debug('[csrf] Token being sent:', token);
 
   const doFetch = async () => {
     const res = await fetch(url, {
