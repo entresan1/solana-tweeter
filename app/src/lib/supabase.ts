@@ -13,18 +13,19 @@ console.log('🔧 Key length:', supabaseAnonKey?.length);
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 console.log('✅ Supabase client initialized');
 
-// Test the connection
+// Test the connection via server-side API
 (async () => {
   try {
-    const { data, error } = await supabase.from('beacons').select('count');
-    console.log('🔧 Supabase connection test:', { data, error });
-    if (error) {
-      console.error('❌ Supabase connection failed:', error);
+    const response = await fetch('/api/beacons?limit=1');
+    const data = await response.json();
+    console.log('🔧 Server-side connection test:', { success: data.success });
+    if (data.success) {
+      console.log('✅ Server-side connection successful');
     } else {
-      console.log('✅ Supabase connection successful');
+      console.error('❌ Server-side connection failed:', data.error);
     }
   } catch (err: any) {
-    console.error('❌ Supabase connection error:', err);
+    console.error('❌ Server-side connection error:', err);
   }
 })();
 
@@ -51,73 +52,79 @@ export interface UserProfile {
   updated_at?: string
 }
 
-// Database operations
+// Database operations - now using server-side APIs for security
 export const beaconService = {
   // Create a new beacon
   async createBeacon(beacon: Omit<Beacon, 'id' | 'created_at'>) {
-    const { data, error } = await supabase
-      .from('beacons')
-      .insert([beacon])
-      .select()
-      .single()
+    const response = await fetch('/api/save-beacon', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(beacon)
+    });
+
+    const data = await response.json();
     
-    if (error) throw error
-    return data
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to create beacon');
+    }
+    
+    return data.beacon;
   },
 
   // Fetch all beacons
   async fetchBeacons(filters: any[] = []) {
     console.log('🗄️ fetchBeacons called with filters:', filters);
     
-    let query = supabase
-      .from('beacons')
-      .select('*')
-      .order('timestamp', { ascending: false })
-
-    // Apply filters if any
-    for (const filter of filters) {
-      if (filter.memcmp) {
-        if (filter.memcmp.bytes === 'author') {
-          query = query.eq('author', filter.memcmp.bytes)
-        }
+    try {
+      const response = await fetch('/api/beacons');
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch beacons');
       }
-    }
-
-    console.log('🗄️ Executing Supabase query...');
-    const { data, error } = await query;
-    console.log('🗄️ Supabase query result:', { data, error });
-
-    if (error) {
-      console.error('❌ Supabase query error:', error);
+      
+      console.log('🗄️ Returning beacons:', data.beacons || []);
+      return data.beacons || [];
+    } catch (error) {
+      console.error('❌ Server-side beacons fetch error:', error);
       throw error;
     }
-    
-    console.log('🗄️ Returning beacons:', data || []);
-    return data || [];
   },
 
   // Fetch beacons by author
   async fetchBeaconsByAuthor(author: string) {
-    const { data, error } = await supabase
-      .from('beacons')
-      .select('*')
-      .eq('author', author)
-      .order('timestamp', { ascending: false })
-    
-    if (error) throw error
-    return data || []
+    try {
+      const response = await fetch(`/api/beacons?author=${encodeURIComponent(author)}`);
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch beacons by author');
+      }
+      
+      return data.beacons || [];
+    } catch (error) {
+      console.error('❌ Server-side beacons by author fetch error:', error);
+      throw error;
+    }
   },
 
   // Fetch beacons by topic
   async fetchBeaconsByTopic(topic: string) {
-    const { data, error } = await supabase
-      .from('beacons')
-      .select('*')
-      .eq('topic', topic)
-      .order('timestamp', { ascending: false })
-    
-    if (error) throw error
-    return data || []
+    try {
+      const response = await fetch(`/api/beacons?topic=${encodeURIComponent(topic)}`);
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch beacons by topic');
+      }
+      
+      return data.beacons || [];
+    } catch (error) {
+      console.error('❌ Server-side beacons by topic fetch error:', error);
+      throw error;
+    }
   }
 }
 

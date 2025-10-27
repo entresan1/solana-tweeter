@@ -1,7 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
-
-const supabaseUrl = process.env.SUPABASE_URL || 'https://voskmcxmtvophehityoa.supabase.co';
-const supabaseKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZvc2ttY3htdHZvcGhlaGl0eW9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1NTI1MDQsImV4cCI6MjA3NDEyODUwNH0.4sZOl1G7ZgCh0R_VSAULPm-KuPtLQ-013ivFn19VYVQ';
+const config = require('./secure-config');
 
 module.exports = async (req, res) => {
   // Set CORS headers
@@ -32,7 +30,7 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'No valid beacon IDs provided' });
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(config.supabase.url, config.supabase.key);
 
     // Get replies for all beacons in one query
     const { data: replies, error } = await supabase

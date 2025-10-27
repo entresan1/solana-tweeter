@@ -10,7 +10,7 @@
   const platformWalletAddress = ref('');
   const platformBalance = ref(0);
   const isMobileMenuOpen = ref(false);
-  const isPlatformWalletExpanded = ref(false);
+  const isPlatformWalletDropdownOpen = ref(false);
   
   // Mobile detection
   const isMobile = computed(() => window.innerWidth < 768);
@@ -26,12 +26,13 @@
   };
 
   // Toggle platform wallet dropdown
-  const togglePlatformWallet = () => {
-    isPlatformWalletExpanded.value = !isPlatformWalletExpanded.value;
-    // Close mobile menu if open
-    if (isMobile.value) {
-      isMobileMenuOpen.value = false;
-    }
+  const togglePlatformWalletDropdown = () => {
+    isPlatformWalletDropdownOpen.value = !isPlatformWalletDropdownOpen.value;
+  };
+
+  // Close platform wallet dropdown
+  const closePlatformWalletDropdown = () => {
+    isPlatformWalletDropdownOpen.value = false;
   };
 
   // Handle window resize
@@ -332,22 +333,14 @@
         <div class="text-lg font-medium"
              :class="route.name === 'X402' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">x402</div>
       </router-link>
-    </div>
-    
-    <!-- Wallet Connection -->
-    <div class="mt-auto pt-6 w-full px-4 md:px-0">
-      <div class="glass rounded-2xl p-4 hover-glow">
-        <wallet-multi-button></wallet-multi-button>
-      </div>
-    </div>
-    
-    <!-- Platform Wallet Section (only when connected) -->
-    <div v-if="connected" class="mt-4 px-4 md:px-0">
-      <div class="bg-dark-800/30 border border-dark-700 rounded-2xl overflow-hidden">
-        <!-- Platform Wallet Header (Clickable) -->
+      
+      
+      <!-- Platform Wallet Dropdown (only when connected) -->
+      <div v-if="connected" class="mt-4 mx-4 md:mx-0">
+        <!-- Dropdown Trigger -->
         <button
-          @click="togglePlatformWallet"
-          class="w-full p-4 flex items-center justify-between hover:bg-dark-700/50 transition-colors duration-200"
+          @click="togglePlatformWalletDropdown"
+          class="w-full p-4 bg-dark-800/30 border border-dark-700 rounded-2xl hover:bg-dark-800/50 transition-all duration-300 flex items-center justify-between group"
         >
           <div class="flex items-center space-x-2">
             <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
@@ -356,8 +349,8 @@
             <span class="text-sm font-medium text-white">Platform Wallet</span>
           </div>
           <svg 
-            class="w-4 h-4 text-dark-400 transition-transform duration-200"
-            :class="{ 'rotate-180': isPlatformWalletExpanded }"
+            class="w-4 h-4 text-dark-400 group-hover:text-white transition-all duration-300"
+            :class="{ 'rotate-180': isPlatformWalletDropdownOpen }"
             fill="none" 
             stroke="currentColor" 
             viewBox="0 0 24 24"
@@ -365,48 +358,44 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
           </svg>
         </button>
-        
-        <!-- Platform Wallet Details (Collapsible) -->
-        <transition
-          enter-active-class="transition-all duration-300 ease-out"
-          enter-from-class="opacity-0 max-h-0"
-          enter-to-class="opacity-100 max-h-96"
-          leave-active-class="transition-all duration-300 ease-in"
-          leave-from-class="opacity-100 max-h-96"
-          leave-to-class="opacity-0 max-h-0"
+
+        <!-- Dropdown Content -->
+        <div 
+          v-if="isPlatformWalletDropdownOpen"
+          class="mt-2 p-4 bg-dark-800/30 border border-dark-700 rounded-2xl space-y-3"
         >
-          <div 
-            v-show="isPlatformWalletExpanded"
-            class="px-4 pb-4 border-t border-dark-700/50 overflow-hidden"
-          >
-          <div class="space-y-3 pt-3">
-            <div class="text-xs text-dark-400">
-              <div class="flex items-center justify-between mb-1">
-                <span>Address:</span>
-                <span class="text-yellow-400 font-mono text-xs break-all">{{ platformWalletAddress.slice(0, 6) }}...{{ platformWalletAddress.slice(-4) }}</span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span>Balance:</span>
-                <span class="text-yellow-400 font-semibold">{{ platformBalance.toFixed(4) }} SOL</span>
-              </div>
+          <div class="text-xs text-dark-400">
+            <div class="flex items-center justify-between mb-1">
+              <span>Address:</span>
+              <span class="text-yellow-400 font-mono text-xs break-all">{{ platformWalletAddress.slice(0, 6) }}...{{ platformWalletAddress.slice(-4) }}</span>
             </div>
-            <div class="flex flex-col space-y-2">
-              <button
-                @click="copyPlatformWalletAddress"
-                class="w-full text-xs btn-secondary py-2 px-3 rounded-lg"
-              >
-                Copy Address
-              </button>
-              <button
-                @click="showPrivateKey"
-                class="w-full text-xs btn-primary py-2 px-3 rounded-lg"
-              >
-                Show Private Key
-              </button>
+            <div class="flex items-center justify-between">
+              <span>Balance:</span>
+              <span class="text-yellow-400 font-semibold">{{ platformBalance.toFixed(4) }} SOL</span>
             </div>
           </div>
+          <div class="flex flex-col space-y-2">
+            <button
+              @click="copyPlatformWalletAddress"
+              class="w-full text-xs btn-secondary py-2 px-3 rounded-lg"
+            >
+              Copy Address
+            </button>
+            <button
+              @click="showPrivateKey"
+              class="w-full text-xs btn-primary py-2 px-3 rounded-lg"
+            >
+              Show Private Key
+            </button>
           </div>
-        </transition>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Wallet Connection -->
+    <div class="mt-auto pt-6 w-full px-4 md:px-0">
+      <div class="glass rounded-2xl p-4 hover-glow">
+        <wallet-multi-button></wallet-multi-button>
       </div>
     </div>
     

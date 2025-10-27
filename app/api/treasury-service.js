@@ -215,13 +215,24 @@ async function saveBeacon(beaconData) {
 /**
  * Get beacons with proper pagination and security
  */
-async function getBeacons(limit = 20, offset = 0) {
+async function getBeacons(limit = 20, offset = 0, author = null, topic = null) {
   try {
-    const { data: beacons, error } = await supabase
+    let query = supabase
       .from('beacons')
       .select('*')
       .order('timestamp', { ascending: false })
       .range(offset, offset + limit - 1);
+
+    // Apply filters if provided
+    if (author) {
+      query = query.eq('author', author);
+    }
+    
+    if (topic) {
+      query = query.eq('topic', topic);
+    }
+
+    const { data: beacons, error } = await query;
 
     if (error) {
       console.error('❌ Error fetching beacons:', error);
