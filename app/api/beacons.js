@@ -1,10 +1,5 @@
 const treasuryService = require('./treasury-service');
-const crypto = require('crypto');
-
-// CSRF token generation
-function generateCSRFToken() {
-  return crypto.randomBytes(32).toString('hex');
-}
+const { generateCSRFToken } = require('./secure-auth-middleware');
 
 module.exports = async (req, res) => {
   // Set CORS headers
@@ -16,6 +11,7 @@ module.exports = async (req, res) => {
   // Generate and send CSRF token for GET requests
   const csrfToken = generateCSRFToken();
   res.setHeader('X-CSRF-Token', csrfToken);
+  res.setHeader('Access-Control-Expose-Headers', 'X-CSRF-Token');
 
   if (req.method === 'OPTIONS') {
     res.status(200).end();

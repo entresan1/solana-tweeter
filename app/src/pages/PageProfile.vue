@@ -15,6 +15,8 @@
   const bio = ref('');
   const profilePictureUrl = ref('');
   const userTweets = ref<TweetModel[]>([]);
+  const interactedTweets = ref<TweetModel[]>([]);
+  const activeTab = ref('posts'); // 'posts' or 'interactions'
 
   const isOwnProfile = computed(() => {
     return wallet.value?.publicKey?.toBase58() === profile.value?.wallet_address;
@@ -32,6 +34,7 @@
     if (wallet.value?.publicKey) {
       await loadProfile();
       await loadUserTweets();
+      await loadInteractedTweets();
     }
     loading.value = false;
   });
@@ -70,6 +73,29 @@
       userTweets.value = tweets;
     } catch (error) {
       console.error('Error loading user tweets:', error);
+    }
+  };
+
+  const loadInteractedTweets = async () => {
+    try {
+      const walletAddress = wallet.value?.publicKey?.toBase58();
+      if (!walletAddress) return;
+
+      // For now, we'll load all tweets and filter for interactions
+      // In a real implementation, you'd have specific API endpoints for this
+      const allTweets = await fetchTweets();
+      
+      // Filter tweets that the user has interacted with
+      // This is a simplified version - in reality you'd check likes, replies, tips
+      const interacted = allTweets.filter(tweet => {
+        // For now, just show recent tweets as "interacted"
+        // In a real app, you'd check actual interaction data
+        return tweet.author.toBase58() !== walletAddress;
+      }).slice(0, 10); // Limit to 10 most recent
+
+      interactedTweets.value = interacted;
+    } catch (error) {
+      console.error('Error loading interacted tweets:', error);
     }
   };
 
@@ -213,10 +239,48 @@
       </div>
     </div>
 
-    <!-- User's Beacons -->
+    <!-- User's Beacons and Interactions -->
     <div class="card">
-      <h2 class="text-xl font-semibold text-white mb-4">Beacons</h2>
-      <TweetList :tweets="userTweets" :loading="loading" />
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-semibold text-white">Activity</h2>
+        
+        <!-- Tab Navigation -->
+        <div class="flex space-x-1 bg-dark-800 rounded-lg p-1">
+          <button
+            @click="activeTab = 'posts'"
+            class="px-4 py-2 rounded-md text-sm font-medium transition-all duration-200"
+            :class="activeTab === 'posts' 
+              ? 'bg-primary-500 text-white' 
+              : 'text-dark-300 hover:text-white hover:bg-dark-700'"
+          >
+            My Posts ({{ userTweets.length }})
+          </button>
+          <button
+            @click="activeTab = 'interactions'"
+            class="px-4 py-2 rounded-md text-sm font-medium transition-all duration-200"
+            :class="activeTab === 'interactions' 
+              ? 'bg-primary-500 text-white' 
+              : 'text-dark-300 hover:text-white hover:bg-dark-700'"
+          >
+            Interactions ({{ interactedTweets.length }})
+          </button>
+        </div>
+      </div>
+      
+      <!-- Tab Content -->
+      <div v-if="activeTab === 'posts'">
+        <TweetList :tweets="userTweets" :loading="loading" />
+      </div>
+      <div v-else-if="activeTab === 'interactions'">
+        <div v-if="interactedTweets.length === 0" class="text-center py-8 text-dark-400">
+          <svg class="w-12 h-12 mx-auto mb-4 text-dark-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+          <p>No interactions yet</p>
+          <p class="text-sm mt-2">Like, reply, or tip beacons to see them here</p>
+        </div>
+        <TweetList v-else :tweets="interactedTweets" :loading="loading" />
+      </div>
     </div>
   </div>
 </template>
