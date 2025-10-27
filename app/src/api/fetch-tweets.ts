@@ -1,6 +1,6 @@
 import { TweetModel } from '@src/models/tweet.model';
 import { PublicKey } from '@solana/web3.js';
-import { getBeacons, isSSEInitialized } from '@src/lib/sse-service';
+import { getTweets, isSSEInitialized } from '@src/lib/tweets-sse-service';
 
 export const fetchTweets = async (filters: any[] = []) => {
   console.log('📡 fetchTweets called with filters:', filters);
@@ -12,33 +12,33 @@ export const fetchTweets = async (filters: any[] = []) => {
       return [];
     }
     
-    // Get beacons from SSE service instead of direct database call
-    const beacons = getBeacons();
-    console.log('📡 Fetched beacons from SSE service:', beacons);
-    console.log('📡 Number of beacons:', beacons.length);
+    // Get tweets from SSE service instead of direct database call
+    const tweets = getTweets();
+    console.log('📡 Fetched tweets from SSE service:', tweets);
+    console.log('📡 Number of tweets:', tweets.length);
     
     // Convert to TweetModel format for compatibility
-    const tweetModels = beacons.map((beacon: any, index: number) => {
-      console.log(`📡 Processing beacon ${index + 1}:`, beacon);
-      console.log(`📡 Beacon ID: ${beacon.id}`);
-      console.log(`📡 Beacon content: ${beacon.content}`);
-      console.log(`📡 Beacon topic: ${beacon.topic}`);
+    const tweetModels = tweets.map((tweet: any, index: number) => {
+      console.log(`📡 Processing tweet ${index + 1}:`, tweet);
+      console.log(`📡 Tweet ID: ${tweet.id}`);
+      console.log(`📡 Tweet content: ${tweet.content}`);
+      console.log(`📡 Tweet topic: ${tweet.topic}`);
       
-      // Create a deterministic mock PublicKey for each beacon
+      // Create a deterministic mock PublicKey for each tweet
       const mockKeyBytes = new Uint8Array(32);
       mockKeyBytes.fill(0);
       mockKeyBytes[0] = index + 1; // Unique identifier
-      mockKeyBytes[31] = 0x42; // Mark as beacon
+      mockKeyBytes[31] = 0x42; // Mark as tweet
       
       // Create TweetModel instance
       const tweetModel = new TweetModel(new PublicKey(mockKeyBytes), {
-        author: new PublicKey(beacon.author),
-        timestamp: { toNumber: () => beacon.timestamp / 1000 },
-        topic: beacon.topic,
-        content: beacon.content,
-        id: beacon.id, // Pass ID in accountData
-        treasuryTransaction: beacon.treasury_transaction || beacon.id,
-        author_display: beacon.author_display || beacon.author?.toString()?.slice(0, 8) + '...' || 'Unknown User'
+        author: new PublicKey(tweet.author),
+        timestamp: { toNumber: () => tweet.timestamp / 1000 },
+        topic: tweet.topic,
+        content: tweet.content,
+        id: tweet.id, // Pass ID in accountData
+        treasuryTransaction: tweet.treasuryTransaction || tweet.id,
+        author_display: tweet.authorDisplay || tweet.author?.toString()?.slice(0, 8) + '...' || 'Unknown User'
       });
       
       console.log(`📡 Created TweetModel with ID: ${tweetModel.id}`);
@@ -63,13 +63,13 @@ export const authorFilter = async (authorBase58PublicKey: string) => {
       return [];
     }
     
-    // Get beacons from SSE service and filter by author
-    const allBeacons = getBeacons();
-    const beacons = allBeacons.filter(beacon => beacon.author === authorBase58PublicKey);
-    console.log('👤 Found beacons for author:', beacons.length);
+    // Get tweets from SSE service and filter by author
+    const allTweets = getTweets();
+    const tweets = allTweets.filter(tweet => tweet.author === authorBase58PublicKey);
+    console.log('👤 Found tweets for author:', tweets.length);
     
     // Convert to TweetModel format for compatibility
-    return beacons.map((beacon: any, index: number) => {
+    return tweets.map((tweet: any, index: number) => {
       const mockKeyBytes = new Uint8Array(32);
       mockKeyBytes.fill(0);
       mockKeyBytes[0] = index + 1;
@@ -77,16 +77,16 @@ export const authorFilter = async (authorBase58PublicKey: string) => {
       
       // Create TweetModel instance
       const tweetModel = new TweetModel(new PublicKey(mockKeyBytes), {
-        author: new PublicKey(beacon.author),
-        timestamp: { toNumber: () => beacon.timestamp / 1000 },
-        topic: beacon.topic,
-        content: beacon.content,
+        author: new PublicKey(tweet.author),
+        timestamp: { toNumber: () => tweet.timestamp / 1000 },
+        topic: tweet.topic,
+        content: tweet.content,
       });
       
       // Add additional properties
-      tweetModel.id = beacon.id;
-      tweetModel.treasuryTransaction = beacon.treasury_transaction || beacon.id;
-      tweetModel.authorDisplay = beacon.author_display || beacon.author?.toString()?.slice(0, 8) + '...' || 'Unknown User';
+      tweetModel.id = tweet.id;
+      tweetModel.treasuryTransaction = tweet.treasuryTransaction || tweet.id;
+      tweetModel.authorDisplay = tweet.authorDisplay || tweet.author?.toString()?.slice(0, 8) + '...' || 'Unknown User';
       
       return tweetModel;
     });
@@ -106,13 +106,13 @@ export const topicFilter = async (topic: string) => {
       return [];
     }
     
-    // Get beacons from SSE service and filter by topic
-    const allBeacons = getBeacons();
-    const beacons = allBeacons.filter(beacon => beacon.topic === topic);
-    console.log('🔍 Found beacons for topic:', beacons.length);
+    // Get tweets from SSE service and filter by topic
+    const allTweets = getTweets();
+    const tweets = allTweets.filter(tweet => tweet.topic === topic);
+    console.log('🔍 Found tweets for topic:', tweets.length);
     
     // Convert to TweetModel format for compatibility
-    return beacons.map((beacon: any, index: number) => {
+    return tweets.map((tweet: any, index: number) => {
       const mockKeyBytes = new Uint8Array(32);
       mockKeyBytes.fill(0);
       mockKeyBytes[0] = index + 1;
@@ -120,16 +120,16 @@ export const topicFilter = async (topic: string) => {
       
       // Create TweetModel instance
       const tweetModel = new TweetModel(new PublicKey(mockKeyBytes), {
-        author: new PublicKey(beacon.author),
-        timestamp: { toNumber: () => beacon.timestamp / 1000 },
-        topic: beacon.topic,
-        content: beacon.content,
+        author: new PublicKey(tweet.author),
+        timestamp: { toNumber: () => tweet.timestamp / 1000 },
+        topic: tweet.topic,
+        content: tweet.content,
       });
       
       // Add additional properties
-      tweetModel.id = beacon.id;
-      tweetModel.treasuryTransaction = beacon.treasury_transaction || beacon.id;
-      tweetModel.authorDisplay = beacon.author_display || beacon.author?.toString()?.slice(0, 8) + '...' || 'Unknown User';
+      tweetModel.id = tweet.id;
+      tweetModel.treasuryTransaction = tweet.treasuryTransaction || tweet.id;
+      tweetModel.authorDisplay = tweet.authorDisplay || tweet.author?.toString()?.slice(0, 8) + '...' || 'Unknown User';
       
       return tweetModel;
     });
@@ -155,19 +155,19 @@ export const searchBeacons = async (searchTerm: string) => {
       return [];
     }
     
-    // Get all beacons from SSE service and filter by content
-    const allBeacons = getBeacons();
-    console.log('🔍 Total beacons fetched:', allBeacons.length);
+    // Get all tweets from SSE service and filter by content
+    const allTweets = getTweets();
+    console.log('🔍 Total tweets fetched:', allTweets.length);
     
-    // Filter beacons that contain the search term in content or topic
-    const filteredBeacons = allBeacons.filter((beacon: any) => 
-      (beacon.content || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (beacon.topic || '').toLowerCase().includes(searchTerm.toLowerCase())
+    // Filter tweets that contain the search term in content or topic
+    const filteredTweets = allTweets.filter((tweet: any) => 
+      (tweet.content || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (tweet.topic || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
-    console.log('🔍 Filtered beacons:', filteredBeacons.length);
+    console.log('🔍 Filtered tweets:', filteredTweets.length);
     
     // Convert to TweetModel format for compatibility
-    return filteredBeacons.map((beacon: any, index: number) => {
+    return filteredTweets.map((tweet: any, index: number) => {
       const mockKeyBytes = new Uint8Array(32);
       mockKeyBytes.fill(0);
       mockKeyBytes[0] = index + 1;
@@ -175,16 +175,16 @@ export const searchBeacons = async (searchTerm: string) => {
       
       // Create TweetModel instance
       const tweetModel = new TweetModel(new PublicKey(mockKeyBytes), {
-        author: new PublicKey(beacon.author),
-        timestamp: { toNumber: () => beacon.timestamp / 1000 },
-        topic: beacon.topic,
-        content: beacon.content,
+        author: new PublicKey(tweet.author),
+        timestamp: { toNumber: () => tweet.timestamp / 1000 },
+        topic: tweet.topic,
+        content: tweet.content,
       });
       
       // Add additional properties
-      tweetModel.id = beacon.id;
-      tweetModel.treasuryTransaction = beacon.treasury_transaction || beacon.id;
-      tweetModel.authorDisplay = beacon.author_display || beacon.author?.toString()?.slice(0, 8) + '...' || 'Unknown User';
+      tweetModel.id = tweet.id;
+      tweetModel.treasuryTransaction = tweet.treasuryTransaction || tweet.id;
+      tweetModel.authorDisplay = tweet.authorDisplay || tweet.author?.toString()?.slice(0, 8) + '...' || 'Unknown User';
       
       return tweetModel;
     });

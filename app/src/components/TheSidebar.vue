@@ -82,32 +82,32 @@
 </script>
 
 <template>
-  <aside class="flex flex-col items-center md:items-stretch space-y-1 md:space-y-4 h-full">
+  <aside class="flex flex-col items-center md:items-stretch space-y-2 md:space-y-4 h-full">
     <!-- Logo -->
-    <div class="mb-4 md:mb-8">
+    <div class="mb-8">
       <router-link
         :to="{ name: 'Home' }"
-        class="inline-block rounded-xl md:rounded-2xl hover:bg-dark-800/50 p-2 md:p-4 md:self-start transition-all duration-200 hover-lift group"
+        class="inline-block rounded-2xl hover:bg-dark-800/50 p-4 md:self-start transition-all duration-200 hover-lift group"
       >
-        <div class="flex items-center space-x-2 md:space-x-3">
-            <img src="/logo.png" alt="Trench Beacon" class="h-6 w-6 md:h-8 md:w-8 rounded-lg" />
+        <div class="flex items-center space-x-3">
+            <img src="/logo.png" alt="Trench Beacon" class="h-8 w-8 rounded-lg" />
             <span class="hidden md:block text-xl font-bold text-gradient">Trench Beacon</span>
         </div>
       </router-link>
     </div>
     <!-- Navigation -->
-    <div class="flex flex-col items-center md:items-stretch space-y-1 md:space-y-2 w-full">
+    <div class="flex flex-col items-center md:items-stretch space-y-2 w-full">
       <router-link
         :to="{ name: 'Home' }"
-        class="rounded-xl md:rounded-2xl hover:bg-dark-800/50 p-2 md:p-4 md:w-full inline-flex items-center space-x-2 md:space-x-4 transition-all duration-300 group"
+        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-300 group"
         :class="route.name === 'Home' ? 'bg-gradient-to-r from-primary-500/20 to-solana-500/20 border border-primary-500/30' : ''"
       >
-        <div class="flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-lg md:rounded-xl"
+        <div class="flex items-center justify-center w-8 h-8 rounded-xl"
              :class="route.name === 'Home' ? 'bg-gradient-to-r from-primary-500 to-solana-500' : 'bg-dark-700 group-hover:bg-dark-600'">
           <svg
             v-if="route.name === 'Home'"
             xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4 md:h-5 md:w-5 text-white"
+            class="h-5 w-5 text-white"
             viewBox="0 0 20 20"
             fill="currentColor"
           >
@@ -118,7 +118,7 @@
           <svg
             v-else
             xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4 md:h-5 md:w-5 text-dark-300 group-hover:text-white"
+            class="h-5 w-5 text-dark-300 group-hover:text-white"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -131,21 +131,21 @@
             />
           </svg>
         </div>
-        <div class="text-sm md:text-lg font-medium hidden md:block"
+        <div class="text-lg font-medium hidden md:block"
              :class="route.name === 'Home' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">Home</div>
       </router-link>
       
       <router-link
         :to="{ name: 'Topics' }"
-        class="rounded-xl md:rounded-2xl hover:bg-dark-800/50 p-2 md:p-4 md:w-full inline-flex items-center space-x-2 md:space-x-4 transition-all duration-300 group"
+        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-300 group"
         :class="route.name === 'Topics' ? 'bg-gradient-to-r from-primary-500/20 to-solana-500/20 border border-primary-500/30' : ''"
       >
-        <div class="flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-lg md:rounded-xl"
+        <div class="flex items-center justify-center w-8 h-8 rounded-xl"
              :class="route.name === 'Topics' ? 'bg-gradient-to-r from-primary-500 to-solana-500' : 'bg-dark-700 group-hover:bg-dark-600'">
           <svg
             v-if="route.name === 'Topics'"
             xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4 md:h-5 md:w-5 text-white"
+            class="h-5 w-5 text-white"
             viewBox="0 0 20 20"
             fill="currentColor"
           >
@@ -159,7 +159,7 @@
           <svg
             v-else
             xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4 md:h-5 md:w-5 text-dark-300 group-hover:text-white"
+            class="h-5 w-5 text-dark-300 group-hover:text-white"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -172,7 +172,7 @@
             />
           </svg>
         </div>
-        <div class="text-sm md:text-lg font-medium hidden md:block"
+        <div class="text-lg font-medium hidden md:block"
              :class="route.name === 'Topics' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">Topics</div>
       </router-link>
       
@@ -180,15 +180,15 @@
       <router-link
         v-if="connected"
         :to="{ name: 'Profile' }"
-        class="rounded-xl md:rounded-2xl hover:bg-dark-800/50 p-2 md:p-4 md:w-full inline-flex items-center space-x-2 md:space-x-4 transition-all duration-300 group"
+        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-300 group"
         :class="route.name === 'Profile' ? 'bg-gradient-to-r from-primary-500/20 to-solana-500/20 border border-accent-500/30' : ''"
       >
-        <div class="flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-lg md:rounded-xl"
+        <div class="flex items-center justify-center w-8 h-8 rounded-xl"
              :class="route.name === 'Profile' ? 'bg-gradient-to-r from-primary-500 to-solana-500' : 'bg-dark-700 group-hover:bg-dark-600'">
           <svg
             v-if="route.name === 'Profile'"
             xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4 md:h-5 md:w-5 text-white"
+            class="h-5 w-5 text-white"
             viewBox="0 0 20 20"
             fill="currentColor"
           >
@@ -201,7 +201,7 @@
           <svg
             v-else
             xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4 md:h-5 md:w-5 text-dark-300 group-hover:text-white"
+            class="h-5 w-5 text-dark-300 group-hover:text-white"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -214,22 +214,22 @@
             />
           </svg>
         </div>
-        <div class="text-sm md:text-lg font-medium hidden md:block"
+        <div class="text-lg font-medium hidden md:block"
              :class="route.name === 'Profile' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">Profile</div>
       </router-link>
       
       <!-- X402 Proof Link -->
       <router-link
         :to="{ name: 'X402' }"
-        class="rounded-xl md:rounded-2xl hover:bg-dark-800/50 p-2 md:p-4 md:w-full inline-flex items-center space-x-2 md:space-x-4 transition-all duration-300 group"
+        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-300 group"
         :class="route.name === 'X402' ? 'bg-gradient-to-r from-primary-500/20 to-solana-500/20 border border-primary-500/30' : ''"
       >
-        <div class="flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-lg md:rounded-xl"
+        <div class="flex items-center justify-center w-8 h-8 rounded-xl"
              :class="route.name === 'X402' ? 'bg-gradient-to-r from-primary-500 to-solana-500' : 'bg-dark-700 group-hover:bg-dark-600'">
           <svg
             v-if="route.name === 'X402'"
             xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4 md:h-5 md:w-5 text-white"
+            class="h-5 w-5 text-white"
             viewBox="0 0 20 20"
             fill="currentColor"
           >
@@ -242,7 +242,7 @@
           <svg
             v-else
             xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4 md:h-5 md:w-5 text-dark-300 group-hover:text-white"
+            class="h-5 w-5 text-dark-300 group-hover:text-white"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -255,37 +255,35 @@
             />
           </svg>
         </div>
-        <div class="text-sm md:text-lg font-medium hidden md:block"
+        <div class="text-lg font-medium hidden md:block"
              :class="route.name === 'X402' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">x402</div>
       </router-link>
       
       <!-- Notification Icon -->
-      <div class="rounded-xl md:rounded-2xl hover:bg-dark-800/50 p-2 md:p-4 md:w-full flex items-center justify-center md:justify-start transition-all duration-300 group cursor-pointer" @click="handleNotificationClick">
+      <div class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full flex items-center justify-center md:justify-start transition-all duration-300 group cursor-pointer" @click="handleNotificationClick">
         <NotificationIcon />
-        <div class="text-sm md:text-lg font-medium hidden md:block text-dark-400 group-hover:text-primary-300 ml-2 md:ml-4">
+        <div class="text-lg font-medium hidden md:block text-dark-400 group-hover:text-primary-300 ml-4">
           Notifications
         </div>
       </div>
       
       <!-- Platform Wallet Section (only when connected) -->
-      <div v-if="connected" class="mt-2 md:mt-4 p-2 md:p-4 bg-dark-800/30 border border-dark-700 rounded-xl md:rounded-2xl">
-        <div class="flex items-center space-x-1 md:space-x-2 mb-2 md:mb-3">
-          <svg class="w-4 h-4 md:w-5 md:h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+      <div v-if="connected" class="mt-4 p-4 bg-dark-800/30 border border-dark-700 rounded-2xl">
+        <div class="flex items-center space-x-2 mb-3">
+          <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
             <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" />
           </svg>
-          <span class="text-xs md:text-sm font-medium text-white">Platform Wallet</span>
+          <span class="text-sm font-medium text-white">Platform Wallet</span>
         </div>
-        <div class="space-y-1 md:space-y-2">
+        <div class="space-y-2">
           <div class="text-xs text-dark-400">
             <div class="flex items-center justify-between mb-1">
-              <span class="hidden md:inline">Address:</span>
-              <span class="md:hidden">Addr:</span>
-              <span class="text-yellow-400 font-mono text-xs">{{ platformWalletAddress.slice(0, 4) }}...{{ platformWalletAddress.slice(-3) }}</span>
+              <span>Address:</span>
+              <span class="text-yellow-400 font-mono">{{ platformWalletAddress.slice(0, 6) }}...{{ platformWalletAddress.slice(-4) }}</span>
             </div>
             <div class="flex items-center justify-between">
-              <span class="hidden md:inline">Balance:</span>
-              <span class="md:hidden">Bal:</span>
-              <span class="text-yellow-400 font-semibold text-xs">{{ platformBalance.toFixed(3) }} SOL</span>
+              <span>Balance:</span>
+              <span class="text-yellow-400 font-semibold">{{ platformBalance.toFixed(4) }} SOL</span>
             </div>
           </div>
           <button
@@ -305,8 +303,8 @@
     </div>
     
     <!-- Wallet Connection -->
-    <div class="mt-auto pt-4 md:pt-6 w-full">
-      <div class="glass rounded-xl md:rounded-2xl p-2 md:p-4 hover-glow">
+    <div class="mt-auto pt-6 w-full">
+      <div class="glass rounded-2xl p-4 hover-glow">
         <wallet-multi-button></wallet-multi-button>
       </div>
     </div>

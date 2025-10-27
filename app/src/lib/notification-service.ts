@@ -1,5 +1,5 @@
 import { ref } from 'vue';
-import { on, off, getNewBeaconsCount, resetNotificationCount as resetSSECount } from './sse-service';
+import { on, off, getNewTweetsCount, resetNotificationCount as resetSSECount } from './tweets-sse-service';
 
 class NotificationService {
   private static instance: NotificationService;
@@ -8,8 +8,8 @@ class NotificationService {
   private listeners: Array<(count: number) => void> = [];
 
   private constructor() {
-    // Initialize with SSE service count
-    this.newBeaconCount.value = getNewBeaconsCount();
+    // Initialize with tweets SSE service count
+    this.newBeaconCount.value = getNewTweetsCount();
   }
 
   public static getInstance(): NotificationService {
@@ -40,18 +40,18 @@ class NotificationService {
     console.log('🔔 Starting SSE-based notification service...');
     this.currentUserAddress = currentUserAddress || null;
     
-    // Listen for new beacons from SSE
-    on('new_beacon', (beacon: any) => {
+    // Listen for new tweets from SSE
+    on('new_tweet', (tweet: any) => {
       // Only count if not from current user
-      if (!this.currentUserAddress || beacon.author !== this.currentUserAddress) {
+      if (!this.currentUserAddress || tweet.author !== this.currentUserAddress) {
         this.newBeaconCount.value++;
-        console.log(`🔔 New beacon notification: ${this.newBeaconCount.value}`);
+        console.log(`🔔 New tweet notification: ${this.newBeaconCount.value}`);
         this.notifyListeners();
       }
     });
 
-    // Sync with SSE service count
-    this.newBeaconCount.value = getNewBeaconsCount();
+    // Sync with tweets SSE service count
+    this.newBeaconCount.value = getNewTweetsCount();
     this.notifyListeners();
   }
 
@@ -59,7 +59,7 @@ class NotificationService {
   public stopPeriodicCheck(): void {
     console.log('🔔 Stopping notification service...');
     // Clean up event listeners
-    off('new_beacon', () => {});
+    off('new_tweet', () => {});
   }
 
   // Reset notification count

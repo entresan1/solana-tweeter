@@ -2,7 +2,7 @@
   import { computed, toRefs, onMounted, onUnmounted, ref } from 'vue';
   import TweetCard from '@src/components/TweetCard.vue';
   import { TweetModel } from '@src/models/tweet.model';
-  import { getBeacons, on, off, isSSEInitialized } from '@src/lib/sse-service';
+  import { getTweets, on, off, isSSEInitialized, connectTweetsSSE } from '@src/lib/tweets-sse-service';
   import { PublicKey } from '@solana/web3.js';
 
   interface IProps {
@@ -41,49 +41,60 @@
     });
   };
 
-  // Handle new beacon from SSE
-  const handleNewBeacon = (beacon: any) => {
-    console.log('📨 New beacon received via SSE:', beacon);
-    const tweetModel = convertBeaconToTweetModel(beacon, sseTweets.value.length);
+  // Handle new tweet from SSE
+  const handleNewTweet = (tweet: any) => {
+    console.log('📨 New tweet received via SSE:', tweet);
+    const tweetModel = convertBeaconToTweetModel(tweet, sseTweets.value.length);
     sseTweets.value.unshift(tweetModel);
   };
 
-  // Handle beacon update from SSE
-  const handleBeaconUpdate = (beacon: any) => {
-    console.log('📨 Beacon update received via SSE:', beacon);
-    const index = sseTweets.value.findIndex(t => t.id === beacon.id);
+  // Handle tweet update from SSE
+  const handleTweetUpdate = (tweet: any) => {
+    console.log('📨 Tweet update received via SSE:', tweet);
+    const index = sseTweets.value.findIndex(t => t.id === tweet.id);
     if (index !== -1) {
-      const tweetModel = convertBeaconToTweetModel(beacon, index);
+      const tweetModel = convertBeaconToTweetModel(tweet, index);
       sseTweets.value[index] = tweetModel;
     }
   };
 
-  // Handle initial beacons load from SSE
-  const handleBeaconsLoaded = (beacons: any[]) => {
-    console.log('📨 Initial beacons loaded via SSE:', beacons);
-    sseTweets.value = beacons.map((beacon, index) => convertBeaconToTweetModel(beacon, index));
+  // Handle tweets update from SSE (every 5 seconds)
+  const handleTweetsUpdate = (tweets: any[]) => {
+    console.log('📨 Tweets update received via SSE:', tweets);
+    sseTweets.value = tweets.map((tweet, index) => convertBeaconToTweetModel(tweet, index));
+  };
+
+  // Handle initial tweets load from SSE
+  const handleTweetsLoaded = (tweets: any[]) => {
+    console.log('📨 Initial tweets loaded via SSE:', tweets);
+    sseTweets.value = tweets.map((tweet, index) => convertBeaconToTweetModel(tweet, index));
   };
 
   onMounted(() => {
+    // Connect to tweets SSE
+    connectTweetsSSE();
+    
     // Set up SSE event listeners
-    on('new_beacon', handleNewBeacon);
-    on('beacon_update', handleBeaconUpdate);
-    on('beacons_loaded', handleBeaconsLoaded);
+    on('new_tweet', handleNewTweet);
+    on('tweet_update', handleTweetUpdate);
+    on('tweets_update', handleTweetsUpdate);
+    on('tweets_loaded', handleTweetsLoaded);
     
     // Initialize with current SSE data if available
     if (isSSEInitialized()) {
-      const currentBeacons = getBeacons();
-      if (currentBeacons.length > 0) {
-        sseTweets.value = currentBeacons.map((beacon, index) => convertBeaconToTweetModel(beacon, index));
+      const currentTweets = getTweets();
+      if (currentTweets.length > 0) {
+        sseTweets.value = currentTweets.map((tweet, index) => convertBeaconToTweetModel(tweet, index));
       }
     }
   });
 
   onUnmounted(() => {
     // Clean up event listeners
-    off('new_beacon', handleNewBeacon);
-    off('beacon_update', handleBeaconUpdate);
-    off('beacons_loaded', handleBeaconsLoaded);
+    off('new_tweet', handleNewTweet);
+    off('tweet_update', handleTweetUpdate);
+    off('tweets_update', handleTweetsUpdate);
+    off('tweets_loaded', handleTweetsLoaded);
   });
 </script>
 
