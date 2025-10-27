@@ -50,8 +50,9 @@ export const fetchTweets = async (filters: any[] = []) => {
 export const authorFilter = async (authorBase58PublicKey: string) => {
   try {
     console.log('👤 authorFilter called with author:', authorBase58PublicKey);
-    // Fetch beacons by author from Supabase
-    const beacons = await beaconService.fetchBeaconsByAuthor(authorBase58PublicKey);
+    // Get beacons from SSE service and filter by author
+    const allBeacons = getBeacons();
+    const beacons = allBeacons.filter(beacon => beacon.author === authorBase58PublicKey);
     console.log('👤 Found beacons for author:', beacons.length);
     
     // Convert to TweetModel format for compatibility
@@ -85,8 +86,9 @@ export const authorFilter = async (authorBase58PublicKey: string) => {
 export const topicFilter = async (topic: string) => {
   try {
     console.log('🔍 topicFilter called with topic:', topic);
-    // Fetch beacons by topic from Supabase
-    const beacons = await beaconService.fetchBeaconsByTopic(topic);
+    // Get beacons from SSE service and filter by topic
+    const allBeacons = getBeacons();
+    const beacons = allBeacons.filter(beacon => beacon.topic === topic);
     console.log('🔍 Found beacons for topic:', beacons.length);
     
     // Convert to TweetModel format for compatibility
@@ -127,8 +129,8 @@ export const searchBeacons = async (searchTerm: string) => {
       return [];
     }
     
-    // Fetch all beacons and filter by content
-    const allBeacons = await beaconService.fetchBeacons();
+    // Get all beacons from SSE service and filter by content
+    const allBeacons = getBeacons();
     console.log('🔍 Total beacons fetched:', allBeacons.length);
     
     // Filter beacons that contain the search term in content or topic
