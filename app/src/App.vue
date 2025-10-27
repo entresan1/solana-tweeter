@@ -7,13 +7,17 @@
     SolflareWalletAdapter,
   } from '@solana/wallet-adapter-wallets';
   import { initWallet } from 'solana-wallets-vue';
-  import { initWorkspace } from '@src/hooks';
+  import { initWorkspace, useProfileAutoCreate } from '@src/hooks';
   import { onMounted } from 'vue';
 
   const route = useRoute();
   const wallets = [new PhantomWalletAdapter(), new SolflareWalletAdapter()];
 
   initWallet({ wallets, autoConnect: true });
+  
+  // Initialize profile auto-creation
+  useProfileAutoCreate();
+  
   onMounted(() => {
     initWorkspace();
   });

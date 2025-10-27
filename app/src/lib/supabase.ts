@@ -150,19 +150,29 @@ export const profileService = {
 
   // Create or update user profile
   async upsertProfile(profile: Omit<UserProfile, 'id' | 'created_at' | 'updated_at'>) {
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .upsert([{
-        ...profile,
-        updated_at: new Date().toISOString()
-      }], {
-        onConflict: 'wallet_address'
-      })
-      .select()
-      .single()
-    
-    if (error) throw error
-    return data
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .upsert([{
+          ...profile,
+          updated_at: new Date().toISOString()
+        }], {
+          onConflict: 'wallet_address'
+        })
+        .select()
+        .single()
+      
+      if (error) {
+        console.error('❌ Profile upsert error:', error);
+        throw error;
+      }
+      
+      console.log('✅ Profile upserted successfully:', data);
+      return data;
+    } catch (error) {
+      console.error('❌ Profile upsert failed:', error);
+      throw error;
+    }
   },
 
   // Update profile picture
