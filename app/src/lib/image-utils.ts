@@ -53,13 +53,13 @@ export function validateImageUrl(url: string): { valid: boolean; error?: string 
 /**
  * Get a safe image URL for display (prevents console errors)
  */
-export function getSafeImageUrl(url: string): string | null {
-  if (!url) return null;
+export function getSafeImageUrl(url: string): string | undefined {
+  if (!url) return undefined;
   
   const validation = validateImageUrl(url);
   if (!validation.valid) {
     console.warn('Invalid image URL:', validation.error);
-    return null;
+    return undefined;
   }
   
   return url;
