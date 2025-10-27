@@ -1,8 +1,65 @@
 <script setup lang="ts">
   import { useWallet, WalletMultiButton } from 'solana-wallets-vue';
   import { useRoute } from 'vue-router';
-  const { connected } = useWallet();
+  import { ref, onMounted, watch } from 'vue';
+  import { platformWalletService } from '@src/lib/platform-wallet';
+  import PlatformWalletModal from './PlatformWalletModal.vue';
+  
+  const { connected, wallet } = useWallet();
   const route = useRoute();
+  
+  const platformWalletAddress = ref('');
+  const platformBalance = ref(0);
+  const showPlatformWalletModal = ref(false);
+  
+  // Load platform wallet data when wallet connects
+  const loadPlatformWalletData = async () => {
+    if (wallet.value?.publicKey) {
+      try {
+        const userAddress = wallet.value.publicKey.toBase58();
+        platformWalletAddress.value = platformWalletService.getPlatformWalletAddress(userAddress);
+        platformBalance.value = await platformWalletService.getBalance(userAddress);
+      } catch (error) {
+        console.warn('Failed to load platform wallet data:', error);
+        platformBalance.value = 0;
+      }
+    }
+  };
+  
+  // Watch for wallet connection changes
+  watch(connected, (isConnected) => {
+    if (isConnected) {
+      loadPlatformWalletData();
+    } else {
+      platformWalletAddress.value = '';
+      platformBalance.value = 0;
+    }
+  });
+  
+  // Load data on mount if already connected
+  onMounted(() => {
+    if (connected) {
+      loadPlatformWalletData();
+    }
+  });
+  
+  const copyPlatformWalletAddress = async () => {
+    try {
+      await navigator.clipboard.writeText(platformWalletAddress.value);
+      // You could add a toast notification here
+      console.log('Platform wallet address copied to clipboard');
+    } catch (error) {
+      console.error('Failed to copy address:', error);
+    }
+  };
+  
+  const openPlatformWalletModal = () => {
+    showPlatformWalletModal.value = true;
+  };
+  
+  const handlePlatformWalletBalanceUpdated = async () => {
+    await loadPlatformWalletData();
+  };
 </script>
 
 <template>
@@ -182,6 +239,40 @@
         <div class="text-lg font-medium hidden md:block"
              :class="route.name === 'X402' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">x402 Proof</div>
       </router-link>
+      
+      <!-- Platform Wallet Section (only when connected) -->
+      <div v-if="connected" class="mt-4 p-4 bg-dark-800/30 border border-dark-700 rounded-2xl">
+        <div class="flex items-center space-x-2 mb-3">
+          <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" />
+          </svg>
+          <span class="text-sm font-medium text-white">Platform Wallet</span>
+        </div>
+        <div class="space-y-2">
+          <div class="text-xs text-dark-400">
+            <div class="flex items-center justify-between mb-1">
+              <span>Address:</span>
+              <span class="text-yellow-400 font-mono">{{ platformWalletAddress.slice(0, 6) }}...{{ platformWalletAddress.slice(-4) }}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span>Balance:</span>
+              <span class="text-yellow-400 font-semibold">{{ platformBalance.toFixed(4) }} SOL</span>
+            </div>
+          </div>
+          <button
+            @click="copyPlatformWalletAddress"
+            class="w-full text-xs btn-secondary py-1 px-2"
+          >
+            Copy Address
+          </button>
+          <button
+            @click="openPlatformWalletModal"
+            class="w-full text-xs btn-primary py-1 px-2"
+          >
+            Manage
+          </button>
+        </div>
+      </div>
     </div>
     
     <!-- Wallet Connection -->
@@ -190,5 +281,12 @@
         <wallet-multi-button></wallet-multi-button>
       </div>
     </div>
+    
+    <!-- Platform Wallet Modal -->
+    <PlatformWalletModal
+      :is-open="showPlatformWalletModal"
+      @close="showPlatformWalletModal = false"
+      @balance-updated="handlePlatformWalletBalanceUpdated"
+    />
   </aside>
 </template>
