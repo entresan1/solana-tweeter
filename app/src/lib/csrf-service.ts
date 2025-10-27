@@ -63,31 +63,46 @@ async function fetchCsrf(): Promise<string> {
 }
 
 export async function authFetch(url: string, init: RequestInit = {}, auth?: AuthContext) {
-  // First, try to get a fresh CSRF token by making a GET request
-  let token = '';
+  console.log('🔐 authFetch called for:', url);
+  console.log('🔐 CSRF Service Version: v2.1 - ' + new Date().toISOString());
   
-  try {
-    // Make a GET request to any endpoint to get a fresh CSRF token
-    const getRes = await fetch('/api/user-profiles?walletAddress=dummy', {
-      method: 'GET',
-      credentials: 'include',
-      headers: {
-        'Accept': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest'
+  // Try to get CSRF token from cookies first (most reliable)
+  let token = getCookie('XSRF-TOKEN') || 
+              getCookie('csrftoken') || 
+              getCookie('csrfToken') || 
+              getCookie('X-CSRF-Token') || '';
+  
+  console.log('🔐 Token from cookies:', token);
+  
+  // If no token from cookies, try to get one from a GET request
+  if (!token) {
+    console.log('🔐 No token from cookies, trying GET request...');
+    try {
+      const getRes = await fetch('/api/user-profiles?walletAddress=EZ1tDSNsMSCUeYmcNVGEj5XibdyVJGeiF2okTfyd8eaV', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+      
+      // Try to get token from headers
+      token = getRes.headers.get('X-CSRF-Token') || 
+              getRes.headers.get('x-csrf-token') || 
+              getRes.headers.get('X-XSRF-TOKEN') || 
+              getRes.headers.get('x-xsrf-token') || '';
+      
+      console.log('🔐 Token from GET headers:', token);
+    } catch (getError) {
+      console.warn('⚠️ GET request failed:', getError);
+      // Fallback to cached token or cookies
+      try {
+        token = await fetchCsrf();
+      } catch (csrfError) {
+        console.warn('⚠️ fetchCsrf also failed:', csrfError);
       }
-    });
-    
-    // Extract token from response headers
-    token = getRes.headers.get('X-CSRF-Token') || 
-            getRes.headers.get('x-csrf-token') || 
-            getRes.headers.get('X-XSRF-TOKEN') || 
-            getRes.headers.get('x-xsrf-token') || '';
-    
-    console.log('🔐 Fresh CSRF token from GET request:', token);
-  } catch (error) {
-    console.warn('⚠️ Failed to get fresh CSRF token, trying cached/cookies:', error);
-    // Fallback to cached token or cookies
-    token = await fetchCsrf();
+    }
   }
 
   // Build headers with multiple CSRF header variants (covers Laravel, Rails, Express/csurf, Django)
@@ -142,7 +157,7 @@ export async function authFetch(url: string, init: RequestInit = {}, auth?: Auth
       cached = { token: '', ts: 0 };
       // Try to get a fresh token again
       try {
-        const getRes = await fetch('/api/user-profiles?walletAddress=dummy', {
+        const getRes = await fetch('/api/csrf', {
           method: 'GET',
           credentials: 'include',
           headers: {
@@ -151,10 +166,19 @@ export async function authFetch(url: string, init: RequestInit = {}, auth?: Auth
           }
         });
         
-        token = getRes.headers.get('X-CSRF-Token') || 
-                getRes.headers.get('x-csrf-token') || 
-                getRes.headers.get('X-XSRF-TOKEN') || 
-                getRes.headers.get('x-xsrf-token') || '';
+        if (getRes.ok) {
+          const data = await getRes.json();
+          if (data.token) {
+            token = data.token;
+          }
+        }
+        
+        if (!token) {
+          token = getRes.headers.get('X-CSRF-Token') || 
+                  getRes.headers.get('x-csrf-token') || 
+                  getRes.headers.get('X-XSRF-TOKEN') || 
+                  getRes.headers.get('x-xsrf-token') || '';
+        }
         
         if (token) {
           base['X-XSRF-TOKEN'] = token;
@@ -191,40 +215,61 @@ export { authFetch as makeAuthenticatedRequest };
 
 // Drop-in postJSON function for easy usage
 export async function postJSON(url: string, body: unknown, extraHeaders: Record<string,string> = {}) {
-  // First, try to get a fresh CSRF token by making a GET request
-  let token = '';
+  console.log('🔐 postJSON called for:', url);
+  console.log('🔐 CSRF Service Version: v2.1 - ' + new Date().toISOString());
   
-  try {
-    // Make a GET request to any endpoint to get a fresh CSRF token
-    const getRes = await fetch('/api/user-profiles?walletAddress=dummy', {
-      method: 'GET',
-      credentials: 'include',
-      headers: {
-        'Accept': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest'
-      }
-    });
-    
-    // Extract token from response headers
-    token = getRes.headers.get('X-CSRF-Token') || 
-            getRes.headers.get('x-csrf-token') || 
-            getRes.headers.get('X-XSRF-TOKEN') || 
-            getRes.headers.get('x-xsrf-token') || '';
-    
-    console.log('🔐 Fresh CSRF token from GET request:', token);
-  } catch (error) {
-    console.warn('⚠️ Failed to get fresh CSRF token, trying cookies:', error);
-  }
+  // Try to get CSRF token from cookies first (most reliable)
+  let token = getCookie('XSRF-TOKEN') || 
+              getCookie('csrftoken') || 
+              getCookie('csrfToken') || 
+              getCookie('X-CSRF-Token') || '';
   
-  // Fallback to cookies if no token from GET request
+  console.log('🔐 Token from cookies:', token);
+  console.log('🔐 All cookies:', document.cookie);
+  
+  // If no token from cookies, try to get one from a GET request
   if (!token) {
-    token = getCookie('XSRF-TOKEN') || // Laravel/Express(csurf) common
-            getCookie('csrftoken')   || // Django
-            getCookie('csrfToken')   || // Next/Auth custom
-            '';
+    console.log('🔐 No token from cookies, trying GET request...');
+    try {
+      const getRes = await fetch('/api/user-profiles?walletAddress=EZ1tDSNsMSCUeYmcNVGEj5XibdyVJGeiF2okTfyd8eaV', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+      
+      console.log('🔐 GET response status:', getRes.status);
+      
+      // Try to get token from headers
+      token = getRes.headers.get('X-CSRF-Token') || 
+              getRes.headers.get('x-csrf-token') || 
+              getRes.headers.get('X-XSRF-TOKEN') || 
+              getRes.headers.get('x-xsrf-token') || '';
+      
+      console.log('🔐 Token from GET headers:', token);
+      
+      // If still no token, try to get it from response body
+      if (!token && getRes.ok) {
+        try {
+          const data = await getRes.json();
+          if (data.token) {
+            token = data.token;
+            console.log('🔐 Token from GET response body:', token);
+          }
+        } catch (jsonError) {
+          console.warn('⚠️ Failed to parse JSON from GET response:', jsonError);
+        }
+      }
+    } catch (getError) {
+      console.warn('⚠️ GET request failed:', getError);
+    }
   }
 
   if (!token) {
+    console.error('❌ No CSRF token available from any source');
+    console.error('❌ Cookies:', document.cookie);
     throw new Error('No CSRF token available. Please refresh the page and try again.');
   }
 

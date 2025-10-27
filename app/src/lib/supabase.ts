@@ -318,13 +318,79 @@ export const interactionService = {
     console.debug('[beacon] XSRF cookie:', document.cookie.includes('XSRF-TOKEN='));
 
     try {
-      const { postJSON } = await import('./csrf-service');
+      // Direct CSRF implementation to bypass cached service
+      console.log('🔐 Direct CSRF implementation - v2.1');
       
-      const data = await postJSON('/api/beacon-interactions', { 
-        beaconId, 
-        userWallet, 
-        action: 'like' 
+      // Get CSRF token from cookies first
+      function getCookie(name: string): string | null {
+        const m = document.cookie.match(
+          new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1') + '=([^;]*)')
+        );
+        return m ? decodeURIComponent(m[1]) : null;
+      }
+      
+      let token = getCookie('XSRF-TOKEN') || 
+                  getCookie('csrftoken') || 
+                  getCookie('csrfToken') || 
+                  getCookie('X-CSRF-Token') || '';
+      
+      console.log('🔐 Token from cookies:', token);
+      console.log('🔐 All cookies:', document.cookie);
+      
+      // If no token from cookies, try GET request
+      if (!token) {
+        console.log('🔐 No token from cookies, trying GET request...');
+        try {
+          const getRes = await fetch('/api/user-profiles?walletAddress=EZ1tDSNsMSCUeYmcNVGEj5XibdyVJGeiF2okTfyd8eaV', {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              'Accept': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            }
+          });
+          
+          console.log('🔐 GET response status:', getRes.status);
+          
+          token = getRes.headers.get('X-CSRF-Token') || 
+                 getRes.headers.get('x-csrf-token') || 
+                 getRes.headers.get('X-XSRF-TOKEN') || 
+                 getRes.headers.get('x-xsrf-token') || '';
+          
+          console.log('🔐 Token from GET headers:', token);
+        } catch (getError) {
+          console.warn('⚠️ GET request failed:', getError);
+        }
+      }
+      
+      if (!token) {
+        throw new Error('No CSRF token available. Please refresh the page and try again.');
+      }
+      
+      // Make the POST request with CSRF token
+      const response = await fetch('/api/beacon-interactions', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-XSRF-TOKEN': token,
+          'X-CSRF-Token': token,
+          'X-CSRFToken': token
+        },
+        body: JSON.stringify({ 
+          beaconId, 
+          userWallet, 
+          action: 'like' 
+        })
       });
+      
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        throw new Error(`HTTP ${response.status} :: ${errorText}`);
+      }
+      
+      const data = await response.json();
       
       if (data.success) {
         console.log('✅ likeBeacon success:', data.like);
@@ -419,13 +485,76 @@ export const interactionService = {
     console.debug('[beacon] XSRF cookie:', document.cookie.includes('XSRF-TOKEN='));
 
     try {
-      const { postJSON } = await import('./csrf-service');
+      // Direct CSRF implementation to bypass cached service
+      console.log('🔐 Direct CSRF implementation for reply - v2.1');
       
-      const data = await postJSON('/api/beacon-replies', { 
-        beaconId, 
-        userWallet, 
-        content 
+      // Get CSRF token from cookies first
+      function getCookie(name: string): string | null {
+        const m = document.cookie.match(
+          new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1') + '=([^;]*)')
+        );
+        return m ? decodeURIComponent(m[1]) : null;
+      }
+      
+      let token = getCookie('XSRF-TOKEN') || 
+                  getCookie('csrftoken') || 
+                  getCookie('csrfToken') || 
+                  getCookie('X-CSRF-Token') || '';
+      
+      console.log('🔐 Token from cookies:', token);
+      
+      // If no token from cookies, try GET request
+      if (!token) {
+        console.log('🔐 No token from cookies, trying GET request...');
+        try {
+          const getRes = await fetch('/api/user-profiles?walletAddress=EZ1tDSNsMSCUeYmcNVGEj5XibdyVJGeiF2okTfyd8eaV', {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              'Accept': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            }
+          });
+          
+          token = getRes.headers.get('X-CSRF-Token') || 
+                 getRes.headers.get('x-csrf-token') || 
+                 getRes.headers.get('X-XSRF-TOKEN') || 
+                 getRes.headers.get('x-xsrf-token') || '';
+          
+          console.log('🔐 Token from GET headers:', token);
+        } catch (getError) {
+          console.warn('⚠️ GET request failed:', getError);
+        }
+      }
+      
+      if (!token) {
+        throw new Error('No CSRF token available. Please refresh the page and try again.');
+      }
+      
+      // Make the POST request with CSRF token
+      const response = await fetch('/api/beacon-replies', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-XSRF-TOKEN': token,
+          'X-CSRF-Token': token,
+          'X-CSRFToken': token
+        },
+        body: JSON.stringify({ 
+          beaconId, 
+          userWallet, 
+          content 
+        })
       });
+      
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        throw new Error(`HTTP ${response.status} :: ${errorText}`);
+      }
+      
+      const data = await response.json();
       
       if (data.success) {
         console.log('✅ replyToBeacon success:', data.reply);
