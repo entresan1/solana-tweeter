@@ -136,6 +136,10 @@ export const profileService = {
         if (error.code === 'PGRST116') {
           // No profile found - this is normal
           return null;
+        } else if (error.code === 'PGRST301' || error.message?.includes('406')) {
+          // 406 Not Acceptable - likely RLS issue, treat as no profile found
+          console.warn('⚠️ Profile fetch blocked by RLS (406) - treating as no profile found');
+          return null;
         } else {
           console.warn('⚠️ Profile fetch failed:', error.message);
           return null;

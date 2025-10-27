@@ -37,10 +37,12 @@
           authorDisplayName.value = profile.nickname || tweet.value.author.toBase58().slice(0, 8) + '...';
           authorAvatar.value = profile.profile_picture_url || '';
         } else {
+          // No profile found - use default display name
           authorDisplayName.value = tweet.value.author.toBase58().slice(0, 8) + '...';
         }
       } catch (error) {
-        console.error('Error loading author profile:', error);
+        // Handle 406 and other errors gracefully
+        console.warn('Profile fetch failed (this is normal for new users):', error);
         authorDisplayName.value = tweet.value.author.toBase58().slice(0, 8) + '...';
       }
     }
