@@ -56,24 +56,32 @@ import { TweetModel } from '@src/models/tweet.model';
   // Function to load profile data for the current tweet
   const loadProfileData = async () => {
     if (tweet.value?.author) {
+      const authorAddress = tweet.value.author.toBase58();
+      console.log('🖼️ Loading profile data for author:', authorAddress);
+      
       try {
-        const profile = await optimizedDataService.getProfile(tweet.value.author.toBase58());
+        const profile = await optimizedDataService.getProfile(authorAddress);
+        console.log('🖼️ Profile data received:', profile);
+        
         if (profile) {
           authorProfile.value = profile;
-          authorDisplayName.value = profile.nickname || tweet.value.author.toBase58().slice(0, 8) + '...';
+          authorDisplayName.value = profile.nickname || authorAddress.slice(0, 8) + '...';
           authorAvatar.value = profile.profile_picture_url || '';
+          console.log('🖼️ Profile loaded - Display name:', authorDisplayName.value, 'Avatar:', authorAvatar.value);
         } else {
           // No profile found - use default display name
-          authorDisplayName.value = tweet.value.author.toBase58().slice(0, 8) + '...';
+          authorDisplayName.value = authorAddress.slice(0, 8) + '...';
           authorProfile.value = null;
           authorAvatar.value = '';
+          console.log('🖼️ No profile found - using default display name:', authorDisplayName.value);
         }
       } catch (error) {
         // Handle 406 and other errors gracefully
         console.warn('Profile fetch failed (this is normal for new users):', error);
-        authorDisplayName.value = tweet.value.author.toBase58().slice(0, 8) + '...';
+        authorDisplayName.value = authorAddress.slice(0, 8) + '...';
         authorProfile.value = null;
         authorAvatar.value = '';
+        console.log('🖼️ Profile fetch failed - using default display name:', authorDisplayName.value);
       }
     } else {
       // Reset profile data if no author
@@ -242,18 +250,24 @@ import { TweetModel } from '@src/models/tweet.model';
 
   const authorRoute = computed(() => {
     if (!tweet.value?.author) {
+      console.log('👤 No author, routing to Home');
       return { name: 'Home' };
     }
     
+    const authorAddress = tweet.value.author.toBase58();
+    console.log('👤 Author address:', authorAddress);
+    
     if (
       wallet.value &&
-      wallet.value.publicKey.toBase58() === tweet.value.author.toBase58()
+      wallet.value.publicKey.toBase58() === authorAddress
     ) {
+      console.log('👤 Same as current user, routing to Profile');
       return { name: 'Profile' };
     } else {
+      console.log('👤 Different user, routing to Users with author:', authorAddress);
       return {
         name: 'Users',
-        params: { author: tweet.value.author.toBase58() },
+        params: { author: authorAddress },
       };
     }
   });

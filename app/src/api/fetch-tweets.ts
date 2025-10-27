@@ -68,7 +68,16 @@ export const authorFilter = async (authorBase58PublicKey: string) => {
     
     // Get tweets from HTTP service and filter by author
     const allTweets = getTweets();
-    const tweets = allTweets.filter(tweet => tweet.author === authorBase58PublicKey);
+    console.log('👤 All tweets count:', allTweets.length);
+    console.log('👤 Looking for author:', authorBase58PublicKey);
+    
+    const tweets = allTweets.filter(tweet => {
+      const matches = tweet.author === authorBase58PublicKey;
+      if (matches) {
+        console.log('👤 Found matching tweet:', tweet.id, 'by', tweet.author);
+      }
+      return matches;
+    });
     console.log('👤 Found tweets for author:', tweets.length);
     
     // Convert to TweetModel format for compatibility

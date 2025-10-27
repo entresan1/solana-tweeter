@@ -20,9 +20,11 @@
 
   const fetchAuthorTweets = async () => {
     if (author.value === viewedAuthor.value) return;
+    console.log('👤 fetchAuthorTweets called with author:', author.value);
     try {
       loading.value = true;
       const fetchedTweets = await authorFilter(author.value);
+      console.log('👤 Fetched tweets for author:', fetchedTweets.length);
       tweets.value = fetchedTweets;
       viewedAuthor.value = author.value;
     } finally {
@@ -32,7 +34,9 @@
 
   // Router hooks.
   useFromRoute((route) => {
+    console.log('👤 Router hook called with route:', route);
     author.value = route.params.author as string;
+    console.log('👤 Author from route params:', author.value);
     if (author.value) {
       fetchAuthorTweets();
     } else {
