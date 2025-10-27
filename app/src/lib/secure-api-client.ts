@@ -44,12 +44,12 @@ export class SecureAPIClient {
   private async signMessage(message: string): Promise<string> {
     const { wallet } = useWallet();
     
-    if (!wallet.value?.adapter?.signMessage) {
+    if (!wallet.value || !(wallet.value as any).adapter?.signMessage) {
       throw new Error('Wallet does not support message signing');
     }
 
     const encodedMessage = new TextEncoder().encode(message);
-    const signature = await wallet.value.adapter.signMessage(encodedMessage);
+    const signature = await (wallet.value as any).adapter.signMessage(encodedMessage);
     
     return Buffer.from(signature).toString('base64');
   }
@@ -209,11 +209,11 @@ export class SecureAPIClient {
   private async sendTransaction(transaction: Transaction): Promise<string> {
     const { wallet } = useWallet();
     
-    if (!wallet.value?.adapter?.sendTransaction) {
+    if (!wallet.value || !(wallet.value as any).adapter?.sendTransaction) {
       throw new Error('Wallet does not support sending transactions');
     }
 
-    const signature = await wallet.value.adapter.sendTransaction(transaction, this.connection);
+    const signature = await (wallet.value as any).adapter.sendTransaction(transaction, this.connection);
     await this.connection.confirmTransaction(signature);
     
     return signature;

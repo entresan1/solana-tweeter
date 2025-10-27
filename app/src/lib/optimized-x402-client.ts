@@ -282,11 +282,11 @@ class OptimizedX402Client {
   private async sendTransaction(transaction: Transaction): Promise<string> {
     const { wallet } = useWallet();
     
-    if (!wallet.value?.adapter?.sendTransaction) {
+    if (!wallet.value || !(wallet.value as any).adapter?.sendTransaction) {
       throw new Error('Wallet does not support sending transactions');
     }
 
-    const signature = await wallet.value.adapter.sendTransaction(transaction, this.connection);
+    const signature = await (wallet.value as any).adapter.sendTransaction(transaction, this.connection);
     await this.connection.confirmTransaction(signature);
     
     return signature;
