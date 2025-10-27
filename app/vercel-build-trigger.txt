@@ -1,0 +1,2 @@
+Build trigger - 2024-01-15 23:17:00
+This file forces Vercel to recognize new changes and rebuild from latest commit.
