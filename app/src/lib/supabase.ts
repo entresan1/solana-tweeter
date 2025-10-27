@@ -313,20 +313,17 @@ export const interactionService = {
   // Like a beacon
   async likeBeacon(beaconId: number, userWallet: string) {
     console.log('🔥 likeBeacon called with:', { beaconId, userWallet });
+    console.debug('[beacon] Origin:', location.origin);
+    console.debug('[beacon] Has cookies:', document.cookie.length > 0);
 
     try {
-      const { csrfService } = await import('./csrf-service');
+      const { makeAuthenticatedRequest } = await import('./csrf-service');
       
-      const response = await csrfService.makeAuthenticatedRequest('/api/beacon-interactions', {
+      const data = await makeAuthenticatedRequest('/api/beacon-interactions', {
         method: 'POST',
-        body: JSON.stringify({ beaconId, userWallet, action: 'like' })
+        body: JSON.stringify({ beaconId, userWallet, action: 'like' }),
+        auth: { walletAddress: userWallet }
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
       
       if (data.success) {
         console.log('✅ likeBeacon success:', data.like);
@@ -345,18 +342,13 @@ export const interactionService = {
     console.log('💔 unlikeBeacon called with:', { beaconId, userWallet });
 
     try {
-      const { csrfService } = await import('./csrf-service');
+      const { makeAuthenticatedRequest } = await import('./csrf-service');
       
-      const response = await csrfService.makeAuthenticatedRequest('/api/beacon-interactions', {
+      const data = await makeAuthenticatedRequest('/api/beacon-interactions', {
         method: 'DELETE',
-        body: JSON.stringify({ beaconId, userWallet, action: 'like' })
+        body: JSON.stringify({ beaconId, userWallet, action: 'like' }),
+        auth: { walletAddress: userWallet }
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
       
       if (data.success) {
         console.log('✅ unlikeBeacon success');
@@ -422,20 +414,17 @@ export const interactionService = {
   // Reply to a beacon
   async replyToBeacon(beaconId: number, userWallet: string, content: string) {
     console.log('💬 replyToBeacon called with:', { beaconId, userWallet, content });
+    console.debug('[beacon] Origin:', location.origin);
+    console.debug('[beacon] Has cookies:', document.cookie.length > 0);
 
     try {
-      const { csrfService } = await import('./csrf-service');
+      const { makeAuthenticatedRequest } = await import('./csrf-service');
       
-      const response = await csrfService.makeAuthenticatedRequest('/api/beacon-replies', {
+      const data = await makeAuthenticatedRequest('/api/beacon-replies', {
         method: 'POST',
-        body: JSON.stringify({ beaconId, userWallet, content })
+        body: JSON.stringify({ beaconId, userWallet, content }),
+        auth: { walletAddress: userWallet }
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
       
       if (data.success) {
         console.log('✅ replyToBeacon success:', data.reply);

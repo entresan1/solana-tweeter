@@ -147,19 +147,6 @@
              :class="route.name === 'Home' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">Home</div>
       </SafeRouterLink>
 
-      <!-- Help Button -->
-      <button
-        @click="toggleHelpModal"
-        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-300 group"
-      >
-        <div class="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 group-hover:from-blue-500/30 group-hover:to-purple-500/30 transition-all duration-300">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400 group-hover:text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-        <div class="text-lg font-medium hidden md:block text-dark-400 group-hover:text-blue-300">Help</div>
-      </button>
-      
       
       <!-- Profile Link (only when connected) -->
       <SafeRouterLink
@@ -243,6 +230,19 @@
         <div class="text-lg font-medium hidden md:block"
              :class="route.name === 'X402' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">x402</div>
       </SafeRouterLink>
+
+      <!-- How Button -->
+      <button
+        @click="toggleHelpModal"
+        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-300 group"
+      >
+        <div class="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 group-hover:from-blue-500/30 group-hover:to-purple-500/30 transition-all duration-300">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400 group-hover:text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div class="text-lg font-medium hidden md:block text-dark-400 group-hover:text-blue-300">How</div>
+      </button>
       
       
       <!-- Platform Wallet Dropdown (only when connected) -->
@@ -337,6 +337,11 @@
         <div>
           <h4 class="font-semibold text-white mb-2">💰 Tips & Fees</h4>
           <p class="text-sm">Tip beacons you like! 5% of tips go to treasury. All beacon fees and tip fees fund strategic buybacks, creating a flywheel effect.</p>
+        </div>
+        
+        <div>
+          <h4 class="font-semibold text-white mb-2">⚡ x402 Protocol</h4>
+          <p class="text-sm"><strong>Both browser wallet and platform wallet use x402!</strong> This ensures secure, verifiable payments for all transactions on the platform.</p>
         </div>
         
         <div>
