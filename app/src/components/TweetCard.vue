@@ -1,8 +1,9 @@
 <script setup lang="ts">
-  import { toRefs, computed, ref, onMounted, watch } from 'vue';
-  import { TweetModel } from '@src/models/tweet.model';
-  import { useWorkspace } from '@src/hooks/useWorkspace';
-  import { profileService, interactionService } from '@src/lib/supabase';
+import { toRefs, computed, ref, onMounted, watch } from 'vue';
+import { TweetModel } from '@src/models/tweet.model';
+import { useWorkspace } from '@src/hooks/useWorkspace';
+import { profileService, interactionService } from '@src/lib/supabase';
+import TipModal from './TipModal.vue';
 
   interface IProps {
     tweet: TweetModel;
@@ -22,6 +23,7 @@
   const replies = ref<any[]>([]);
   const showReplies = ref(false);
   const loadingReplies = ref(false);
+  const showTipModal = ref(false);
 
   // Function to load profile data for the current tweet
   const loadProfileData = async () => {
@@ -240,6 +242,27 @@
     }
   };
 
+  const handleTip = () => {
+    if (!wallet.value?.publicKey) {
+      alert('Please connect your wallet to send tips');
+      return;
+    }
+    
+    // Don't allow tipping yourself
+    if (wallet.value.publicKey.toBase58() === tweet.value?.author?.toBase58()) {
+      alert('You cannot tip yourself');
+      return;
+    }
+    
+    showTipModal.value = true;
+  };
+
+  const handleTipSent = (tipData: any) => {
+    console.log('💰 Tip sent:', tipData);
+    showTipModal.value = false;
+    // You could add a success notification here
+  };
+
   const handleShare = () => {
     const walletAddress = wallet.value?.publicKey?.toBase58() || 'Anonymous';
     const firstThree = walletAddress.slice(0, 3);
@@ -374,6 +397,15 @@ Come beacon at @https://trenchbeacon.com/`;
             <span class="text-sm">{{ showReplies ? 'Reply' : 'Replies' }}</span>
           </button>
           <button 
+            @click="handleTip"
+            class="flex items-center space-x-2 text-dark-400 hover:text-yellow-400 transition-colors duration-300 hover:scale-110"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" />
+            </svg>
+            <span class="text-sm">Tip</span>
+          </button>
+          <button 
             @click="handleShare"
             class="flex items-center space-x-2 text-dark-400 hover:text-green-400 transition-colors duration-300 hover:scale-110"
           >
@@ -457,6 +489,16 @@ Come beacon at @https://trenchbeacon.com/`;
         </div>
       </div>
     </div>
+
+    <!-- Tip Modal -->
+    <TipModal
+      :is-open="showTipModal"
+      :author-address="tweet?.author?.toBase58() || ''"
+      :author-display="authorDisplayName"
+      :beacon-id="tweet?.id || 0"
+      @close="showTipModal = false"
+      @tip-sent="handleTipSent"
+    />
   </div>
 </template>
 
