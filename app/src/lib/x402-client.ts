@@ -22,13 +22,17 @@ export async function payForX402AndRetry(
   try {
     // Helper to post beacon with optional x402 headers
     async function postBeacon(proofHeaders?: Record<string, string>) {
+      const requestBody = JSON.stringify(payload);
+      console.log('📤 Sending request body:', requestBody);
+      console.log('📤 Request headers:', { 'Content-Type': 'application/json', ...(proofHeaders ?? {}) });
+      
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(proofHeaders ?? {})
         },
-        body: JSON.stringify(payload) // ROOT FIELDS ONLY - same body for both requests
+        body: requestBody // ROOT FIELDS ONLY - same body for both requests
       });
       return res;
     }
@@ -132,6 +136,9 @@ export async function sendBeaconWithPayment(
     author: wallet.publicKey.toString(),
     author_display: wallet.publicKey.toString().slice(0, 8) + '...',
   };
+
+  console.log('📝 Created payload:', payload);
+  console.log('📝 Payload keys:', Object.keys(payload));
 
     // Use environment-aware API endpoint
     const apiEndpoint = '/api/beacon';
