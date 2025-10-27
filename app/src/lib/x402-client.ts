@@ -21,6 +21,7 @@ export async function payForX402AndRetry(
 ): Promise<any> {
   try {
     // First attempt - might get 402
+    console.log('🔄 First request attempt:', { endpoint, payload });
     const firstResponse = await fetch(endpoint, {
       method: 'POST',
       headers: {
@@ -61,6 +62,7 @@ export async function payForX402AndRetry(
     const proof = createX402Proof(signature, X402_CONFIG.priceSOL);
 
     // Retry request with proof
+    console.log('🔄 Retrying request with proof:', { endpoint, payload, proof });
     const retryResponse = await fetch(endpoint, {
       method: 'POST',
       headers: {

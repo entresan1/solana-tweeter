@@ -169,6 +169,9 @@ module.exports = async (req, res) => {
       'confirmed'
     );
 
+    console.log('🔍 Request headers:', req.headers);
+    console.log('🔍 Request body:', req.body);
+
     // Check for x402 proof in headers
     const x402Proof = req.headers['x-402-proof'];
 
@@ -205,10 +208,12 @@ module.exports = async (req, res) => {
     }
 
     // If we reach here, payment was verified successfully
+    console.log('🔍 Request body:', req.body);
     const { topic, content, author, author_display } = req.body;
 
     // Validate required fields
     if (!topic || !content || !author) {
+      console.log('❌ Missing required fields:', { topic, content, author });
       return res.status(400).json({
         error: 'Missing required fields',
         message: 'topic, content, and author are required',
