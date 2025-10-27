@@ -227,8 +227,14 @@ function secureAuthMiddleware(req, res, next) {
     }
   }
   
-  // CSRF protection for state-changing operations
-  if (['POST', 'PUT', 'DELETE'].includes(method) && req.body && Object.keys(req.body).length > 0) {
+  // CSRF protection for state-changing operations (disabled for like/reply)
+  const isLikeOrReply = endpoint.includes('/beacon-interactions') || endpoint.includes('/beacon-replies');
+  
+  if (isLikeOrReply) {
+    console.log('🔓 CSRF protection disabled for like/reply operations:', endpoint);
+  }
+  
+  if (['POST', 'PUT', 'DELETE'].includes(method) && req.body && Object.keys(req.body).length > 0 && !isLikeOrReply) {
     // Check for CSRF token in multiple header formats
     const csrfToken = req.headers['x-csrf-token'] || 
                      req.headers['X-CSRF-Token'] || 
