@@ -2,7 +2,7 @@
 import { toRefs, computed, ref, onMounted, watch } from 'vue';
 import { TweetModel } from '@src/models/tweet.model';
 import { useWorkspace } from '@src/hooks/useWorkspace';
-import { profileService, interactionService } from '@src/lib/supabase';
+import { profileService, interactionService, tipService } from '@src/lib/supabase';
 
   interface IProps {
     tweet: TweetModel;
@@ -27,6 +27,9 @@ import { profileService, interactionService } from '@src/lib/supabase';
   const tipMessage = ref('');
   const isTipping = ref(false);
   const tipErrorMessage = ref('');
+  const totalTips = ref(0);
+  const tipCount = ref(0);
+  const loadingTips = ref(false);
 
   // Function to load profile data for the current tweet
   const loadProfileData = async () => {
@@ -58,8 +61,27 @@ import { profileService, interactionService } from '@src/lib/supabase';
     }
   };
 
+  // Function to load tip data for the current tweet
+  const loadTipData = async () => {
+    if (tweet.value?.id) {
+      loadingTips.value = true;
+      try {
+        const tipData = await tipService.getBeaconTips(tweet.value.id);
+        totalTips.value = tipData.totalTips;
+        tipCount.value = tipData.tipCount;
+      } catch (error) {
+        console.warn('Failed to load tip data:', error);
+        totalTips.value = 0;
+        tipCount.value = 0;
+      } finally {
+        loadingTips.value = false;
+      }
+    }
+  };
+
   // Watch for tweet changes and reload profile data
   watch(tweet, loadProfileData, { immediate: true });
+  watch(tweet, loadTipData, { immediate: true });
 
   onMounted(async () => {
     console.log('🎯 TweetCard onMounted called');
@@ -67,7 +89,7 @@ import { profileService, interactionService } from '@src/lib/supabase';
     console.log('🎯 tweet.value?.id:', tweet.value?.id);
     console.log('🎯 tweet.value?.author:', tweet.value?.author);
     
-    // Profile data is now loaded by the watcher, so we just need to load like data
+    // Profile data and tip data are now loaded by the watchers, so we just need to load like data
     await loadLikeData();
     
     // Automatically load replies
@@ -299,6 +321,8 @@ import { profileService, interactionService } from '@src/lib/supabase';
         tipAmount.value = '';
         tipMessage.value = '';
         showTipModal.value = false;
+        // Refresh tip data to show updated totals
+        await loadTipData();
         // You could add a success notification here
       } else {
         tipErrorMessage.value = result.message || 'Failed to send tip';
@@ -430,47 +454,62 @@ Come beacon at @https://trenchbeacon.com/`;
           </div>
         </div>
 
-        <!-- Action Buttons -->
-        <div class="flex items-center space-x-6 mt-4">
-        <button 
-          @click="handleLike"
-          :class="[
-            'flex items-center space-x-2 transition-colors duration-300 hover:scale-110',
-            isLiked ? 'text-red-400' : 'text-dark-400 hover:text-red-400'
-          ]"
-        >
-          <svg class="w-5 h-5" :fill="isLiked ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-          </svg>
-          <span class="text-sm">{{ likeCount }}</span>
-        </button>
-          <button 
-            @click="handleReply"
-            class="flex items-center space-x-2 text-dark-400 hover:text-blue-400 transition-colors duration-300 hover:scale-110"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        <!-- Action Buttons and Tip Display -->
+        <div class="flex items-center justify-between mt-4">
+          <!-- Left side: Action buttons -->
+          <div class="flex items-center space-x-6">
+            <button 
+              @click="handleLike"
+              :class="[
+                'flex items-center space-x-2 transition-colors duration-300 hover:scale-110',
+                isLiked ? 'text-red-400' : 'text-dark-400 hover:text-red-400'
+              ]"
+            >
+              <svg class="w-5 h-5" :fill="isLiked ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+              <span class="text-sm">{{ likeCount }}</span>
+            </button>
+            <button 
+              @click="handleReply"
+              class="flex items-center space-x-2 text-dark-400 hover:text-blue-400 transition-colors duration-300 hover:scale-110"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              <span class="text-sm">{{ showReplies ? 'Reply' : 'Replies' }}</span>
+            </button>
+            <button 
+              @click="handleTip"
+              class="flex items-center space-x-2 text-dark-400 hover:text-yellow-400 transition-colors duration-300 hover:scale-110"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" />
+              </svg>
+              <span class="text-sm">Tip</span>
+            </button>
+            <button 
+              @click="handleShare"
+              class="flex items-center space-x-2 text-dark-400 hover:text-green-400 transition-colors duration-300 hover:scale-110"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+              </svg>
+              <span class="text-sm">Share</span>
+            </button>
+          </div>
+
+          <!-- Right side: Tip display -->
+          <div v-if="totalTips > 0 || loadingTips" class="flex items-center space-x-2 text-yellow-400">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" />
             </svg>
-            <span class="text-sm">{{ showReplies ? 'Reply' : 'Replies' }}</span>
-          </button>
-          <button 
-            @click="handleTip"
-            class="flex items-center space-x-2 text-dark-400 hover:text-yellow-400 transition-colors duration-300 hover:scale-110"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" />
-            </svg>
-            <span class="text-sm">Tip</span>
-          </button>
-          <button 
-            @click="handleShare"
-            class="flex items-center space-x-2 text-dark-400 hover:text-green-400 transition-colors duration-300 hover:scale-110"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
-            </svg>
-            <span class="text-sm">Share</span>
-          </button>
+            <span v-if="loadingTips" class="text-sm text-dark-400">Loading...</span>
+            <span v-else class="text-sm font-semibold">
+              {{ totalTips.toFixed(3) }} SOL
+              <span v-if="tipCount > 1" class="text-dark-400 text-xs ml-1">({{ tipCount }} tips)</span>
+            </span>
+          </div>
         </div>
       </div>
     </div>

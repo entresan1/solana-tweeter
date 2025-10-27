@@ -125,6 +125,30 @@ export const beaconService = {
 const profileCache = new Map<string, { profile: any | null; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
+// Tip service
+export const tipService = {
+  // Get tip totals for a beacon
+  async getBeaconTips(beaconId: number) {
+    try {
+      const response = await fetch(`/api/beacon-tips?beaconId=${beaconId}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        return {
+          totalTips: parseFloat(data.totalTips),
+          tipCount: data.tipCount
+        };
+      } else {
+        console.warn('⚠️ Failed to fetch beacon tips:', data.message);
+        return { totalTips: 0, tipCount: 0 };
+      }
+    } catch (error) {
+      console.warn('⚠️ Error fetching beacon tips:', error);
+      return { totalTips: 0, tipCount: 0 };
+    }
+  }
+};
+
 // User profile service
 export const profileService = {
   // Get user profile by wallet address
