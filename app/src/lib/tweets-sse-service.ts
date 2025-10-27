@@ -41,13 +41,13 @@ export function connectTweetsSSE() {
     const baseUrl = window.location.origin;
     eventSource = new EventSource(`${baseUrl}/api/tweets-sse`);
     
-    // Set a timeout to fallback to direct API if SSE doesn't connect quickly
-    const connectionTimeout = setTimeout(() => {
-      if (!isConnected.value) {
-        console.warn('⚠️ SSE connection timeout, falling back to direct API');
-        loadTweetsDirectly();
-      }
-    }, 5000); // 5 second timeout
+          // Set a timeout to fallback to direct API if SSE doesn't connect quickly
+          const connectionTimeout = setTimeout(() => {
+            if (!isConnected.value) {
+              console.warn('⚠️ SSE connection timeout, falling back to direct API');
+              loadTweetsDirectly();
+            }
+          }, 2000); // 2 second timeout (reduced from 5)
 
     eventSource.onopen = () => {
       console.log('📡 Tweets SSE connected');

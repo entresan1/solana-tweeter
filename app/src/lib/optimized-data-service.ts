@@ -4,12 +4,12 @@ import { ref, reactive } from 'vue';
 // Global cache for all data
 const dataCache = new Map<string, { data: any; timestamp: number; ttl: number }>();
 const CACHE_TTL = {
-  PROFILES: 30 * 60 * 1000, // 30 minutes (increased)
-  TIPS: 10 * 60 * 1000, // 10 minutes (increased)
-  LIKES: 5 * 60 * 1000, // 5 minutes (increased)
-  RUGS: 5 * 60 * 1000, // 5 minutes (increased)
-  REPLIES: 10 * 60 * 1000, // 10 minutes (increased)
-  BEACONS: 2 * 60 * 1000, // 2 minutes (increased)
+  PROFILES: 15 * 60 * 1000, // 15 minutes (reduced from 30)
+  TIPS: 5 * 60 * 1000, // 5 minutes (reduced from 10)
+  LIKES: 2 * 60 * 1000, // 2 minutes (reduced from 5)
+  RUGS: 2 * 60 * 1000, // 2 minutes (reduced from 5)
+  REPLIES: 5 * 60 * 1000, // 5 minutes (reduced from 10)
+  BEACONS: 1 * 60 * 1000, // 1 minute (reduced from 2)
 };
 
 // Request deduplication
@@ -17,7 +17,7 @@ const pendingRequests = new Map<string, Promise<any>>();
 
 // Debounce timers for rapid requests
 const debounceTimers = new Map<string, NodeJS.Timeout>();
-const DEBOUNCE_DELAY = 300; // 300ms debounce
+const DEBOUNCE_DELAY = 100; // 100ms debounce (reduced from 300ms)
 
 class OptimizedDataService {
   private static instance: OptimizedDataService;

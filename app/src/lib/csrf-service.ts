@@ -29,7 +29,8 @@ class CSRFService {
   // Fetch CSRF token from server
   private async fetchToken(): Promise<string> {
     try {
-      const response = await fetch('/api/user-profiles', {
+      // Use a simple GET request to any endpoint that returns CSRF token
+      const response = await fetch('/api/beacons?limit=1', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

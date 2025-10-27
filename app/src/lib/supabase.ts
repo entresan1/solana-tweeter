@@ -313,13 +313,12 @@ export const interactionService = {
   // Like a beacon
   async likeBeacon(beaconId: number, userWallet: string) {
     console.log('🔥 likeBeacon called with:', { beaconId, userWallet });
-    
+
     try {
-      const response = await fetch('/api/beacon-interactions', {
+      const { csrfService } = await import('./csrf-service');
+      
+      const response = await csrfService.makeAuthenticatedRequest('/api/beacon-interactions', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ beaconId, userWallet, action: 'like' })
       });
 
@@ -344,13 +343,12 @@ export const interactionService = {
   // Unlike a beacon
   async unlikeBeacon(beaconId: number, userWallet: string) {
     console.log('💔 unlikeBeacon called with:', { beaconId, userWallet });
-    
+
     try {
-      const response = await fetch('/api/beacon-interactions', {
+      const { csrfService } = await import('./csrf-service');
+      
+      const response = await csrfService.makeAuthenticatedRequest('/api/beacon-interactions', {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ beaconId, userWallet, action: 'like' })
       });
 
@@ -424,13 +422,12 @@ export const interactionService = {
   // Reply to a beacon
   async replyToBeacon(beaconId: number, userWallet: string, content: string) {
     console.log('💬 replyToBeacon called with:', { beaconId, userWallet, content });
-    
+
     try {
-      const response = await fetch('/api/beacon-replies', {
+      const { csrfService } = await import('./csrf-service');
+      
+      const response = await csrfService.makeAuthenticatedRequest('/api/beacon-replies', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ beaconId, userWallet, content })
       });
 
