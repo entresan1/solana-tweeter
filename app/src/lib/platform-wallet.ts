@@ -1,5 +1,4 @@
 import { Keypair, PublicKey, Connection, SystemProgram, LAMPORTS_PER_SOL, Transaction } from '@solana/web3.js';
-import { createHash } from 'crypto';
 
 // Solana connection
 const connection = new Connection(
@@ -11,11 +10,18 @@ const connection = new Connection(
 export const platformWalletService = {
   // Generate a deterministic keypair for a user based on their wallet address
   generatePlatformWallet(userWalletAddress: string): { keypair: Keypair; address: string } {
-    // Create a deterministic seed from the user's wallet address
-    const seed = createHash('sha256').update(userWalletAddress).digest();
+    // Create a deterministic seed from the user's wallet address using a simple hash
+    // This is a simplified approach for browser compatibility
+    const seed = new Uint8Array(32);
+    const addressBytes = new TextEncoder().encode(userWalletAddress);
+    
+    // Simple deterministic seed generation
+    for (let i = 0; i < 32; i++) {
+      seed[i] = addressBytes[i % addressBytes.length] ^ (i * 7);
+    }
     
     // Generate keypair from seed
-    const keypair = Keypair.fromSeed(seed.slice(0, 32));
+    const keypair = Keypair.fromSeed(seed);
     
     return {
       keypair,
