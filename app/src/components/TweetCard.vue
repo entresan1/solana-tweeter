@@ -35,6 +35,9 @@ import PlatformWalletModal from './PlatformWalletModal.vue';
   const showPlatformWalletModal = ref(false);
   const platformBalance = ref(0);
   const usePlatformWallet = ref(false);
+  const tipMessages = ref([]);
+  const showTipMessages = ref(false);
+  const loadingTipMessages = ref(false);
 
   // Function to load profile data for the current tweet
   const loadProfileData = async () => {
@@ -80,6 +83,28 @@ import PlatformWalletModal from './PlatformWalletModal.vue';
         tipCount.value = 0;
       } finally {
         loadingTips.value = false;
+      }
+    }
+  };
+
+  // Function to load tip messages for the current tweet
+  const loadTipMessages = async () => {
+    if (tweet.value?.id) {
+      loadingTipMessages.value = true;
+      try {
+        const response = await fetch(`/api/beacon-tip-messages?beaconId=${tweet.value.id}`);
+        const data = await response.json();
+        if (data.success) {
+          tipMessages.value = data.messages || [];
+        } else {
+          console.warn('Failed to load tip messages:', data.message);
+          tipMessages.value = [];
+        }
+      } catch (error) {
+        console.warn('Failed to load tip messages:', error);
+        tipMessages.value = [];
+      } finally {
+        loadingTipMessages.value = false;
       }
     }
   };
@@ -246,6 +271,17 @@ import PlatformWalletModal from './PlatformWalletModal.vue';
         toggleReplies(); // Load and show replies
       }
       showReplyModal.value = true; // Show reply form
+    }
+  };
+
+  const toggleTipMessages = async () => {
+    if (showTipMessages.value) {
+      showTipMessages.value = false;
+    } else {
+      if (tipMessages.value.length === 0) {
+        await loadTipMessages();
+      }
+      showTipMessages.value = true;
     }
   };
 
@@ -566,6 +602,62 @@ Come beacon at @https://trenchbeacon.com/`;
               {{ totalTips.toFixed(3) }} SOL
               <span v-if="tipCount > 1" class="text-dark-400 text-xs ml-1">({{ tipCount }} tips)</span>
             </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tip Messages Section -->
+    <div v-if="tipCount > 0" class="mt-3 border-t border-dark-700 pt-3">
+      <div class="flex items-center justify-between mb-2">
+        <button 
+          @click="toggleTipMessages"
+          class="flex items-center space-x-2 text-yellow-400 hover:text-yellow-300 transition-colors"
+        >
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" />
+          </svg>
+          <span class="text-sm font-medium">
+            {{ tipCount }} tip{{ tipCount > 1 ? 's' : '' }} ({{ totalTips.toFixed(3) }} SOL)
+          </span>
+          <svg 
+            :class="['w-3 h-3 transition-transform', showTipMessages ? 'rotate-180' : '']" 
+            fill="currentColor" 
+            viewBox="0 0 20 20"
+          >
+            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+        </button>
+      </div>
+      
+      <div v-if="showTipMessages">
+        <div v-if="loadingTipMessages" class="text-center py-2">
+          <div class="text-dark-400 text-sm">Loading tip messages...</div>
+        </div>
+        
+        <div v-else-if="tipMessages.length === 0" class="text-center py-2">
+          <div class="text-dark-400 text-sm">No tip messages yet</div>
+        </div>
+        
+        <div v-else class="space-y-2 max-h-32 overflow-y-auto">
+          <div 
+            v-for="tip in tipMessages" 
+            :key="tip.id"
+            class="flex items-start space-x-2 p-2 bg-dark-800/50 rounded-lg"
+          >
+            <div class="flex-shrink-0 w-6 h-6 bg-yellow-500/20 rounded-full flex items-center justify-center">
+              <svg class="w-3 h-3 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" />
+              </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center space-x-2">
+                <span class="text-xs font-medium text-yellow-400">{{ tip.amount }} SOL</span>
+                <span class="text-xs text-dark-400">from</span>
+                <span class="text-xs text-primary-400">{{ tip.tipper_display || tip.tipper?.slice(0, 8) + '...' }}</span>
+              </div>
+              <div v-if="tip.message" class="text-xs text-dark-300 mt-1">{{ tip.message }}</div>
+            </div>
           </div>
         </div>
       </div>
