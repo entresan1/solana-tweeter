@@ -13,9 +13,9 @@
 
   const route = useRoute();
   const wallets = [new PhantomWalletAdapter(), new SolflareWalletAdapter()];
-  const { wallet } = useWallet();
 
   initWallet({ wallets, autoConnect: true });
+  const { wallet } = useWallet();
   
   // Initialize profile auto-creation
   useProfileAutoCreate();
