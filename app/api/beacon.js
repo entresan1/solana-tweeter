@@ -200,18 +200,18 @@ module.exports = async (req, res) => {
     const { topic, content, author, author_display } = req.body;
 
     // Validate required fields
-    if (!topic || !content || !author) {
+    if (!content || !author) {
       console.log('❌ Missing required fields:', { topic, content, author });
       return res.status(400).json({
         error: 'Missing required fields',
-        message: 'topic, content, and author are required',
+        message: 'content and author are required',
       });
     }
 
     // For now, return success without database integration
     // In production, you would integrate with your Supabase database here
     const beaconData = {
-      topic,
+      topic: topic || 'general', // Default topic if not provided
       content,
       author,
       author_display: author_display || author.slice(0, 8) + '...',

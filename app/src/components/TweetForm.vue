@@ -68,6 +68,8 @@
         errorMessage.value = 'Network error. Please check your connection and try again.';
       } else if (error.message?.includes('wallet') || error.message?.includes('Wallet')) {
         errorMessage.value = 'Wallet connection issue. Please reconnect your wallet.';
+      } else if (error.message?.includes('content and author are required')) {
+        errorMessage.value = 'Please enter content for your beacon.';
       } else {
         errorMessage.value = 'Failed to send beacon. Please try again.';
       }
@@ -132,8 +134,9 @@
         <div class="relative flex-1 max-w-xs group/topic">
           <input
             type="text"
-            placeholder="Add a topic..."
+            placeholder="Add a topic... (optional)"
             class="input-field pl-10 pr-4 py-2 text-sm transition-all duration-300 focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500"
+            :class="{}"
             :value="effectiveTopic"
             :disabled="forcedTopic != null"
             @input="handleTopicChange"
@@ -169,6 +172,7 @@
             class="btn-primary text-sm px-6 py-2 relative overflow-hidden group/btn"
             :disabled="!canTweet || isSubmitting"
             :class="(!canTweet || isSubmitting) ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'"
+            :title="!content.trim() ? 'Please enter content' : characterLimit <= 0 ? 'Content too long' : 'Send beacon'"
             @click="send"
           >
             <span class="flex items-center space-x-2 relative z-10">
