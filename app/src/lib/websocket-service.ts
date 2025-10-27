@@ -48,11 +48,22 @@ export function connectWebSocket() {
     
     console.log('🔌 Connecting to WebSocket:', wsUrl);
     websocket = new WebSocket(wsUrl);
+    
+    // Set a connection timeout
+    const connectionTimeout = setTimeout(() => {
+      if (websocket && websocket.readyState === WebSocket.CONNECTING) {
+        console.log('⏰ WebSocket connection timeout, falling back to API');
+        websocket.close();
+        loadTweetsDirectly();
+      }
+    }, 5000); // 5 second timeout
 
     websocket.onopen = () => {
       console.log('🔌 WebSocket connected');
       isConnected.value = true;
       reconnectAttempts = 0;
+      clearTimeout(connectionTimeout);
+      stopPolling(); // Stop polling when WebSocket connects
       if (reconnectTimeout) {
         clearTimeout(reconnectTimeout);
         reconnectTimeout = null;
@@ -72,7 +83,14 @@ export function connectWebSocket() {
       console.log('🔌 WebSocket closed:', event.code, event.reason);
       isConnected.value = false;
       
-      // Attempt reconnection
+      // If it's a connection error (1006), fallback immediately
+      if (event.code === 1006) {
+        console.log('🔄 WebSocket connection failed, falling back to API');
+        loadTweetsDirectly();
+        return;
+      }
+      
+      // Attempt reconnection for other close codes
       if (reconnectAttempts < maxReconnectAttempts) {
         reconnectAttempts++;
         const delay = Math.min(RECONNECT_DELAY * Math.pow(2, reconnectAttempts), 30000);
@@ -91,6 +109,9 @@ export function connectWebSocket() {
     websocket.onerror = (error) => {
       console.error('❌ WebSocket error:', error);
       isConnected.value = false;
+      clearTimeout(connectionTimeout);
+      // Fallback to API immediately on error
+      loadTweetsDirectly();
     };
 
   } catch (error) {
@@ -117,7 +138,7 @@ export function disconnectWebSocket() {
 async function loadTweetsDirectly() {
   try {
     console.log('🔄 Loading tweets directly via API...');
-    const response = await fetch('/api/tweets-unified?page=1&limit=20');
+    const response = await fetch('/api/tweets-polling?page=1&limit=20');
     const data = await response.json();
 
     if (data.success) {
@@ -126,11 +147,52 @@ async function loadTweetsDirectly() {
 
       console.log('✅ Loaded tweets directly:', tweets.value.length);
       emit('tweets_loaded', tweets.value);
+      
+      // Start polling for updates every 10 seconds
+      startPolling();
     } else {
       console.error('❌ Failed to load tweets directly:', data.message);
     }
   } catch (error) {
     console.error('❌ Error loading tweets directly:', error);
+  }
+}
+
+/**
+ * Start polling for updates when WebSocket is not available
+ */
+let pollingInterval: NodeJS.Timeout | null = null;
+
+function startPolling() {
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+  }
+  
+  pollingInterval = setInterval(async () => {
+    try {
+      const lastTweetTime = tweets.value.length > 0 
+        ? Math.max(...tweets.value.map(t => new Date(t.created_at).getTime()))
+        : 0;
+        
+      const response = await fetch(`/api/tweets-polling?page=1&limit=20&since=${lastTweetTime}`);
+      const data = await response.json();
+
+      if (data.success && data.data.tweets) {
+        // Update tweets with new data
+        tweets.value = data.data.tweets;
+        emit('tweets_update', data.data.tweets);
+        console.log('🔄 Polling update:', data.data.tweets.length, 'tweets');
+      }
+    } catch (error) {
+      console.error('❌ Error in polling update:', error);
+    }
+  }, 10000); // Poll every 10 seconds
+}
+
+function stopPolling() {
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+    pollingInterval = null;
   }
 }
 
@@ -316,7 +378,9 @@ export function off(event: string, listener: Function) {
   }
 }
 
-// Auto-connect on module load
+// Auto-connect on module load with a small delay
 if (typeof window !== 'undefined') {
-  connectWebSocket();
+  setTimeout(() => {
+    connectWebSocket();
+  }, 1000); // 1 second delay to let the page load
 }
