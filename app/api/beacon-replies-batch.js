@@ -32,44 +32,50 @@ module.exports = async (req, res) => {
 
     const supabase = createClient(config.supabase.url, config.supabase.key);
 
-    // Get likes for all beacons in one query
-    const { data: likes, error } = await supabase
-      .from('beacon_likes')
-      .select('beacon_id, user_wallet')
-      .in('beacon_id', beaconIdArray);
+    // Get replies for all beacons in one query
+    const { data: replies, error } = await supabase
+      .from('beacon_replies')
+      .select('beacon_id, user_wallet, content, created_at')
+      .in('beacon_id', beaconIdArray)
+      .order('created_at', { ascending: true });
 
     if (error) {
-      console.error('Error fetching likes batch:', error);
+      console.error('Error fetching replies batch:', error);
       return res.status(500).json({ error: 'Database error' });
     }
 
-    // Process likes data
-    const likesMap = new Map();
-    likes.forEach(like => {
-      if (!likesMap.has(like.beacon_id)) {
-        likesMap.set(like.beacon_id, []);
+    // Process replies data
+    const repliesMap = new Map();
+    replies.forEach(reply => {
+      if (!repliesMap.has(reply.beacon_id)) {
+        repliesMap.set(reply.beacon_id, []);
       }
-      likesMap.get(like.beacon_id).push(like.user_wallet);
+      repliesMap.get(reply.beacon_id).push({
+        user_wallet: reply.user_wallet,
+        content: reply.content,
+        created_at: reply.created_at
+      });
     });
 
     // Format response
     const result = beaconIdArray.map(beaconId => {
-      const userLikes = likesMap.get(beaconId) || [];
+      const beaconReplies = repliesMap.get(beaconId) || [];
+      
       return {
         beacon_id: beaconId,
-        count: userLikes.length,
-        isLiked: false // Will be set by client based on current user
+        count: beaconReplies.length,
+        messages: beaconReplies
       };
     });
 
     return res.status(200).json({
       success: true,
-      likes: result,
+      replies: result,
       count: result.length
     });
 
   } catch (error) {
-    console.error('Batch likes API error:', error);
+    console.error('Batch replies API error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 };

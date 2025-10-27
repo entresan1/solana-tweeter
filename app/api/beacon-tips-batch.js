@@ -4,7 +4,7 @@ const config = require('./secure-config');
 module.exports = async (req, res) => {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', 'https://trenchbeacon.com');
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
 
@@ -32,40 +32,49 @@ module.exports = async (req, res) => {
 
     const supabase = createClient(config.supabase.url, config.supabase.key);
 
-    // Get tip messages for all beacons in one query
+    // Get tips for all beacons in one query
     const { data: tips, error } = await supabase
       .from('tips')
-      .select(`
-        id,
-        amount,
-        message,
-        tipper,
-        tipper_display,
-        timestamp,
-        beacon_id
-      `)
+      .select('beacon_id, amount, user_wallet, message, created_at')
       .in('beacon_id', beaconIdArray)
-      .order('timestamp', { ascending: false });
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching tips batch:', error);
       return res.status(500).json({ error: 'Database error' });
     }
 
-    // Group tips by beacon_id
-    const tipsByBeacon = {};
+    // Process tips data
+    const tipsMap = new Map();
     tips.forEach(tip => {
-      if (!tipsByBeacon[tip.beacon_id]) {
-        tipsByBeacon[tip.beacon_id] = [];
+      if (!tipsMap.has(tip.beacon_id)) {
+        tipsMap.set(tip.beacon_id, []);
       }
-      tipsByBeacon[tip.beacon_id].push(tip);
+      tipsMap.get(tip.beacon_id).push({
+        amount: parseFloat(tip.amount),
+        user_wallet: tip.user_wallet,
+        message: tip.message,
+        created_at: tip.created_at
+      });
+    });
+
+    // Format response
+    const result = beaconIdArray.map(beaconId => {
+      const beaconTips = tipsMap.get(beaconId) || [];
+      const totalAmount = beaconTips.reduce((sum, tip) => sum + tip.amount, 0);
+      
+      return {
+        beacon_id: beaconId,
+        totalAmount,
+        count: beaconTips.length,
+        messages: beaconTips
+      };
     });
 
     return res.status(200).json({
       success: true,
-      tips: tips,
-      tipsByBeacon: tipsByBeacon,
-      count: tips.length
+      tips: result,
+      count: result.length
     });
 
   } catch (error) {

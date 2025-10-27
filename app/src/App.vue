@@ -69,27 +69,30 @@
     </div>
     
     <div class="relative w-full max-w-6xl mx-auto">
-      <!-- Sidebar -->
-      <the-sidebar class="py-4 md:py-8 md:pl-4 md:pr-8 fixed w-20 md:w-64 z-10" />
+      <!-- Desktop Sidebar -->
+      <the-sidebar class="py-4 md:py-8 md:pl-4 md:pr-8 fixed w-20 md:w-64 z-10 hidden md:block" />
+      
+      <!-- Mobile Sidebar -->
+      <the-sidebar class="md:hidden" />
 
       <!-- Main Content -->
-      <main class="flex-1 ml-20 md:ml-64 min-h-screen">
+      <main class="flex-1 md:ml-64 min-h-screen">
         <!-- Clean Header -->
         <header class="glass border-b border-dark-700/50 backdrop-blur-xl">
-          <div class="flex items-center justify-between px-8 py-6">
+          <div class="flex items-center justify-between px-4 md:px-8 py-4 md:py-6">
             <div class="flex items-center space-x-4">
-              <img src="/logo.png" alt="Trench Beacon" class="h-8 w-8 rounded-lg" />
-              <h1 class="text-2xl font-bold text-gradient" v-text="route.name"></h1>
+              <img src="/logo.png" alt="Trench Beacon" class="h-6 w-6 md:h-8 md:w-8 rounded-lg" />
+              <h1 class="text-lg md:text-2xl font-bold text-gradient" v-text="route.name"></h1>
             </div>
-            <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-2 md:space-x-4">
               <div class="hidden md:flex items-center space-x-2 text-sm text-dark-400">
                 <div class="w-2 h-2 bg-solana-500 rounded-full"></div>
                 <span>Solana Network</span>
               </div>
               <!-- Status Indicator -->
-              <div class="hidden md:flex items-center space-x-2 px-3 py-1 rounded-full bg-dark-800/50 border border-dark-600/50">
+              <div class="flex items-center space-x-2 px-2 md:px-3 py-1 rounded-full bg-dark-800/50 border border-dark-600/50">
                 <div class="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span class="text-xs text-dark-300">Live</span>
+                <span class="text-xs text-dark-300 hidden md:inline">Live</span>
               </div>
             </div>
           </div>

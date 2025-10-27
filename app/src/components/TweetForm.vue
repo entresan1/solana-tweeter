@@ -136,11 +136,11 @@
     <div class="relative z-10">
       <!-- Treasury Info -->
       <div class="mb-4 p-3 bg-primary-500/10 border border-primary-500/20 rounded-lg text-primary-300 text-sm">
-        <div class="flex items-center space-x-2">
-          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+        <div class="flex items-start space-x-2">
+          <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
           </svg>
-          <span>Each beacon costs 0.001 SOL and creates an on-chain transaction. Transaction signature becomes your beacon ID!</span>
+          <span class="text-xs md:text-sm">Each beacon costs 0.001 SOL and creates an on-chain transaction. Transaction signature becomes your beacon ID!</span>
         </div>
       </div>
 
@@ -170,13 +170,13 @@
         </div>
       </div>
 
-      <div class="flex flex-wrap items-center justify-between">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
         <!-- Enhanced Topic field -->
         <div class="relative flex-1 max-w-xs group/topic">
           <input
             type="text"
             placeholder="Add a topic..."
-            class="input-field pl-10 pr-4 py-2 text-sm transition-all duration-300 focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500"
+            class="input-field pl-10 pr-4 py-2 text-sm transition-all duration-300 focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 w-full"
             :class="{}"
             :value="effectiveTopic"
             :disabled="forcedTopic != null"
@@ -199,7 +199,7 @@
           </div>
         </div>
         
-        <div class="flex items-center space-x-4">
+        <div class="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-4">
           <!-- Enhanced Character limit -->
           <div class="text-sm font-medium transition-all duration-300" :class="characterLimitColour">
             <span class="inline-flex items-center space-x-1">
@@ -209,13 +209,15 @@
           </div>
 
           <!-- Automatic Wallet Selection Info (only when connected) -->
-          <div v-if="connected && platformWalletAddress" class="flex items-center space-x-3 text-sm">
+          <div v-if="connected && platformWalletAddress" class="flex flex-col md:flex-row md:items-center space-y-1 md:space-y-0 md:space-x-3 text-sm">
             <span class="text-dark-300">Payment:</span>
-            <div class="flex items-center space-x-2">
-              <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" />
-              </svg>
-              <span class="text-yellow-400 font-medium">Smart Payment</span>
+            <div class="flex flex-col md:flex-row md:items-center space-y-1 md:space-y-0 md:space-x-2">
+              <div class="flex items-center space-x-2">
+                <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" />
+                </svg>
+                <span class="text-yellow-400 font-medium">Smart Payment</span>
+              </div>
               <span class="text-xs text-dark-400">
                 (Platform: {{ platformBalance.toFixed(4) }} SOL → Phantom fallback)
               </span>
@@ -224,13 +226,13 @@
 
           <!-- Enhanced Tweet button -->
           <button
-            class="btn-primary text-sm px-6 py-2 relative overflow-hidden group/btn"
+            class="btn-primary text-sm px-4 md:px-6 py-2 relative overflow-hidden group/btn w-full md:w-auto"
             :disabled="!canTweet || isSubmitting"
             :class="(!canTweet || isSubmitting) ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'"
             :title="!content.trim() ? 'Please enter content' : characterLimit <= 0 ? 'Content too long' : 'Smart beacon: Uses platform wallet if available, falls back to Phantom'"
             @click="send"
           >
-            <span class="flex items-center space-x-2 relative z-10">
+            <span class="flex items-center justify-center space-x-2 relative z-10">
               <svg v-if="!isSubmitting" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
               </svg>

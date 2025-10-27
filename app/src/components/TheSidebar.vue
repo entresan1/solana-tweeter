@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { useWallet, WalletMultiButton } from 'solana-wallets-vue';
   import { useRoute } from 'vue-router';
-  import { ref, onMounted, watch } from 'vue';
+  import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
   import { platformWalletService } from '@src/lib/platform-wallet';
   
   const { connected, wallet } = useWallet();
@@ -9,6 +9,46 @@
   
   const platformWalletAddress = ref('');
   const platformBalance = ref(0);
+  const isMobileMenuOpen = ref(false);
+  const isPlatformWalletExpanded = ref(false);
+  
+  // Mobile detection
+  const isMobile = computed(() => window.innerWidth < 768);
+  
+  // Close mobile menu when route changes
+  watch(route, () => {
+    isMobileMenuOpen.value = false;
+  });
+  
+  // Close mobile menu when clicking outside
+  const closeMobileMenu = () => {
+    isMobileMenuOpen.value = false;
+  };
+
+  // Toggle platform wallet dropdown
+  const togglePlatformWallet = () => {
+    isPlatformWalletExpanded.value = !isPlatformWalletExpanded.value;
+    // Close mobile menu if open
+    if (isMobile.value) {
+      isMobileMenuOpen.value = false;
+    }
+  };
+
+  // Handle window resize
+  const handleResize = () => {
+    if (window.innerWidth >= 768) {
+      isMobileMenuOpen.value = false;
+    }
+  };
+
+  onMounted(() => {
+    window.addEventListener('resize', handleResize);
+  });
+
+  // Cleanup
+  onUnmounted(() => {
+    window.removeEventListener('resize', handleResize);
+  });
   
   // Load platform wallet data when wallet connects
   const loadPlatformWalletData = async () => {
@@ -74,24 +114,63 @@
 </script>
 
 <template>
-  <aside class="flex flex-col items-center md:items-stretch space-y-2 md:space-y-4 h-full">
+  <!-- Mobile Menu Button -->
+  <button
+    v-if="isMobile"
+    @click="isMobileMenuOpen = !isMobileMenuOpen"
+    class="fixed top-4 left-4 z-50 p-2 bg-dark-800/90 backdrop-blur-sm rounded-xl border border-dark-700 hover:bg-dark-700 transition-all duration-200"
+  >
+    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+  </button>
+
+  <!-- Mobile Overlay -->
+  <div
+    v-if="isMobile && isMobileMenuOpen"
+    @click="closeMobileMenu"
+    class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+  ></div>
+
+  <!-- Sidebar -->
+  <aside 
+    :class="[
+      'flex flex-col items-center md:items-stretch space-y-2 md:space-y-4 h-full transition-all duration-300',
+      isMobile ? 'fixed top-0 left-0 z-50 w-80 h-full bg-dark-900/95 backdrop-blur-md border-r border-dark-700 transform' : '',
+      isMobile && !isMobileMenuOpen ? '-translate-x-full' : '',
+      isMobile && isMobileMenuOpen ? 'translate-x-0' : ''
+    ]"
+  >
+    <!-- Mobile Close Button -->
+    <button
+      v-if="isMobile"
+      @click="closeMobileMenu"
+      class="absolute top-4 right-4 p-2 text-dark-400 hover:text-white transition-colors"
+    >
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+
     <!-- Logo -->
-    <div class="mb-8">
+    <div class="mb-8 mt-4 md:mt-0">
       <router-link
         :to="{ name: 'Home' }"
+        @click="closeMobileMenu"
         class="inline-block rounded-2xl hover:bg-dark-800/50 p-4 md:self-start transition-all duration-200 hover-lift group"
       >
         <div class="flex items-center space-x-3">
             <img src="/logo.png" alt="Trench Beacon" class="h-8 w-8 rounded-lg" />
-            <span class="hidden md:block text-xl font-bold text-gradient">Trench Beacon</span>
+            <span class="text-xl font-bold text-gradient">Trench Beacon</span>
         </div>
       </router-link>
     </div>
     <!-- Navigation -->
-    <div class="flex flex-col items-center md:items-stretch space-y-2 w-full">
+    <div class="flex flex-col items-center md:items-stretch space-y-2 w-full px-4 md:px-0">
       <router-link
         :to="{ name: 'Home' }"
-        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-300 group"
+        @click="closeMobileMenu"
+        class="rounded-2xl hover:bg-dark-800/50 p-4 w-full inline-flex items-center space-x-4 transition-all duration-300 group"
         :class="route.name === 'Home' ? 'bg-gradient-to-r from-primary-500/20 to-solana-500/20 border border-primary-500/30' : ''"
       >
         <div class="flex items-center justify-center w-8 h-8 rounded-xl"
@@ -123,13 +202,14 @@
             />
           </svg>
         </div>
-        <div class="text-lg font-medium hidden md:block"
+        <div class="text-lg font-medium"
              :class="route.name === 'Home' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">Home</div>
       </router-link>
       
       <router-link
         :to="{ name: 'Topics' }"
-        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-300 group"
+        @click="closeMobileMenu"
+        class="rounded-2xl hover:bg-dark-800/50 p-4 w-full inline-flex items-center space-x-4 transition-all duration-300 group"
         :class="route.name === 'Topics' ? 'bg-gradient-to-r from-primary-500/20 to-solana-500/20 border border-primary-500/30' : ''"
       >
         <div class="flex items-center justify-center w-8 h-8 rounded-xl"
@@ -164,7 +244,7 @@
             />
           </svg>
         </div>
-        <div class="text-lg font-medium hidden md:block"
+        <div class="text-lg font-medium"
              :class="route.name === 'Topics' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">Topics</div>
       </router-link>
       
@@ -172,7 +252,8 @@
       <router-link
         v-if="connected"
         :to="{ name: 'Profile' }"
-        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-300 group"
+        @click="closeMobileMenu"
+        class="rounded-2xl hover:bg-dark-800/50 p-4 w-full inline-flex items-center space-x-4 transition-all duration-300 group"
         :class="route.name === 'Profile' ? 'bg-gradient-to-r from-primary-500/20 to-solana-500/20 border border-accent-500/30' : ''"
       >
         <div class="flex items-center justify-center w-8 h-8 rounded-xl"
@@ -206,14 +287,15 @@
             />
           </svg>
         </div>
-        <div class="text-lg font-medium hidden md:block"
+        <div class="text-lg font-medium"
              :class="route.name === 'Profile' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">Profile</div>
       </router-link>
       
       <!-- X402 Proof Link -->
       <router-link
         :to="{ name: 'X402' }"
-        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-300 group"
+        @click="closeMobileMenu"
+        class="rounded-2xl hover:bg-dark-800/50 p-4 w-full inline-flex items-center space-x-4 transition-all duration-300 group"
         :class="route.name === 'X402' ? 'bg-gradient-to-r from-primary-500/20 to-solana-500/20 border border-primary-500/30' : ''"
       >
         <div class="flex items-center justify-center w-8 h-8 rounded-xl"
@@ -247,50 +329,84 @@
             />
           </svg>
         </div>
-        <div class="text-lg font-medium hidden md:block"
+        <div class="text-lg font-medium"
              :class="route.name === 'X402' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">x402</div>
       </router-link>
-      
-      
-      <!-- Platform Wallet Section (only when connected) -->
-      <div v-if="connected" class="mt-4 p-4 bg-dark-800/30 border border-dark-700 rounded-2xl">
-        <div class="flex items-center space-x-2 mb-3">
-          <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" />
-          </svg>
-          <span class="text-sm font-medium text-white">Platform Wallet</span>
-        </div>
-        <div class="space-y-2">
-          <div class="text-xs text-dark-400">
-            <div class="flex items-center justify-between mb-1">
-              <span>Address:</span>
-              <span class="text-yellow-400 font-mono">{{ platformWalletAddress.slice(0, 6) }}...{{ platformWalletAddress.slice(-4) }}</span>
-            </div>
-            <div class="flex items-center justify-between">
-              <span>Balance:</span>
-              <span class="text-yellow-400 font-semibold">{{ platformBalance.toFixed(4) }} SOL</span>
-            </div>
-          </div>
-          <button
-            @click="copyPlatformWalletAddress"
-            class="w-full text-xs btn-secondary py-1 px-2"
-          >
-            Copy Address
-          </button>
-          <button
-            @click="showPrivateKey"
-            class="w-full text-xs btn-primary py-1 px-2"
-          >
-            Show Private Key
-          </button>
-        </div>
-      </div>
     </div>
     
     <!-- Wallet Connection -->
-    <div class="mt-auto pt-6 w-full">
+    <div class="mt-auto pt-6 w-full px-4 md:px-0">
       <div class="glass rounded-2xl p-4 hover-glow">
         <wallet-multi-button></wallet-multi-button>
+      </div>
+    </div>
+    
+    <!-- Platform Wallet Section (only when connected) -->
+    <div v-if="connected" class="mt-4 px-4 md:px-0">
+      <div class="bg-dark-800/30 border border-dark-700 rounded-2xl overflow-hidden">
+        <!-- Platform Wallet Header (Clickable) -->
+        <button
+          @click="togglePlatformWallet"
+          class="w-full p-4 flex items-center justify-between hover:bg-dark-700/50 transition-colors duration-200"
+        >
+          <div class="flex items-center space-x-2">
+            <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" />
+            </svg>
+            <span class="text-sm font-medium text-white">Platform Wallet</span>
+          </div>
+          <svg 
+            class="w-4 h-4 text-dark-400 transition-transform duration-200"
+            :class="{ 'rotate-180': isPlatformWalletExpanded }"
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        
+        <!-- Platform Wallet Details (Collapsible) -->
+        <transition
+          enter-active-class="transition-all duration-300 ease-out"
+          enter-from-class="opacity-0 max-h-0"
+          enter-to-class="opacity-100 max-h-96"
+          leave-active-class="transition-all duration-300 ease-in"
+          leave-from-class="opacity-100 max-h-96"
+          leave-to-class="opacity-0 max-h-0"
+        >
+          <div 
+            v-show="isPlatformWalletExpanded"
+            class="px-4 pb-4 border-t border-dark-700/50 overflow-hidden"
+          >
+          <div class="space-y-3 pt-3">
+            <div class="text-xs text-dark-400">
+              <div class="flex items-center justify-between mb-1">
+                <span>Address:</span>
+                <span class="text-yellow-400 font-mono text-xs break-all">{{ platformWalletAddress.slice(0, 6) }}...{{ platformWalletAddress.slice(-4) }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span>Balance:</span>
+                <span class="text-yellow-400 font-semibold">{{ platformBalance.toFixed(4) }} SOL</span>
+              </div>
+            </div>
+            <div class="flex flex-col space-y-2">
+              <button
+                @click="copyPlatformWalletAddress"
+                class="w-full text-xs btn-secondary py-2 px-3 rounded-lg"
+              >
+                Copy Address
+              </button>
+              <button
+                @click="showPrivateKey"
+                class="w-full text-xs btn-primary py-2 px-3 rounded-lg"
+              >
+                Show Private Key
+              </button>
+            </div>
+          </div>
+          </div>
+        </transition>
       </div>
     </div>
     

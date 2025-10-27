@@ -4,7 +4,7 @@ const config = require('./secure-config');
 module.exports = async (req, res) => {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', 'https://trenchbeacon.com');
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
 
@@ -32,32 +32,35 @@ module.exports = async (req, res) => {
 
     const supabase = createClient(config.supabase.url, config.supabase.key);
 
-    // Get rug counts for all beacons in one query
+    // Get rugs for all beacons in one query
     const { data: rugs, error } = await supabase
       .from('rug_reports')
-      .select('beacon_id, count(*) as count')
-      .in('beacon_id', beaconIdArray)
-      .group('beacon_id');
+      .select('beacon_id, user_wallet')
+      .in('beacon_id', beaconIdArray);
 
     if (error) {
       console.error('Error fetching rugs batch:', error);
       return res.status(500).json({ error: 'Database error' });
     }
 
-    // Format response
-    const rugsMap = {};
+    // Process rugs data
+    const rugsMap = new Map();
     rugs.forEach(rug => {
-      rugsMap[rug.beacon_id] = {
-        beacon_id: rug.beacon_id,
-        count: parseInt(rug.count),
-        is_rugged: false // We'll implement user-specific rugs later
-      };
+      if (!rugsMap.has(rug.beacon_id)) {
+        rugsMap.set(rug.beacon_id, []);
+      }
+      rugsMap.get(rug.beacon_id).push(rug.user_wallet);
     });
 
-    // Ensure all requested beacons have entries (even with 0 rugs)
-    const result = beaconIdArray.map(beaconId => 
-      rugsMap[beaconId] || { beacon_id: beaconId, count: 0, is_rugged: false }
-    );
+    // Format response
+    const result = beaconIdArray.map(beaconId => {
+      const userRugs = rugsMap.get(beaconId) || [];
+      return {
+        beacon_id: beaconId,
+        count: userRugs.length,
+        isRugged: false // Will be set by client based on current user
+      };
+    });
 
     return res.status(200).json({
       success: true,
