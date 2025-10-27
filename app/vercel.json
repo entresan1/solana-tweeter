@@ -3,16 +3,5 @@
   "outputDirectory": "dist",
   "installCommand": "yarn install",
   "devCommand": "yarn dev",
-  "framework": "vite",
-  "functions": {
-    "api/beacon.js": {
-      "runtime": "nodejs18.x"
-    }
-  },
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
-    }
-  ]
+  "framework": "vite"
 }
