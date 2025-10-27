@@ -5,6 +5,7 @@
   import { fetchTweets, authorFilter } from '@src/api';
   import TweetList from '@src/components/TweetList.vue';
   import { TweetModel } from '@src/models/tweet.model';
+  import { getSafeImageUrl, shouldDisplayImage } from '@src/lib/image-utils';
 
   const { wallet } = useWorkspace();
   const profile = ref<UserProfile | null>(null);
@@ -17,6 +18,14 @@
 
   const isOwnProfile = computed(() => {
     return wallet.value?.publicKey?.toBase58() === profile.value?.wallet_address;
+  });
+
+  const safeProfilePictureUrl = computed(() => {
+    return getSafeImageUrl(profilePictureUrl.value);
+  });
+
+  const shouldShowProfilePicture = computed(() => {
+    return shouldDisplayImage(profilePictureUrl.value);
   });
 
   onMounted(async () => {
@@ -117,8 +126,8 @@
         <div class="relative">
           <div class="w-24 h-24 rounded-full bg-gradient-to-r from-primary-500 to-solana-500 flex items-center justify-center overflow-hidden">
             <img 
-              v-if="profilePictureUrl" 
-              :src="profilePictureUrl" 
+              v-if="shouldShowProfilePicture" 
+              :src="safeProfilePictureUrl" 
               :alt="nickname || 'Profile'"
               class="w-full h-full object-cover"
             />

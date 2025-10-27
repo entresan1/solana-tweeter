@@ -5,6 +5,7 @@ import { useWorkspace } from '@src/hooks/useWorkspace';
 import { profileService, interactionService, tipService } from '@src/lib/supabase';
 import { platformWalletService } from '@src/lib/platform-wallet';
 import PlatformWalletModal from './PlatformWalletModal.vue';
+import { getSafeImageUrl, shouldDisplayImage } from '@src/lib/image-utils';
 
   interface IProps {
     tweet: TweetModel;
@@ -40,6 +41,15 @@ import PlatformWalletModal from './PlatformWalletModal.vue';
   const tipMessages = ref<any[]>([]);
   const showTipMessages = ref(false);
   const loadingTipMessages = ref(false);
+
+  // Computed properties for safe image handling
+  const safeAuthorAvatar = computed(() => {
+    return getSafeImageUrl(authorAvatar.value);
+  });
+
+  const shouldShowAuthorAvatar = computed(() => {
+    return shouldDisplayImage(authorAvatar.value);
+  });
 
   // Function to load profile data for the current tweet
   const loadProfileData = async () => {
@@ -600,8 +610,8 @@ Come beacon at @https://trenchbeacon.com/`;
         <div class="relative group/avatar">
           <div class="w-12 h-12 rounded-full bg-gradient-to-r from-primary-500 to-solana-500 flex items-center justify-center overflow-hidden transition-all duration-300">
             <img 
-              v-if="authorAvatar" 
-              :src="authorAvatar" 
+              v-if="shouldShowAuthorAvatar" 
+              :src="safeAuthorAvatar" 
               :alt="authorDisplayName"
               class="w-full h-full object-cover"
             />
