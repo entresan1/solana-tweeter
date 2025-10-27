@@ -59,15 +59,18 @@ export function getSafeImageUrl(url: string): string | undefined {
   // For base64 URLs, return them directly without any processing
   // This prevents the browser from trying to make GET requests to them
   if (isBase64DataUrl(url)) {
+    console.log('🖼️ Using base64 image URL (length:', url.length, ')');
     return url;
   }
   
   // For HTTP URLs, validate them
   if (isHttpUrl(url)) {
+    console.log('🌐 Using HTTP image URL:', url);
     return url;
   }
   
   // If it's neither base64 nor HTTP, return undefined
+  console.warn('❌ Invalid image URL format:', url.substring(0, 100) + '...');
   return undefined;
 }
 
