@@ -2,6 +2,8 @@ import { TweetModel } from '@src/models/tweet.model';
 import { PublicKey } from '@solana/web3.js';
 import { getTweets, isServiceInitialized } from '@src/lib/http-tweets-service';
 
+// HTTP-based tweets service - no WebSocket dependencies
+
 export const fetchTweets = async (filters: any[] = []) => {
   console.log('📡 fetchTweets called with filters:', filters);
   
