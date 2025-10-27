@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { computed, ref, toRefs } from 'vue';
+  import { computed, ref, toRefs, onMounted, watch } from 'vue';
   import { sendTweet } from '@src/api';
   import {
     useSlug,
@@ -7,6 +7,7 @@
     useCountCharacterLimit,
   } from '@src/hooks';
   import { useWallet } from 'solana-wallets-vue';
+  import { platformWalletService } from '@src/lib/platform-wallet';
 
   interface IProps {
     forcedTopic?: string;
@@ -38,8 +39,45 @@
   });
 
   // Permissions
-  const { connected } = useWallet();
+  const { connected, wallet } = useWallet();
   const canTweet = computed(() => content.value && characterLimit.value > 0);
+  
+  // Platform wallet state
+  const usePlatformWallet = ref(false);
+  const platformBalance = ref(0);
+  const platformWalletAddress = ref('');
+
+  // Load platform wallet data
+  const loadPlatformWalletData = async () => {
+    if (wallet.value?.publicKey) {
+      try {
+        const userAddress = wallet.value.publicKey.toBase58();
+        platformWalletAddress.value = platformWalletService.getPlatformWalletAddress(userAddress);
+        platformBalance.value = await platformWalletService.getBalance(userAddress);
+      } catch (error) {
+        console.warn('Failed to load platform wallet data:', error);
+        platformBalance.value = 0;
+      }
+    }
+  };
+
+  // Watch for wallet connection changes
+  watch(connected, (isConnected) => {
+    if (isConnected) {
+      loadPlatformWalletData();
+    } else {
+      platformWalletAddress.value = '';
+      platformBalance.value = 0;
+      usePlatformWallet.value = false;
+    }
+  });
+
+  // Load data on mount if already connected
+  onMounted(() => {
+    if (connected) {
+      loadPlatformWalletData();
+    }
+  });
 
   // Actions
   const emit = defineEmits(['added']);
@@ -50,10 +88,14 @@
     errorMessage.value = '';
     
     try {
-      const tweet = await sendTweet(effectiveTopic.value, content.value);
+      const tweet = await sendTweet(effectiveTopic.value, content.value, usePlatformWallet.value);
       emit('added', tweet);
       content.value = '';
       topic.value = '';
+      // Refresh platform wallet balance after successful beacon
+      if (usePlatformWallet.value) {
+        await loadPlatformWalletData();
+      }
     } catch (error: any) {
       console.error('Beacon error:', error);
       
@@ -165,6 +207,32 @@
               <span>{{ characterLimit }}</span>
               <span class="text-xs opacity-70">left</span>
             </span>
+          </div>
+
+          <!-- Platform Wallet Selection (only when connected) -->
+          <div v-if="connected && platformWalletAddress" class="flex items-center space-x-3 text-sm">
+            <span class="text-dark-300">Payment:</span>
+            <div class="flex items-center space-x-4">
+              <label class="flex items-center space-x-2 cursor-pointer">
+                <input
+                  v-model="usePlatformWallet"
+                  type="radio"
+                  :value="false"
+                  class="text-blue-500 focus:ring-blue-500"
+                />
+                <span class="text-dark-300">Phantom Wallet</span>
+              </label>
+              <label class="flex items-center space-x-2 cursor-pointer">
+                <input
+                  v-model="usePlatformWallet"
+                  type="radio"
+                  :value="true"
+                  class="text-yellow-500 focus:ring-yellow-500"
+                />
+                <span class="text-yellow-400">Platform Wallet</span>
+                <span class="text-xs text-dark-400">({{ platformBalance.toFixed(4) }} SOL)</span>
+              </label>
+            </div>
           </div>
 
           <!-- Enhanced Tweet button -->

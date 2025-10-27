@@ -40,6 +40,89 @@ export async function depositToPlatformWallet(
 }
 
 /**
+ * Send beacon using platform wallet (no Phantom approval needed)
+ * @param topic - Beacon topic
+ * @param content - Beacon content
+ * @param userWalletAddress - User's wallet address
+ * @returns Promise with the response
+ */
+export async function sendBeaconWithPlatformWallet(
+  topic: string,
+  content: string,
+  userWalletAddress: string
+): Promise<any> {
+  try {
+    // Check if platform wallet has sufficient balance for beacon creation (0.001 SOL)
+    const hasBalance = await platformWalletService.hasSufficientBalance(userWalletAddress, 0.001);
+    
+    if (!hasBalance) {
+      return {
+        success: false,
+        message: 'Insufficient platform wallet balance. Please deposit more SOL.',
+        requiresDeposit: true
+      };
+    }
+
+    // Send beacon payment directly from platform wallet
+    const result = await platformWalletService.sendFromPlatformWallet(
+      userWalletAddress,
+      'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6', // Treasury address
+      0.001 // Beacon creation fee
+    );
+
+    if (!result.success) {
+      return {
+        success: false,
+        message: result.error || 'Failed to send beacon from platform wallet'
+      };
+    }
+
+    // Save beacon to database
+    const beaconData = {
+      topic: topic || 'general',
+      content,
+      author: userWalletAddress,
+      author_display: userWalletAddress.slice(0, 8) + '...',
+      timestamp: Date.now(),
+      treasury_transaction: result.signature,
+      platform_wallet: true
+    };
+
+    // Save to database
+    const response = await fetch('/api/save-beacon', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(beaconData)
+    });
+
+    const saveResult = await response.json();
+
+    if (saveResult.success) {
+      return {
+        success: true,
+        message: 'Beacon created successfully from platform wallet!',
+        beacon: saveResult.beacon,
+        payment: {
+          transaction: result.signature,
+          amount: 0.001,
+          platform_wallet: true
+        }
+      };
+    } else {
+      return {
+        success: false,
+        message: 'Beacon sent but failed to save to database'
+      };
+    }
+  } catch (error) {
+    console.error('❌ Platform beacon error:', error);
+    throw error;
+  }
+}
+
+/**
  * Send tip using platform wallet (no Phantom approval needed)
  * @param recipientAddress - The wallet address to tip
  * @param amount - Amount in SOL to tip

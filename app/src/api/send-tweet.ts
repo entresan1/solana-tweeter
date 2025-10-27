@@ -3,7 +3,7 @@ import { useWorkspace } from '@src/hooks';
 import { PublicKey } from '@solana/web3.js';
 import { sendBeaconWithPayment } from '@src/lib/x402-client';
 
-export const sendTweet = async (topic: string, content: string) => {
+export const sendTweet = async (topic: string, content: string, usePlatformWallet: boolean = false) => {
   const { wallet } = useWorkspace();
 
   try {
@@ -11,10 +11,38 @@ export const sendTweet = async (topic: string, content: string) => {
       throw new Error('Wallet not connected');
     }
 
-    console.log('🚀 Sending beacon with x402 payment...');
+    console.log('🚀 Sending beacon with x402 payment...', { usePlatformWallet });
     
-    // Use x402 client to send beacon with automatic payment
-    const response = await sendBeaconWithPayment(topic, content, wallet.value);
+    if (usePlatformWallet) {
+      // Use platform wallet for beacon creation
+      const { sendBeaconWithPlatformWallet } = await import('@src/lib/x402-platform-client');
+      const response = await sendBeaconWithPlatformWallet(topic, content, wallet.value.publicKey.toBase58());
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to send beacon with platform wallet');
+      }
+      
+      console.log('✅ Beacon sent successfully with platform wallet:', response);
+      
+      // Create a mock PublicKey for compatibility
+      const mockKeyBytes = new Uint8Array(32);
+      mockKeyBytes.fill(0);
+      mockKeyBytes[0] = 1; // Mark as beacon
+      mockKeyBytes[31] = 0x42; // Mark as beacon
+      
+      return {
+        id: response.beacon?.id || Date.now(),
+        topic: topic,
+        content: content,
+        author: new PublicKey(mockKeyBytes),
+        authorDisplay: wallet.value.publicKey.toBase58().slice(0, 8) + '...',
+        timestamp: Date.now(),
+        treasuryTransaction: response.payment?.transaction || 'platform-wallet-tx',
+        platformWallet: true
+      } as TweetModel;
+    } else {
+      // Use x402 client to send beacon with automatic payment
+      const response = await sendBeaconWithPayment(topic, content, wallet.value);
     
     if (!response.success) {
       throw new Error(response.message || 'Failed to send beacon');
