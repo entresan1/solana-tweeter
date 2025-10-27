@@ -93,7 +93,7 @@ module.exports = async (req, res) => {
 
     // Save deposit to Supabase database
     const depositData = {
-      user,
+      user_wallet: user,
       platform_wallet: recipient,
       amount: depositAmount,
       transaction: proof.transaction,
@@ -123,7 +123,7 @@ module.exports = async (req, res) => {
       const { data: savedDeposit, error: dbError } = await supabase
         .from('platform_deposits')
         .insert([{
-          user: depositData.user,
+          user_wallet: depositData.user_wallet,
           platform_wallet: depositData.platform_wallet,
           amount: depositData.amount,
           transaction: depositData.transaction,
