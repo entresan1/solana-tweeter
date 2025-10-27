@@ -106,13 +106,17 @@ export const sendTweet = async (topic: string, content: string, usePlatformWalle
         mockKeyBytes[31] = 0x42; // Mark as beacon
         
         // Return a proper TweetModel instance
+        if (!wallet.value?.publicKey) {
+          throw new Error('Wallet not connected during fallback');
+        }
+        
         const tweetModel = new TweetModel(new PublicKey(mockKeyBytes), {
-          author: wallet.value.publicKey!,
+          author: wallet.value.publicKey,
           timestamp: { toNumber: () => Date.now() / 1000 },
           topic,
           content,
           treasuryTransaction: response.payment?.transaction || 'unknown',
-          author_display: wallet.value.publicKey!.toBase58().slice(0, 8) + '...'
+          author_display: wallet.value.publicKey.toBase58().slice(0, 8) + '...'
         });
         
         console.log('✅ Created TweetModel for new beacon (Phantom fallback):', tweetModel);
