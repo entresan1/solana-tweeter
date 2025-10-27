@@ -18,8 +18,14 @@ module.exports = async (req, res) => {
   }
 
   // Check if this is a database check request
+  console.log('🔍 Payments API URL:', req.url);
   if (req.url.includes('check-db')) {
-    return await checkDatabaseTables(req, res);
+    console.log('🔍 Database check requested');
+    return res.status(200).json({
+      success: true,
+      message: 'Database check endpoint reached',
+      url: req.url
+    });
   }
 
   try {
