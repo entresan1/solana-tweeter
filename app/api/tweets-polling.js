@@ -5,10 +5,63 @@ const supabaseKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cC
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// Rate limiting
+const rateLimitMap = new Map();
+const RATE_LIMIT_WINDOW = 60000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 30; // 30 requests per minute
+
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const requests = rateLimitMap.get(ip) || [];
+  const validRequests = requests.filter(time => now - time < RATE_LIMIT_WINDOW);
+  
+  if (validRequests.length >= RATE_LIMIT_MAX_REQUESTS) {
+    return false;
+  }
+  
+  validRequests.push(now);
+  rateLimitMap.set(ip, validRequests);
+  return true;
+}
+
+// Input validation
+function validateInput(page, limit, since) {
+  const pageNum = parseInt(page);
+  const limitNum = parseInt(limit);
+  
+  // Validate page
+  if (isNaN(pageNum) || pageNum < 1 || pageNum > 1000) {
+    return { valid: false, error: 'Invalid page number' };
+  }
+  
+  // Validate limit
+  if (isNaN(limitNum) || limitNum < 1 || limitNum > 100) {
+    return { valid: false, error: 'Invalid limit' };
+  }
+  
+  // Validate since timestamp
+  if (since && (isNaN(parseInt(since)) || parseInt(since) < 0)) {
+    return { valid: false, error: 'Invalid since timestamp' };
+  }
+  
+  return { valid: true, page: pageNum, limit: limitNum, since: since ? parseInt(since) : null };
+}
+
 module.exports = async (req, res) => {
-  // Set CORS headers
+  // Set CORS headers - SECURITY: Restrict to specific origins
+  const allowedOrigins = [
+    'https://trenchbeacon.com',
+    'https://www.trenchbeacon.com',
+    'http://localhost:3000',
+    'http://localhost:5173'
+  ];
+  
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  
   res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
@@ -22,10 +75,35 @@ module.exports = async (req, res) => {
     return;
   }
 
+  // Rate limiting
+  const clientIP = req.headers['x-forwarded-for'] || 
+                   req.connection.remoteAddress || 
+                   req.socket.remoteAddress ||
+                   'unknown';
+  
+  if (!checkRateLimit(clientIP)) {
+    res.status(429).json({ 
+      success: false, 
+      message: 'Rate limit exceeded. Please try again later.',
+      retryAfter: 60
+    });
+    return;
+  }
+
   try {
     const { page = 1, limit = 20, since } = req.query;
-    const pageNum = parseInt(page);
-    const limitNum = parseInt(limit);
+    
+    // Validate input
+    const validation = validateInput(page, limit, since);
+    if (!validation.valid) {
+      res.status(400).json({ 
+        success: false, 
+        message: validation.error 
+      });
+      return;
+    }
+    
+    const { page: pageNum, limit: limitNum, since: sinceTimestamp } = validation;
     const offset = (pageNum - 1) * limitNum;
 
     console.log('📊 Polling tweets:', { page: pageNum, limit: limitNum, since });
@@ -37,8 +115,8 @@ module.exports = async (req, res) => {
       .range(offset, offset + limitNum - 1);
 
     // If since parameter is provided, filter by timestamp
-    if (since) {
-      const sinceDate = new Date(parseInt(since));
+    if (sinceTimestamp) {
+      const sinceDate = new Date(sinceTimestamp);
       query = query.gte('created_at', sinceDate.toISOString());
     }
 
