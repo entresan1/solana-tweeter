@@ -56,7 +56,7 @@ export function connectWebSocket() {
         websocket.close();
         loadTweetsDirectly();
       }
-    }, 5000); // 5 second timeout
+    }, 3000); // 3 second timeout
 
     websocket.onopen = () => {
       console.log('🔌 WebSocket connected');
@@ -83,33 +83,16 @@ export function connectWebSocket() {
       console.log('🔌 WebSocket closed:', event.code, event.reason);
       isConnected.value = false;
       
-      // If it's a connection error (1006), fallback immediately
-      if (event.code === 1006) {
-        console.log('🔄 WebSocket connection failed, falling back to API');
-        loadTweetsDirectly();
-        return;
-      }
-      
-      // Attempt reconnection for other close codes
-      if (reconnectAttempts < maxReconnectAttempts) {
-        reconnectAttempts++;
-        const delay = Math.min(RECONNECT_DELAY * Math.pow(2, reconnectAttempts), 30000);
-        console.log(`🔄 Reconnecting WebSocket in ${delay}ms (attempt ${reconnectAttempts}/${maxReconnectAttempts})`);
-
-        reconnectTimeout = setTimeout(() => {
-          connectWebSocket();
-        }, delay);
-      } else {
-        console.error('❌ Max reconnection attempts reached for WebSocket');
-        // Fallback to direct API call
-        loadTweetsDirectly();
-      }
+      // Always fallback to API on close - no reconnection attempts
+      console.log('🔄 WebSocket closed, falling back to API polling');
+      loadTweetsDirectly();
     };
 
     websocket.onerror = (error) => {
       console.error('❌ WebSocket error:', error);
       isConnected.value = false;
       clearTimeout(connectionTimeout);
+      console.log('🔄 WebSocket failed, falling back to API polling...');
       // Fallback to API immediately on error
       loadTweetsDirectly();
     };
@@ -138,8 +121,17 @@ export function disconnectWebSocket() {
 async function loadTweetsDirectly() {
   try {
     console.log('🔄 Loading tweets directly via API...');
-    const response = await fetch('/api/tweets-polling?page=1&limit=20');
-    const data = await response.json();
+    
+    // Try polling endpoint first
+    let response = await fetch('/api/tweets-polling?page=1&limit=20');
+    let data = await response.json();
+
+    // If polling endpoint fails, try the original tweets-unified endpoint
+    if (!data.success) {
+      console.log('🔄 Polling endpoint failed, trying tweets-unified...');
+      response = await fetch('/api/tweets-unified?page=1&limit=20');
+      data = await response.json();
+    }
 
     if (data.success) {
       tweets.value = data.data.tweets || [];
