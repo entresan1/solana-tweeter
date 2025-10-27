@@ -7,9 +7,9 @@ export const TREASURY_SOL_ADDRESS = 'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6
 // x402 Configuration
 export const X402_CONFIG = {
   network: 'solana',
-  priceSOL: 0.01, // 0.01 SOL as required
+  priceSOL: 0.001, // 0.001 SOL as required
   treasury: new PublicKey(TREASURY_SOL_ADDRESS),
-  description: 'Pay 0.01 SOL to beacon (tweet).',
+  description: 'Pay 0.001 SOL to beacon (tweet).',
 } as const;
 
 // Payment verification cache to prevent replay attacks

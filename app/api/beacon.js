@@ -6,9 +6,9 @@ const TREASURY_SOL_ADDRESS = 'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6';
 // x402 Configuration
 const X402_CONFIG = {
   network: 'solana',
-  priceSOL: 0.01,
+  priceSOL: 0.001,
   treasury: new PublicKey(TREASURY_SOL_ADDRESS),
-  description: 'Pay 0.01 SOL to beacon (tweet).',
+  description: 'Pay 0.001 SOL to beacon (tweet).',
 };
 
 // Payment verification cache (in-memory for serverless)

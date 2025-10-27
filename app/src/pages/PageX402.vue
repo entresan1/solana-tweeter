@@ -8,7 +8,7 @@
         </h1>
         <p class="text-xl text-dark-300 max-w-3xl mx-auto">
           Trench Beacon uses the <strong>x402 Payment Required</strong> protocol for transparent, on-chain payments.
-          Every beacon requires a verifiable 0.01 SOL payment to our public treasury.
+          Every beacon requires a verifiable 0.001 SOL payment to our public treasury.
         </p>
       </div>
 
@@ -96,7 +96,7 @@
                   <span class="font-mono text-sm">{{ payment.author.slice(0, 8) }}...{{ payment.author.slice(-8) }}</span>
                 </td>
                 <td class="py-3 px-4">
-                  <span class="text-green-400 font-semibold">0.01 SOL</span>
+                  <span class="text-green-400 font-semibold">0.001 SOL</span>
                 </td>
                 <td class="py-3 px-4 text-sm text-dark-300">
                   {{ formatTimestamp(payment.timestamp) }}
@@ -181,12 +181,12 @@
             </div>
 
             <div>
-              <h3 class="text-lg font-semibold text-white mb-2">Step 2: Pay 0.01 SOL to Treasury</h3>
+              <h3 class="text-lg font-semibold text-white mb-2">Step 2: Pay 0.001 SOL to Treasury</h3>
               <div class="bg-black rounded-lg p-4 overflow-x-auto">
-                <pre class="text-blue-400 text-sm"><code># User pays 0.01 SOL to: {{ treasuryAddress }}
+                <pre class="text-blue-400 text-sm"><code># User pays 0.001 SOL to: {{ treasuryAddress }}
 # Transaction signature: 3DwerjP7...</code></pre>
               </div>
-              <p class="text-sm text-dark-400 mt-2">Payment must be exactly 0.01 SOL to our treasury address</p>
+              <p class="text-sm text-dark-400 mt-2">Payment must be exactly 0.001 SOL to our treasury address</p>
             </div>
 
             <div>
@@ -194,7 +194,7 @@
               <div class="bg-black rounded-lg p-4 overflow-x-auto">
                 <pre class="text-yellow-400 text-sm"><code>curl -i -X POST https://trenchbeacon.com/api/beacon \
   -H "Content-Type: application/json" \
-  -H "x-402-proof: {\"transaction\":\"3DwerjP7...\",\"amount\":0.01,\"network\":\"solana\"}" \
+  -H "x-402-proof: {\"transaction\":\"3DwerjP7...\",\"amount\":0.001,\"network\":\"solana\"}" \
   -d '{"topic":"test","content":"hello world","author":"demo"}'</code></pre>
               </div>
               <p class="text-sm text-dark-400 mt-2">Server verifies payment and creates beacon</p>
