@@ -2,16 +2,63 @@
 -- This script creates secure but functional RLS policies
 
 -- ========================================
+-- CREATE MISSING TABLES FIRST
+-- ========================================
+
+-- Create platform_transactions table if it doesn't exist
+CREATE TABLE IF NOT EXISTS platform_transactions (
+    id BIGSERIAL PRIMARY KEY,
+    user_wallet TEXT NOT NULL,
+    platform_wallet TEXT NOT NULL,
+    amount DECIMAL(20, 9) NOT NULL,
+    transaction TEXT NOT NULL,
+    timestamp BIGINT NOT NULL,
+    type TEXT NOT NULL CHECK (type IN ('deposit', 'withdrawal', 'tip', 'beacon')),
+    recipient TEXT,
+    message TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create indexes for platform_transactions
+CREATE INDEX IF NOT EXISTS idx_platform_transactions_user_wallet ON platform_transactions(user_wallet);
+CREATE INDEX IF NOT EXISTS idx_platform_transactions_platform_wallet ON platform_transactions(platform_wallet);
+CREATE INDEX IF NOT EXISTS idx_platform_transactions_timestamp ON platform_transactions(timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_platform_transactions_type ON platform_transactions(type);
+CREATE INDEX IF NOT EXISTS idx_platform_transactions_transaction ON platform_transactions(transaction);
+
+-- ========================================
 -- DISABLE RLS TEMPORARILY
 -- ========================================
 
 -- Disable RLS on all tables temporarily to avoid conflicts
-ALTER TABLE beacons DISABLE ROW LEVEL SECURITY;
-ALTER TABLE beacon_likes DISABLE ROW LEVEL SECURITY;
-ALTER TABLE rug_reports DISABLE ROW LEVEL SECURITY;
-ALTER TABLE tips DISABLE ROW LEVEL SECURITY;
-ALTER TABLE user_profiles DISABLE ROW LEVEL SECURITY;
-ALTER TABLE platform_transactions DISABLE ROW LEVEL SECURITY;
+-- Use IF EXISTS to avoid errors if tables don't exist
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'beacons') THEN
+        ALTER TABLE beacons DISABLE ROW LEVEL SECURITY;
+    END IF;
+    
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'beacon_likes') THEN
+        ALTER TABLE beacon_likes DISABLE ROW LEVEL SECURITY;
+    END IF;
+    
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'rug_reports') THEN
+        ALTER TABLE rug_reports DISABLE ROW LEVEL SECURITY;
+    END IF;
+    
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'tips') THEN
+        ALTER TABLE tips DISABLE ROW LEVEL SECURITY;
+    END IF;
+    
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'user_profiles') THEN
+        ALTER TABLE user_profiles DISABLE ROW LEVEL SECURITY;
+    END IF;
+    
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'platform_transactions') THEN
+        ALTER TABLE platform_transactions DISABLE ROW LEVEL SECURITY;
+    END IF;
+END $$;
 
 -- ========================================
 -- DROP ALL EXISTING POLICIES
@@ -51,13 +98,33 @@ DROP POLICY IF EXISTS "Allow public insert access to user_profiles" ON user_prof
 -- ENABLE RLS
 -- ========================================
 
--- Re-enable RLS on all tables
-ALTER TABLE beacons ENABLE ROW LEVEL SECURITY;
-ALTER TABLE beacon_likes ENABLE ROW LEVEL SECURITY;
-ALTER TABLE rug_reports ENABLE ROW LEVEL SECURITY;
-ALTER TABLE tips ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE platform_transactions ENABLE ROW LEVEL SECURITY;
+-- Re-enable RLS on all tables (only if they exist)
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'beacons') THEN
+        ALTER TABLE beacons ENABLE ROW LEVEL SECURITY;
+    END IF;
+    
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'beacon_likes') THEN
+        ALTER TABLE beacon_likes ENABLE ROW LEVEL SECURITY;
+    END IF;
+    
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'rug_reports') THEN
+        ALTER TABLE rug_reports ENABLE ROW LEVEL SECURITY;
+    END IF;
+    
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'tips') THEN
+        ALTER TABLE tips ENABLE ROW LEVEL SECURITY;
+    END IF;
+    
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'user_profiles') THEN
+        ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+    END IF;
+    
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'platform_transactions') THEN
+        ALTER TABLE platform_transactions ENABLE ROW LEVEL SECURITY;
+    END IF;
+END $$;
 
 -- ========================================
 -- CREATE SECURE RLS POLICIES
