@@ -94,7 +94,7 @@
 </script>
 
 <template>
-  <aside class="flex flex-col items-center md:items-stretch space-y-2 md:space-y-4 h-full">
+  <aside class="fixed left-0 top-0 h-screen w-20 md:w-64 z-10 flex flex-col items-center md:items-stretch space-y-2 md:space-y-4 py-4 md:py-8 md:pl-4 md:pr-8 bg-dark-900/95 backdrop-blur-xl border-r border-dark-700/50">
     <!-- Logo -->
     <div class="mb-8">
       <SafeRouterLink

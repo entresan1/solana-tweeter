@@ -65,7 +65,7 @@
     
     <div class="relative w-full max-w-6xl mx-auto">
       <!-- Sidebar -->
-      <the-sidebar class="py-4 md:py-8 md:pl-4 md:pr-8 fixed w-20 md:w-64 z-10" />
+      <the-sidebar />
 
       <!-- Main Content -->
       <main class="flex-1 ml-20 md:ml-64 min-h-screen">
