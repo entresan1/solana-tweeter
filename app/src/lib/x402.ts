@@ -87,10 +87,12 @@ export async function verifyX402Payment(
 
     // Alternative verification: check transaction instructions
     if (!paymentFound && transaction.transaction?.message?.instructions) {
+      const accounts = transaction.transaction.message.accountKeys;
       for (const instruction of transaction.transaction.message.instructions) {
-        if (instruction.programId.equals(SystemProgram.programId)) {
+        // Get the program ID from the accounts array
+        const programId = accounts[instruction.programIdIndex];
+        if (programId && programId.equals(SystemProgram.programId)) {
           // This is a system program instruction, check if it's a transfer
-          const accounts = transaction.transaction.message.accountKeys;
           if (instruction.accounts && instruction.accounts.length >= 2) {
             const toAccount = accounts[instruction.accounts[1]];
             if (toAccount && toAccount.equals(treasuryPubkey)) {
