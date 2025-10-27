@@ -134,7 +134,7 @@
         <div class="relative flex-1 max-w-xs group/topic">
           <input
             type="text"
-            placeholder="Add a topic... (optional)"
+            placeholder="Add a topic..."
             class="input-field pl-10 pr-4 py-2 text-sm transition-all duration-300 focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500"
             :class="{}"
             :value="effectiveTopic"
