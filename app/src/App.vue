@@ -23,9 +23,11 @@
   onMounted(() => {
     initWorkspace();
     
-    // Initialize HTTP tweets service
-    console.log('🚀 Starting HTTP tweets service...');
-    initializeTweetsService();
+    // Delay tweets service initialization to let router settle
+    setTimeout(() => {
+      console.log('🚀 Starting HTTP tweets service...');
+      initializeTweetsService();
+    }, 200); // 200ms delay
   });
 
   // Watch for wallet changes

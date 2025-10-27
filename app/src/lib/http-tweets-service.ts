@@ -35,12 +35,16 @@ async function loadTweets() {
     }
 
     if (data.success && Array.isArray(data.data.tweets)) {
-      tweets.value = data.data.tweets;
-      isInitialized.value = true;
-      console.log('✅ Loaded tweets via HTTP:', tweets.value.length);
-      
-      // Emit event safely
-      emit('tweets_loaded', tweets.value);
+      try {
+        tweets.value = data.data.tweets;
+        isInitialized.value = true;
+        console.log('✅ Loaded tweets via HTTP:', tweets.value.length);
+        
+        // Emit event safely
+        emit('tweets_loaded', tweets.value);
+      } catch (error) {
+        console.error('❌ Error updating tweets data:', error);
+      }
     } else {
       console.error('❌ Failed to load tweets:', data.message);
     }
@@ -69,9 +73,13 @@ function startPolling() {
         
         // Only update if tweets have changed
         if (JSON.stringify(newTweets) !== JSON.stringify(tweets.value)) {
-          tweets.value = newTweets;
-          emit('tweets_update', newTweets);
-          console.log('🔄 HTTP polling update:', newTweets.length, 'tweets');
+          try {
+            tweets.value = newTweets;
+            emit('tweets_update', newTweets);
+            console.log('🔄 HTTP polling update:', newTweets.length, 'tweets');
+          } catch (error) {
+            console.error('❌ Error updating tweets during polling:', error);
+          }
         }
       }
     } catch (error) {
@@ -95,9 +103,15 @@ function stopPolling() {
  */
 export function initializeTweetsService() {
   console.log('🚀 Initializing HTTP tweets service...');
-  loadTweets().then(() => {
-    startPolling();
-  });
+  
+  // Delay initialization to let router settle
+  setTimeout(() => {
+    loadTweets().then(() => {
+      startPolling();
+    }).catch(error => {
+      console.error('❌ Error initializing tweets service:', error);
+    });
+  }, 100); // 100ms delay
 }
 
 /**
@@ -133,15 +147,36 @@ export function refreshTweets() {
  */
 function emit(event: string, data?: any) {
   try {
-    const listeners = eventListeners.get(event);
-    if (listeners) {
-      listeners.forEach(listener => {
+    // Use nextTick to avoid interfering with router
+    if (typeof window !== 'undefined' && window.requestAnimationFrame) {
+      window.requestAnimationFrame(() => {
         try {
-          listener(data);
+          const listeners = eventListeners.get(event);
+          if (listeners) {
+            listeners.forEach(listener => {
+              try {
+                listener(data);
+              } catch (error) {
+                console.error(`❌ Error in event listener for ${event}:`, error);
+              }
+            });
+          }
         } catch (error) {
-          console.error(`❌ Error in event listener for ${event}:`, error);
+          console.error(`❌ Error in emit animation frame for ${event}:`, error);
         }
       });
+    } else {
+      // Fallback for environments without requestAnimationFrame
+      const listeners = eventListeners.get(event);
+      if (listeners) {
+        listeners.forEach(listener => {
+          try {
+            listener(data);
+          } catch (error) {
+            console.error(`❌ Error in event listener for ${event}:`, error);
+          }
+        });
+      }
     }
   } catch (error) {
     console.error(`❌ Error emitting event ${event}:`, error);
