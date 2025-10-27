@@ -208,8 +208,7 @@ module.exports = async (req, res) => {
       });
     }
 
-    // For now, return success without database integration
-    // In production, you would integrate with your Supabase database here
+    // Save beacon to Supabase database
     const beaconData = {
       topic: topic || 'general', // Default topic if not provided
       content,
@@ -219,17 +218,66 @@ module.exports = async (req, res) => {
       treasury_transaction: proof.transaction,
     };
 
-    console.log('✅ Beacon created with x402 payment:', beaconData);
+    console.log('💾 Saving beacon to database:', beaconData);
 
-    return res.status(200).json({
-      success: true,
-      message: 'Beacon created successfully',
-      beacon: beaconData,
-      payment: {
-        transaction: proof.transaction,
-        amount: proof.amount || X402_CONFIG.priceSOL,
-      },
-    });
+    try {
+      // Import beaconService (we need to adjust the path for Vercel)
+      const { createClient } = require('@supabase/supabase-js');
+      
+      const supabaseUrl = process.env.VITE_SUPABASE_URL;
+      const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+      
+      if (!supabaseUrl || !supabaseKey) {
+        console.error('❌ Missing Supabase environment variables');
+        return res.status(500).json({
+          error: 'Configuration Error',
+          message: 'Database configuration missing',
+        });
+      }
+
+      const supabase = createClient(supabaseUrl, supabaseKey);
+
+      // Insert beacon into database
+      const { data: savedBeacon, error: dbError } = await supabase
+        .from('beacons')
+        .insert([{
+          topic: beaconData.topic,
+          content: beaconData.content,
+          author: beaconData.author,
+          author_display: beaconData.author_display,
+          timestamp: new Date(beaconData.timestamp).toISOString(),
+          treasury_transaction: beaconData.treasury_transaction,
+        }])
+        .select()
+        .single();
+
+      if (dbError) {
+        console.error('❌ Database save error:', dbError);
+        return res.status(500).json({
+          error: 'Database Error',
+          message: 'Failed to save beacon to database',
+        });
+      }
+
+      console.log('✅ Beacon saved to database:', savedBeacon);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Beacon created successfully',
+        beacon: savedBeacon,
+        payment: {
+          transaction: proof.transaction,
+          amount: proof.amount || X402_CONFIG.priceSOL,
+        },
+      });
+
+    } catch (dbError) {
+      console.error('❌ Database operation failed:', dbError);
+      return res.status(500).json({
+        error: 'Database Error',
+        message: 'Failed to save beacon to database',
+      });
+    }
   } catch (error) {
     console.error('❌ Beacon API error:', error);
     return res.status(500).json({

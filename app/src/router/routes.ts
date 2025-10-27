@@ -3,6 +3,7 @@ import TopicsPage from '@src/pages/PageTopics.vue';
 import UsersPage from '@src/pages/PageUsers.vue';
 import ProfilePage from '@src/pages/PageProfile.vue';
 import TweetPage from '@src/pages/PageTweet.vue';
+import X402Page from '@src/pages/PageX402.vue';
 import NotFoundPage from '@src/pages/PageNotFound.vue';
 
 export default [
