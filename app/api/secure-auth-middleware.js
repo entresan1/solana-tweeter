@@ -79,6 +79,9 @@ function generateCSRFToken() {
   const timestamp = Date.now();
   csrfTokens.set(token, timestamp);
   
+  console.log('🔐 Generated CSRF token:', token);
+  console.log('🔐 Total tokens in storage:', csrfTokens.size);
+  
   // Clean up old tokens
   const now = Date.now();
   for (const [t, ts] of csrfTokens.entries()) {
@@ -92,16 +95,28 @@ function generateCSRFToken() {
 
 // Verify CSRF token
 function verifyCSRFToken(token) {
-  if (!token || !csrfTokens.has(token)) return false;
+  console.log('🔐 Verifying CSRF token:', token);
+  console.log('🔐 Token exists in storage:', csrfTokens.has(token));
+  console.log('🔐 Available tokens:', Array.from(csrfTokens.keys()));
+  
+  if (!token || !csrfTokens.has(token)) {
+    console.log('❌ Token not found in storage');
+    return false;
+  }
   
   const timestamp = csrfTokens.get(token);
   const now = Date.now();
+  const age = now - timestamp;
   
-  if (now - timestamp > CSRF_TOKEN_TTL) {
+  console.log('🔐 Token age:', age, 'ms (TTL:', CSRF_TOKEN_TTL, 'ms)');
+  
+  if (age > CSRF_TOKEN_TTL) {
+    console.log('❌ Token expired, removing from storage');
     csrfTokens.delete(token);
     return false;
   }
   
+  console.log('✅ CSRF token is valid');
   return true;
 }
 

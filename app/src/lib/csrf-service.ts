@@ -11,19 +11,10 @@ class CSRFService {
     return CSRFService.instance;
   }
 
-  // Get CSRF token (with caching)
+  // Get CSRF token (always fetch fresh)
   async getToken(): Promise<string> {
-    if (this.csrfToken) {
-      return this.csrfToken;
-    }
-
-    if (this.tokenPromise) {
-      return this.tokenPromise;
-    }
-
-    this.tokenPromise = this.fetchToken();
-    this.csrfToken = await this.tokenPromise;
-    return this.csrfToken;
+    // Always fetch a fresh token to avoid caching issues
+    return this.fetchToken();
   }
 
   // Fetch CSRF token from server
