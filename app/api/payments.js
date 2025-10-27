@@ -18,7 +18,7 @@ module.exports = async (req, res) => {
   }
 
   // Check if this is a database check request
-  if (req.url.includes('?check-db=true')) {
+  if (req.url.includes('check-db')) {
     return await checkDatabaseTables(req, res);
   }
 
