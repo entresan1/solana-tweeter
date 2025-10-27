@@ -126,7 +126,7 @@ function handleTweetsSSEMessage(data: any) {
       
       if (tweets.value.length > 0) {
         lastTweetTimestamp.value = Math.max(
-          ...tweets.value.map(t => 
+          ...tweets.value.map((t: any) => 
             typeof t.timestamp === 'number' ? t.timestamp : new Date(t.timestamp).getTime()
           )
         );
