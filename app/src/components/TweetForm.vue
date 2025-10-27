@@ -88,14 +88,13 @@
     errorMessage.value = '';
     
     try {
-      const tweet = await sendTweet(effectiveTopic.value, content.value, usePlatformWallet.value);
+      // Always try platform wallet first, automatic fallback to Phantom
+      const tweet = await sendTweet(effectiveTopic.value, content.value, true);
       emit('added', tweet);
       content.value = '';
       topic.value = '';
-      // Refresh platform wallet balance after successful beacon
-      if (usePlatformWallet.value) {
-        await loadPlatformWalletData();
-      }
+      // Always refresh platform wallet balance after successful beacon
+      await loadPlatformWalletData();
     } catch (error: any) {
       console.error('Beacon error:', error);
       
@@ -209,29 +208,17 @@
             </span>
           </div>
 
-          <!-- Platform Wallet Selection (only when connected) -->
+          <!-- Automatic Wallet Selection Info (only when connected) -->
           <div v-if="connected && platformWalletAddress" class="flex items-center space-x-3 text-sm">
             <span class="text-dark-300">Payment:</span>
-            <div class="flex items-center space-x-4">
-              <label class="flex items-center space-x-2 cursor-pointer">
-                <input
-                  v-model="usePlatformWallet"
-                  type="radio"
-                  :value="false"
-                  class="text-blue-500 focus:ring-blue-500"
-                />
-                <span class="text-dark-300">Phantom Wallet</span>
-              </label>
-              <label class="flex items-center space-x-2 cursor-pointer">
-                <input
-                  v-model="usePlatformWallet"
-                  type="radio"
-                  :value="true"
-                  class="text-yellow-500 focus:ring-yellow-500"
-                />
-                <span class="text-yellow-400">Platform Wallet</span>
-                <span class="text-xs text-dark-400">({{ platformBalance.toFixed(4) }} SOL)</span>
-              </label>
+            <div class="flex items-center space-x-2">
+              <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" />
+              </svg>
+              <span class="text-yellow-400 font-medium">Smart Payment</span>
+              <span class="text-xs text-dark-400">
+                (Platform: {{ platformBalance.toFixed(4) }} SOL → Phantom fallback)
+              </span>
             </div>
           </div>
 
@@ -240,7 +227,7 @@
             class="btn-primary text-sm px-6 py-2 relative overflow-hidden group/btn"
             :disabled="!canTweet || isSubmitting"
             :class="(!canTweet || isSubmitting) ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'"
-            :title="!content.trim() ? 'Please enter content' : characterLimit <= 0 ? 'Content too long' : 'Send beacon'"
+            :title="!content.trim() ? 'Please enter content' : characterLimit <= 0 ? 'Content too long' : 'Smart beacon: Uses platform wallet if available, falls back to Phantom'"
             @click="send"
           >
             <span class="flex items-center space-x-2 relative z-10">
@@ -251,7 +238,7 @@
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              <span>{{ isSubmitting ? 'Sending...' : 'Beacon' }}</span>
+              <span>{{ isSubmitting ? 'Sending...' : 'Smart Beacon' }}</span>
             </span>
           </button>
         </div>
@@ -274,6 +261,7 @@
         <div class="mt-4 p-3 bg-primary-500/10 border border-primary-500/20 rounded-lg">
           <p class="text-sm text-primary-300">
             Each beacon costs 0.001 SOL and creates an on-chain transaction.
+            Smart payment: Uses platform wallet if available, falls back to Phantom wallet.
             The transaction signature becomes your beacon's unique ID on Solscan!
           </p>
         </div>
