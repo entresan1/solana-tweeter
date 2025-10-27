@@ -1,15 +1,15 @@
-import { beaconService } from './supabase';
+import { ref } from 'vue';
+import { on, off, getNewBeaconsCount, resetNotificationCount as resetSSECount } from './sse-service';
 
-// Notification service for tracking new beacons
-export class NotificationService {
+class NotificationService {
   private static instance: NotificationService;
-  private lastBeaconTimestamp: number = 0;
-  private newBeaconCount: number = 0;
+  private newBeaconCount = ref(0);
+  private currentUserAddress: string | null = null;
   private listeners: Array<(count: number) => void> = [];
 
   private constructor() {
-    // Initialize with current timestamp
-    this.lastBeaconTimestamp = Date.now();
+    // Initialize with SSE service count
+    this.newBeaconCount.value = getNewBeaconsCount();
   }
 
   public static getInstance(): NotificationService {
@@ -32,69 +32,57 @@ export class NotificationService {
 
   // Notify all listeners
   private notifyListeners(): void {
-    this.listeners.forEach(callback => callback(this.newBeaconCount));
+    this.listeners.forEach(callback => callback(this.newBeaconCount.value));
   }
 
-  // Check for new beacons
-  public async checkForNewBeacons(currentUserAddress?: string): Promise<void> {
-    try {
-      console.log('🔔 Checking for new beacons...');
-      
-      // Fetch recent beacons
-      const beacons = await beaconService.fetchBeacons();
-      
-      // Count beacons newer than our last check, excluding user's own beacons
-      const newBeacons = beacons.filter(beacon => {
-        const beaconTime = typeof beacon.timestamp === 'number' 
-          ? beacon.timestamp 
-          : new Date(beacon.timestamp).getTime();
-        
-        // Only count if it's newer than our last check
-        const isNew = beaconTime > this.lastBeaconTimestamp;
-        
-        // Exclude user's own beacons if currentUserAddress is provided
-        const isNotOwnBeacon = !currentUserAddress || beacon.author !== currentUserAddress;
-        
-        return isNew && isNotOwnBeacon;
-      });
-
-      if (newBeacons.length > 0) {
-        console.log(`🔔 Found ${newBeacons.length} new beacons (excluding own beacons)!`);
-        this.newBeaconCount += newBeacons.length;
+  // Start periodic checking with SSE integration
+  public startPeriodicCheck(currentUserAddress?: string): void {
+    console.log('🔔 Starting SSE-based notification service...');
+    this.currentUserAddress = currentUserAddress || null;
+    
+    // Listen for new beacons from SSE
+    on('new_beacon', (beacon: any) => {
+      // Only count if not from current user
+      if (!this.currentUserAddress || beacon.author !== this.currentUserAddress) {
+        this.newBeaconCount.value++;
+        console.log(`🔔 New beacon notification: ${this.newBeaconCount.value}`);
         this.notifyListeners();
       }
+    });
 
-      // Update timestamp to the latest beacon (including own beacons for timestamp tracking)
-      if (beacons.length > 0) {
-        const latestBeacon = beacons[0]; // They're ordered by timestamp desc
-        const latestTime = typeof latestBeacon.timestamp === 'number' 
-          ? latestBeacon.timestamp 
-          : new Date(latestBeacon.timestamp).getTime();
-        this.lastBeaconTimestamp = latestTime;
-      }
-    } catch (error) {
-      console.error('❌ Error checking for new beacons:', error);
-    }
+    // Sync with SSE service count
+    this.newBeaconCount.value = getNewBeaconsCount();
+    this.notifyListeners();
   }
 
-  // Reset notification count (when user refreshes or visits home)
+  // Stop periodic checking
+  public stopPeriodicCheck(): void {
+    console.log('🔔 Stopping notification service...');
+    // Clean up event listeners
+    off('new_beacon', () => {});
+  }
+
+  // Reset notification count
   public resetNotificationCount(): void {
     console.log('🔔 Resetting notification count');
-    this.newBeaconCount = 0;
+    this.newBeaconCount.value = 0;
+    resetSSECount();
     this.notifyListeners();
   }
 
   // Get current notification count
   public getNotificationCount(): number {
-    return this.newBeaconCount;
+    return this.newBeaconCount.value;
   }
 
-  // Start periodic checking (every 30 seconds)
-  public startPeriodicCheck(currentUserAddress?: string): void {
-    console.log('🔔 Starting periodic beacon check...');
-    setInterval(() => {
-      this.checkForNewBeacons(currentUserAddress);
-    }, 30000); // Check every 30 seconds
+  // Update current user address
+  public updateCurrentUser(currentUserAddress: string | null): void {
+    this.currentUserAddress = currentUserAddress;
+  }
+
+  // Get reactive count for Vue components
+  public get newBeaconsCount() {
+    return this.newBeaconCount;
   }
 }
 

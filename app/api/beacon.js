@@ -1,138 +1,4 @@
-const { Connection, PublicKey, LAMPORTS_PER_SOL, SystemProgram } = require('@solana/web3.js');
-
-// Treasury address for beacon payments
-const TREASURY_SOL_ADDRESS = 'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6';
-
-// x402 Configuration
-const X402_CONFIG = {
-  network: 'solana',
-  priceSOL: 0.001,
-  treasury: new PublicKey(TREASURY_SOL_ADDRESS),
-  description: 'Pay 0.001 SOL to beacon (tweet).',
-};
-
-// Payment verification cache (in-memory for serverless)
-const paymentCache = new Map();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-
-// Clean up expired cache entries
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, value] of paymentCache.entries()) {
-    if (now - value.timestamp > CACHE_TTL) {
-      paymentCache.delete(key);
-    }
-  }
-}, 60000);
-
-/**
- * Verify x402 payment proof
- */
-async function verifyX402Payment(proof, connection) {
-  try {
-    if (!proof || !proof.transaction) {
-      return { valid: false, error: 'Missing payment proof' };
-    }
-
-    const cacheKey = `${proof.transaction}-${proof.amount || '0.01'}`;
-    
-    // Check cache first
-    const cached = paymentCache.get(cacheKey);
-    if (cached && cached.verified) {
-      return { valid: true };
-    }
-
-    // Verify transaction exists and is confirmed
-    const signature = proof.transaction;
-    const transaction = await connection.getTransaction(signature, {
-      commitment: 'confirmed',
-    });
-
-    if (!transaction) {
-      return { valid: false, error: 'Transaction not found or not confirmed' };
-    }
-
-    // Verify transaction is to our treasury
-    const treasuryPubkey = X402_CONFIG.treasury;
-    const expectedAmount = X402_CONFIG.priceSOL * LAMPORTS_PER_SOL;
-
-    // Check if transaction contains transfer to treasury
-    let paymentFound = false;
-    let actualAmount = 0;
-
-    if (transaction.meta?.preBalances && transaction.meta?.postBalances) {
-      const accounts = transaction.transaction.message.accountKeys;
-      const treasuryIndex = accounts.findIndex(key => key.equals(treasuryPubkey));
-      
-      if (treasuryIndex !== -1) {
-        const preBalance = transaction.meta.preBalances[treasuryIndex];
-        const postBalance = transaction.meta.postBalances[treasuryIndex];
-        actualAmount = postBalance - preBalance;
-        
-        if (actualAmount >= expectedAmount) {
-          paymentFound = true;
-          console.log('✅ Payment found via balance change');
-        }
-      }
-    }
-
-    // Alternative verification: check transaction instructions
-    if (!paymentFound && transaction.transaction?.message?.instructions) {
-      const accounts = transaction.transaction.message.accountKeys;
-      for (const instruction of transaction.transaction.message.instructions) {
-        // Get the program ID from the accounts array
-        const programId = accounts[instruction.programIdIndex];
-        
-        if (programId && programId.equals(SystemProgram.programId)) {
-          // This is a system program instruction, check if it's a transfer
-          if (instruction.accounts && instruction.accounts.length >= 2) {
-            const toAccount = accounts[instruction.accounts[1]];
-            
-            if (toAccount && toAccount.equals(treasuryPubkey)) {
-              // This is a transfer to our treasury
-              paymentFound = true;
-              actualAmount = expectedAmount;
-              console.log('✅ Payment found via instruction verification');
-              break;
-            }
-          }
-        }
-      }
-    }
-
-    console.log('🔍 Payment verification result:', { paymentFound, actualAmount, expectedAmount });
-    
-    if (!paymentFound) {
-      return { valid: false, error: 'Payment not found or insufficient amount' };
-    }
-
-    // Verify network (mainnet only)
-    const cluster = connection.rpcEndpoint;
-    if (!cluster.includes('mainnet') && !cluster.includes('quiknode.pro')) {
-      return { valid: false, error: 'Only mainnet payments are accepted' };
-    }
-
-    // Cache successful verification
-    paymentCache.set(cacheKey, { timestamp: Date.now(), verified: true });
-
-    return { valid: true };
-  } catch (error) {
-    console.error('x402 payment verification error:', error);
-    return { valid: false, error: 'Payment verification failed' };
-  }
-}
-
-/**
- * Create x402 payment request response
- */
-function createX402PaymentRequest(amount = X402_CONFIG.priceSOL, description = X402_CONFIG.description) {
-  return {
-    network: X402_CONFIG.network,
-    recipient: X402_CONFIG.treasury.toBase58(),
-    price: { token: 'SOL', amount },
-    config: { description },
-  };
-}
+const treasuryService = require('./treasury-service');
 
 module.exports = async (req, res) => {
   // Set CORS headers
@@ -152,12 +18,6 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Initialize Solana connection
-    const connection = new Connection(
-      'https://small-twilight-sponge.solana-mainnet.quiknode.pro/71bdb31dd3e965467b1393cebaaebe69d481dbeb/',
-      'confirmed'
-    );
-
     console.log('🔍 Request body:', req.body);
 
     // Check for x402 proof in headers
@@ -166,8 +26,8 @@ module.exports = async (req, res) => {
     if (!x402Proof) {
       return res.status(402).json({
         error: 'Payment Required',
-        message: 'This endpoint requires a 0.01 SOL payment',
-        payment: createX402PaymentRequest(),
+        message: 'This endpoint requires a 0.001 SOL payment',
+        payment: treasuryService.createX402PaymentRequest(),
       });
     }
 
@@ -182,110 +42,68 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Verify payment
+    // Verify payment using secure service
     console.log('🔍 Verifying payment proof:', proof);
-    const verification = await verifyX402Payment(proof, connection);
+    const verification = await treasuryService.verifyX402Payment(proof, treasuryService.connection);
     console.log('🔍 Payment verification result:', verification);
     
     if (!verification.valid) {
       return res.status(402).json({
         error: 'Payment Verification Failed',
         message: verification.error || 'Invalid payment proof',
-        payment: createX402PaymentRequest(),
+        payment: treasuryService.createX402PaymentRequest(),
       });
     }
 
     // If we reach here, payment was verified successfully
-    console.log('🔍 Request body:', req.body);
     const { topic, content, author, author_display } = req.body;
 
-    // Validate required fields
-    if (!content || !author) {
-      console.log('❌ Missing required fields:', { topic, content, author });
+    // Server-side validation
+    const validation = treasuryService.validateBeaconData({ topic, content, author, author_display });
+    if (!validation.valid) {
       return res.status(400).json({
-        error: 'Missing required fields',
-        message: 'content and author are required',
+        error: 'Validation Failed',
+        message: validation.errors.join(', '),
       });
     }
 
-    // Save beacon to Supabase database
+    // Prepare beacon data
     const beaconData = {
-      topic: topic && topic.trim() ? topic.trim() : 'general', // Ensure topic is never null/empty
-      content,
+      topic: topic && topic.trim() ? topic.trim() : 'general',
+      content: content.trim(),
       author,
       author_display: author_display || author.slice(0, 8) + '...',
       timestamp: Date.now(),
       treasury_transaction: proof.transaction,
+      platform_wallet: false, // Always false for direct payments
     };
 
-    console.log('💾 Saving beacon to database (v2):', beaconData);
+    console.log('💾 Saving beacon to database:', beaconData);
 
+    // Save beacon using secure service
+    const savedBeacon = await treasuryService.saveBeacon(beaconData);
+
+    console.log('✅ Beacon saved to database:', savedBeacon);
+
+    // Broadcast new beacon via SSE
     try {
-      // Import beaconService (we need to adjust the path for Vercel)
-      const { createClient } = require('@supabase/supabase-js');
-      
-      const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-      const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
-      
-      console.log('🔍 Environment variables check:');
-      console.log('VITE_SUPABASE_URL:', process.env.VITE_SUPABASE_URL ? 'SET' : 'NOT SET');
-      console.log('SUPABASE_URL:', process.env.SUPABASE_URL ? 'SET' : 'NOT SET');
-      console.log('VITE_SUPABASE_ANON_KEY:', process.env.VITE_SUPABASE_ANON_KEY ? 'SET' : 'NOT SET');
-      console.log('SUPABASE_ANON_KEY:', process.env.SUPABASE_ANON_KEY ? 'SET' : 'NOT SET');
-      console.log('Final supabaseUrl:', supabaseUrl ? 'SET' : 'NOT SET');
-      console.log('Final supabaseKey:', supabaseKey ? 'SET' : 'NOT SET');
-      
-      if (!supabaseUrl || !supabaseKey) {
-        console.error('❌ Missing Supabase environment variables');
-        return res.status(500).json({
-          error: 'Configuration Error',
-          message: 'Database configuration missing',
-        });
-      }
-
-      const supabase = createClient(supabaseUrl, supabaseKey);
-
-      // Insert beacon into database
-      const { data: savedBeacon, error: dbError } = await supabase
-        .from('beacons')
-        .insert([{
-          topic: beaconData.topic || 'general', // Ensure topic is never null
-          content: beaconData.content,
-          author: beaconData.author,
-          author_display: beaconData.author_display,
-          timestamp: beaconData.timestamp, // Keep as bigint (milliseconds)
-          treasury_transaction: beaconData.treasury_transaction,
-        }])
-        .select()
-        .single();
-
-      if (dbError) {
-        console.error('❌ Database save error:', dbError);
-        return res.status(500).json({
-          error: 'Database Error',
-          message: 'Failed to save beacon to database',
-        });
-      }
-
-      console.log('✅ Beacon saved to database:', savedBeacon);
-
-      return res.status(200).json({
-        success: true,
-        message: 'Beacon created successfully',
-        beacon: savedBeacon,
-        payment: {
-          transaction: proof.transaction,
-          amount: proof.amount || X402_CONFIG.priceSOL,
-        },
-      });
-
-    } catch (dbError) {
-      console.error('❌ Database operation failed:', dbError);
-      return res.status(500).json({
-        error: 'Database Error',
-        message: 'Failed to save beacon to database',
-      });
+      const { broadcastNewBeacon } = require('./events');
+      broadcastNewBeacon(savedBeacon);
+    } catch (error) {
+      console.error('Failed to broadcast new beacon:', error);
+      // Don't fail the request if SSE broadcast fails
     }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Beacon created successfully',
+      beacon: savedBeacon,
+      payment: {
+        transaction: proof.transaction,
+        amount: proof.amount || treasuryService.X402_CONFIG.priceSOL,
+      },
+    });
+
   } catch (error) {
     console.error('❌ Beacon API error:', error);
     return res.status(500).json({

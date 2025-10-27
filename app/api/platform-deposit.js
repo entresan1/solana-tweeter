@@ -1,4 +1,10 @@
-const { Connection, LAMPORTS_PER_SOL, PublicKey, SystemProgram } = require('@solana/web3.js');
+const { 
+  generatePlatformWalletAddress, 
+  verifyPlatformWalletPayment, 
+  savePlatformWalletTransaction,
+  connection,
+  TREASURY_SOL_ADDRESS 
+} = require('./platform-wallet-secure');
 
 module.exports = async (req, res) => {
   // Set CORS headers

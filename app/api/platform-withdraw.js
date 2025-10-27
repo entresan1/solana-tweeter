@@ -49,11 +49,10 @@ module.exports = async (req, res) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Get platform wallet address for user
-    const { platformWalletService } = require('./platform-wallet');
-    const platformWalletAddress = platformWalletService.getPlatformWalletAddress(user);
+    const platformWalletAddress = generatePlatformWalletAddress(user);
 
     // Check platform wallet balance
-    const platformBalance = await platformWalletService.getBalance(user);
+    const platformBalance = await getPlatformWalletBalance(user);
     if (platformBalance < withdrawAmount) {
       return res.status(400).json({
         error: 'Insufficient balance',
@@ -62,11 +61,8 @@ module.exports = async (req, res) => {
     }
 
     // Transfer from platform wallet to user's connected wallet
-    const result = await platformWalletService.transferFromPlatformWallet(
-      user,
-      user, // Send to user's connected wallet
-      withdrawAmount
-    );
+    const signature = await sendFromPlatformWallet(user, user, withdrawAmount);
+    const result = { success: true, signature };
 
     if (result.success) {
       // Record the withdrawal in database
@@ -74,7 +70,7 @@ module.exports = async (req, res) => {
         user_wallet: user,
         platform_wallet: platformWalletAddress,
         amount: withdrawAmount,
-        transaction: result.signature,
+        transaction: signature,
         timestamp: Date.now(),
         type: 'withdrawal'
       };

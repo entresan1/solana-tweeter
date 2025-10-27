@@ -1,24 +1,15 @@
 import { TweetModel } from '@src/models/tweet.model';
 import { PublicKey } from '@solana/web3.js';
-import { beaconService } from '@src/lib/supabase';
+import { getBeacons, on, off } from '@src/lib/sse-service';
 
 export const fetchTweets = async (filters: any[] = []) => {
   console.log('📡 fetchTweets called with filters:', filters);
-  console.log('📡 Environment:', process.env.NODE_ENV);
-  console.log('📡 User agent:', navigator.userAgent);
-  console.log('📡 Location:', window.location.href);
   
   try {
-    console.log('📡 Fetching beacons from Supabase...');
-    // Fetch beacons from Supabase database
-    const beacons = await beaconService.fetchBeacons(filters);
-    console.log('📡 Fetched beacons from Supabase:', beacons);
+    // Get beacons from SSE service instead of direct database call
+    const beacons = getBeacons();
+    console.log('📡 Fetched beacons from SSE service:', beacons);
     console.log('📡 Number of beacons:', beacons.length);
-    
-    if (beacons.length === 0) {
-      console.log('⚠️ No beacons found in database - this might be the issue!');
-      console.log('⚠️ Check if database tables exist and have data');
-    }
     
     // Convert to TweetModel format for compatibility
     const tweetModels = beacons.map((beacon: any, index: number) => {
@@ -51,47 +42,8 @@ export const fetchTweets = async (filters: any[] = []) => {
     console.log('📡 Returning tweet models:', tweetModels);
     return tweetModels;
   } catch (error) {
-    console.error('❌ Error fetching beacons from Supabase:', error);
-    console.log('📡 Falling back to localStorage...');
-    
-    // Fallback to localStorage if database fails
-    try {
-      const beacons = JSON.parse(localStorage.getItem('beacons') || '[]');
-      console.log('📡 Fetched beacons from localStorage:', beacons);
-      console.log('📡 Number of beacons found:', beacons.length);
-      
-      if (beacons.length === 0) {
-        console.log('📡 No beacons found in localStorage');
-        return [];
-      }
-      
-      return beacons.map((beacon: any, index: number) => {
-        console.log('📡 Processing localStorage beacon:', beacon);
-        console.log('📡 Beacon content:', beacon.content);
-        console.log('📡 Beacon topic:', beacon.topic);
-        
-        const mockKeyBytes = new Uint8Array(32);
-        mockKeyBytes.fill(0);
-        mockKeyBytes[0] = index + 1;
-        mockKeyBytes[31] = 0x42;
-        
-        // Create TweetModel instance
-        const tweetModel = new TweetModel(new PublicKey(mockKeyBytes), {
-          author: new PublicKey(beacon.author),
-          timestamp: { toNumber: () => beacon.timestamp / 1000 },
-          topic: beacon.topic,
-          content: beacon.content,
-          id: beacon.id, // Pass ID in accountData
-          treasuryTransaction: beacon.treasury_transaction || beacon.id,
-          author_display: beacon.author_display || beacon.author?.toString()?.slice(0, 8) + '...' || 'Unknown User'
-        });
-        
-        return tweetModel;
-      });
-    } catch (localError) {
-      console.error('❌ Error fetching from localStorage:', localError);
-      return [];
-    }
+    console.error('❌ Error fetching beacons from SSE service:', error);
+    return [];
   }
 };
 
