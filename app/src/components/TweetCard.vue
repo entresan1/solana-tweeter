@@ -7,6 +7,7 @@ import { TweetModel } from '@src/models/tweet.model';
   import PlatformWalletModal from './PlatformWalletModal.vue';
   import { getSafeImageUrl, shouldDisplayImage } from '@src/lib/image-utils';
   import { optimizedDataService } from '@src/lib/optimized-data-service';
+  import SafeRouterLink from './SafeRouterLink.vue';
 
   interface IProps {
     tweet: TweetModel;
@@ -633,18 +634,18 @@ Come beacon at @https://trenchbeacon.com/`;
         <!-- Enhanced Header -->
         <div class="flex items-center space-x-2 mb-3">
           <h3 class="font-semibold text-white group-hover:text-primary-300 transition-colors duration-300" :title="tweet?.author?.toBase58() || 'Unknown author'">
-            <router-link :to="authorRoute" class="hover:text-primary-400 transition-all duration-300 hover:scale-105 inline-block">
+            <SafeRouterLink :to="authorRoute" class="hover:text-primary-400 transition-all duration-300 hover:scale-105 inline-block">
               {{ authorDisplayName || tweet?.author_display || 'Unknown User' }}
-            </router-link>
+            </SafeRouterLink>
           </h3>
           <span class="text-dark-400">•</span>
           <time class="text-dark-400 text-sm hover:text-primary-400 transition-colors duration-300" :title="tweet?.created_at">
-            <router-link
-              :to="{ name: 'Tweet', params: { tweet: tweet.publicKey.toBase58() } }"
+            <SafeRouterLink
+              :to="{ name: 'Tweet', params: { tweet: tweet?.publicKey?.toBase58() } }"
               class="hover:text-primary-400 transition-all duration-300"
             >
               {{ tweet?.created_ago }}
-            </router-link>
+            </SafeRouterLink>
           </time>
           <!-- Verified Badge -->
           <div class="flex items-center space-x-1">
@@ -660,16 +661,15 @@ Come beacon at @https://trenchbeacon.com/`;
         </div>
         
         <!-- Enhanced Topic Tag -->
-        <router-link
+        <span
           v-if="tweet?.topic"
-          :to="{ name: 'Topics', params: { topic: tweet?.topic } }"
-          class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-gradient-to-r from-primary-500/20 to-solana-500/20 text-primary-400 hover:from-primary-500/30 hover:to-solana-500/30 transition-all duration-300 hover-lift hover-scale border border-primary-500/20 hover:border-primary-500/40"
+          class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-gradient-to-r from-primary-500/20 to-solana-500/20 text-primary-400 border border-primary-500/20"
         >
           <svg class="w-4 h-4 mr-1.5 transition-transform duration-300 group-hover:rotate-12" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M9.243 3.03a1 1 0 01.727 1.213L9.53 6h2.94l.56-2.243a1 1 0 111.94.486L14.53 6H17a1 1 0 110 2h-2.97l-1 4H15a1 1 0 110 2h-2.47l-.56 2.242a1 1 0 11-1.94-.485L10.47 14H7.53l-.56 2.242a1 1 0 11-1.94-.485L5.47 14H3a1 1 0 110-2h2.97l1-4H5a1 1 0 110-2h2.47l.56-2.243a1 1 0 011.213-.727zM9.03 8l-1 4h2.938l1-4H9.031z" clip-rule="evenodd" />
           </svg>
           #{{ tweet?.topic }}
-        </router-link>
+        </span>
         
         <!-- Treasury Transaction Link -->
         <div class="mt-3 p-2 bg-dark-800/50 border border-dark-700 rounded-lg">

@@ -3,6 +3,7 @@
   import { useRoute } from 'vue-router';
   import { ref, onMounted, watch } from 'vue';
   import { platformWalletService } from '@src/lib/platform-wallet';
+  import SafeRouterLink from './SafeRouterLink.vue';
   
   const { connected, wallet } = useWallet();
   const route = useRoute();
@@ -88,7 +89,7 @@
   <aside class="flex flex-col items-center md:items-stretch space-y-2 md:space-y-4 h-full">
     <!-- Logo -->
     <div class="mb-8">
-      <router-link
+      <SafeRouterLink
         :to="{ name: 'Home' }"
         class="inline-block rounded-2xl hover:bg-dark-800/50 p-4 md:self-start transition-all duration-200 hover-lift group"
       >
@@ -96,11 +97,11 @@
             <img src="/logo.png" alt="Trench Beacon" class="h-8 w-8 rounded-lg" />
             <span class="hidden md:block text-xl font-bold text-gradient">Trench Beacon</span>
         </div>
-      </router-link>
+      </SafeRouterLink>
     </div>
     <!-- Navigation -->
     <div class="flex flex-col items-center md:items-stretch space-y-2 w-full">
-      <router-link
+      <SafeRouterLink
         :to="{ name: 'Home' }"
         class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-300 group"
         :class="route.name === 'Home' ? 'bg-gradient-to-r from-primary-500/20 to-solana-500/20 border border-primary-500/30' : ''"
@@ -136,11 +137,11 @@
         </div>
         <div class="text-lg font-medium hidden md:block"
              :class="route.name === 'Home' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">Home</div>
-      </router-link>
+      </SafeRouterLink>
       
       
       <!-- Profile Link (only when connected) -->
-      <router-link
+      <SafeRouterLink
         v-if="connected"
         :to="{ name: 'Profile' }"
         class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-300 group"
@@ -179,10 +180,10 @@
         </div>
         <div class="text-lg font-medium hidden md:block"
              :class="route.name === 'Profile' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">Profile</div>
-      </router-link>
+      </SafeRouterLink>
       
       <!-- X402 Proof Link -->
-      <router-link
+      <SafeRouterLink
         :to="{ name: 'X402' }"
         class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-300 group"
         :class="route.name === 'X402' ? 'bg-gradient-to-r from-primary-500/20 to-solana-500/20 border border-primary-500/30' : ''"
@@ -220,7 +221,7 @@
         </div>
         <div class="text-lg font-medium hidden md:block"
              :class="route.name === 'X402' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">x402</div>
-      </router-link>
+      </SafeRouterLink>
       
       
       <!-- Platform Wallet Dropdown (only when connected) -->

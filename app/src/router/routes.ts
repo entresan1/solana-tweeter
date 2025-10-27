@@ -15,6 +15,7 @@ export default [
     name: 'Users',
     path: '/users/:author?',
     component: UsersPage,
+    props: true,
   },
   {
     name: 'Profile',
@@ -25,6 +26,7 @@ export default [
     name: 'Tweet',
     path: '/tweet/:tweet',
     component: TweetPage,
+    props: true,
   },
   {
     name: 'X402',
