@@ -6,15 +6,15 @@ export const fetchTweets = async (filters: any[] = []) => {
   console.log('📡 fetchTweets called with filters:', filters);
   
   try {
-    // Check if SSE is initialized
-    if (!isSSEInitialized()) {
-      console.log('📡 SSE not initialized yet, returning empty array');
+    // Check if WebSocket is initialized
+    if (!isWSInitialized()) {
+      console.log('📡 WebSocket not initialized yet, returning empty array');
       return [];
     }
     
-    // Get tweets from SSE service instead of direct database call
+    // Get tweets from WebSocket service instead of direct database call
     const tweets = getTweets();
-    console.log('📡 Fetched tweets from SSE service:', tweets);
+    console.log('📡 Fetched tweets from WebSocket service:', tweets);
     console.log('📡 Number of tweets:', tweets.length);
     
     // Convert to TweetModel format for compatibility
@@ -48,7 +48,7 @@ export const fetchTweets = async (filters: any[] = []) => {
     console.log('📡 Returning tweet models:', tweetModels);
     return tweetModels;
   } catch (error) {
-    console.error('❌ Error fetching beacons from SSE service:', error);
+    console.error('❌ Error fetching beacons from WebSocket service:', error);
     return [];
   }
 };
@@ -57,13 +57,13 @@ export const authorFilter = async (authorBase58PublicKey: string) => {
   try {
     console.log('👤 authorFilter called with author:', authorBase58PublicKey);
     
-    // Check if SSE is initialized
-    if (!isSSEInitialized()) {
-      console.log('👤 SSE not initialized yet, returning empty array');
+    // Check if WebSocket is initialized
+    if (!isWSInitialized()) {
+      console.log('👤 WebSocket not initialized yet, returning empty array');
       return [];
     }
     
-    // Get tweets from SSE service and filter by author
+    // Get tweets from WebSocket service and filter by author
     const allTweets = getTweets();
     const tweets = allTweets.filter(tweet => tweet.author === authorBase58PublicKey);
     console.log('👤 Found tweets for author:', tweets.length);
@@ -106,7 +106,7 @@ export const topicFilter = async (topic: string) => {
       return [];
     }
     
-    // Get tweets from SSE service and filter by topic
+    // Get tweets from WebSocket service and filter by topic
     const allTweets = getTweets();
     const tweets = allTweets.filter(tweet => tweet.topic === topic);
     console.log('🔍 Found tweets for topic:', tweets.length);
@@ -155,7 +155,7 @@ export const searchBeacons = async (searchTerm: string) => {
       return [];
     }
     
-    // Get all tweets from SSE service and filter by content
+    // Get all tweets from WebSocket service and filter by content
     const allTweets = getTweets();
     console.log('🔍 Total tweets fetched:', allTweets.length);
     
