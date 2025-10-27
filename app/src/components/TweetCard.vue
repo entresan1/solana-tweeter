@@ -464,7 +464,7 @@ import PlatformWalletModal from './PlatformWalletModal.vue';
       
       if (usePlatformWallet.value) {
         // Use platform wallet (no Phantom approval needed)
-        const { sendTipWithPlatformWallet } = await import('@src/lib/x402-platform-client');
+        const { sendTipWithPlatformWallet } = await import('@src/lib/x402-platform-client?v=' + Date.now());
         
         const result = await sendTipWithPlatformWallet(
           tweet.value?.author?.toBase58() || '',

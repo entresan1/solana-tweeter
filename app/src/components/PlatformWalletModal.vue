@@ -258,7 +258,7 @@ const depositToPlatformWallet = async () => {
     const amount = parseFloat(depositAmount.value);
     
     // Import the deposit function (we'll create this)
-    const { depositToPlatformWallet } = await import('@src/lib/x402-platform-client');
+    const { depositToPlatformWallet } = await import('@src/lib/x402-platform-client?v=' + Date.now());
     
     const result = await depositToPlatformWallet(
       wallet.value,
