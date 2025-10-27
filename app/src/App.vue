@@ -9,6 +9,7 @@
   import { initWallet } from 'solana-wallets-vue';
   import { initWorkspace, useProfileAutoCreate } from '@src/hooks';
   import { onMounted } from 'vue';
+  import { notificationService } from '@src/lib/notification-service';
 
   const route = useRoute();
   const wallets = [new PhantomWalletAdapter(), new SolflareWalletAdapter()];
@@ -20,6 +21,8 @@
   
   onMounted(() => {
     initWorkspace();
+    // Start checking for new beacons
+    notificationService.startPeriodicCheck();
   });
 </script>
 

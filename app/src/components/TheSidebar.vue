@@ -4,6 +4,7 @@
   import { ref, onMounted, watch } from 'vue';
   import { platformWalletService } from '@src/lib/platform-wallet';
   import PlatformWalletModal from './PlatformWalletModal.vue';
+  import NotificationIcon from './NotificationIcon.vue';
   
   const { connected, wallet } = useWallet();
   const route = useRoute();
@@ -239,6 +240,14 @@
         <div class="text-lg font-medium hidden md:block"
              :class="route.name === 'X402' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">x402 Proof</div>
       </router-link>
+      
+      <!-- Notification Icon -->
+      <div class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full flex items-center justify-center md:justify-start transition-all duration-300 group">
+        <NotificationIcon />
+        <div class="text-lg font-medium hidden md:block text-dark-400 group-hover:text-primary-300 ml-4">
+          Notifications
+        </div>
+      </div>
       
       <!-- Platform Wallet Section (only when connected) -->
       <div v-if="connected" class="mt-4 p-4 bg-dark-800/30 border border-dark-700 rounded-2xl">
