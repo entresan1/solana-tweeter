@@ -4,16 +4,20 @@ import { ref, reactive } from 'vue';
 // Global cache for all data
 const dataCache = new Map<string, { data: any; timestamp: number; ttl: number }>();
 const CACHE_TTL = {
-  PROFILES: 10 * 60 * 1000, // 10 minutes
-  TIPS: 5 * 60 * 1000, // 5 minutes
-  LIKES: 2 * 60 * 1000, // 2 minutes
-  RUGS: 2 * 60 * 1000, // 2 minutes
-  REPLIES: 5 * 60 * 1000, // 5 minutes
-  BEACONS: 1 * 60 * 1000, // 1 minute
+  PROFILES: 30 * 60 * 1000, // 30 minutes (increased)
+  TIPS: 10 * 60 * 1000, // 10 minutes (increased)
+  LIKES: 5 * 60 * 1000, // 5 minutes (increased)
+  RUGS: 5 * 60 * 1000, // 5 minutes (increased)
+  REPLIES: 10 * 60 * 1000, // 10 minutes (increased)
+  BEACONS: 2 * 60 * 1000, // 2 minutes (increased)
 };
 
 // Request deduplication
 const pendingRequests = new Map<string, Promise<any>>();
+
+// Debounce timers for rapid requests
+const debounceTimers = new Map<string, NodeJS.Timeout>();
+const DEBOUNCE_DELAY = 300; // 300ms debounce
 
 class OptimizedDataService {
   private static instance: OptimizedDataService;
@@ -44,7 +48,7 @@ class OptimizedDataService {
     });
   }
 
-  // Generic request handler with deduplication
+  // Generic request handler with deduplication and debouncing
   private async makeRequest<T>(
     key: string,
     requestFn: () => Promise<T>,
@@ -62,17 +66,32 @@ class OptimizedDataService {
       return await pendingRequests.get(key);
     }
 
-    // Make new request
-    const requestPromise = requestFn();
-    pendingRequests.set(key, requestPromise);
+    // Debounce rapid requests
+    return new Promise((resolve, reject) => {
+      // Clear existing timer
+      if (debounceTimers.has(key)) {
+        clearTimeout(debounceTimers.get(key)!);
+      }
 
-    try {
-      const result = await requestPromise;
-      this.setCached(key, result, ttl);
-      return result;
-    } finally {
-      pendingRequests.delete(key);
-    }
+      // Set new timer
+      const timer = setTimeout(async () => {
+        try {
+          const requestPromise = requestFn();
+          pendingRequests.set(key, requestPromise);
+
+          const result = await requestPromise;
+          this.setCached(key, result, ttl);
+          resolve(result);
+        } catch (error) {
+          reject(error);
+        } finally {
+          pendingRequests.delete(key);
+          debounceTimers.delete(key);
+        }
+      }, DEBOUNCE_DELAY);
+
+      debounceTimers.set(key, timer);
+    });
   }
 
   // Get profile with caching
@@ -186,6 +205,10 @@ class OptimizedDataService {
   clearCache(): void {
     dataCache.clear();
     pendingRequests.clear();
+    
+    // Clear all debounce timers
+    debounceTimers.forEach(timer => clearTimeout(timer));
+    debounceTimers.clear();
   }
 
   // Clear specific cache entry

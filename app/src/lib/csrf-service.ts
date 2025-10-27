@@ -1,0 +1,75 @@
+// CSRF token service for secure API calls
+class CSRFService {
+  private static instance: CSRFService;
+  private csrfToken: string | null = null;
+  private tokenPromise: Promise<string> | null = null;
+
+  public static getInstance(): CSRFService {
+    if (!CSRFService.instance) {
+      CSRFService.instance = new CSRFService();
+    }
+    return CSRFService.instance;
+  }
+
+  // Get CSRF token (with caching)
+  async getToken(): Promise<string> {
+    if (this.csrfToken) {
+      return this.csrfToken;
+    }
+
+    if (this.tokenPromise) {
+      return this.tokenPromise;
+    }
+
+    this.tokenPromise = this.fetchToken();
+    this.csrfToken = await this.tokenPromise;
+    return this.csrfToken;
+  }
+
+  // Fetch CSRF token from server
+  private async fetchToken(): Promise<string> {
+    try {
+      const response = await fetch('/api/user-profiles', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      const token = response.headers.get('X-CSRF-Token');
+      if (token) {
+        console.log('🔐 CSRF token received:', token);
+        return token;
+      }
+
+      throw new Error('No CSRF token received');
+    } catch (error) {
+      console.error('❌ Failed to get CSRF token:', error);
+      throw error;
+    }
+  }
+
+  // Clear token (for logout, etc.)
+  clearToken(): void {
+    this.csrfToken = null;
+    this.tokenPromise = null;
+  }
+
+  // Make authenticated request with CSRF token
+  async makeAuthenticatedRequest(url: string, options: RequestInit = {}): Promise<Response> {
+    const token = await this.getToken();
+    
+    const headers = {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': token,
+      ...options.headers
+    };
+
+    return fetch(url, {
+      ...options,
+      headers
+    });
+  }
+}
+
+export const csrfService = CSRFService.getInstance();

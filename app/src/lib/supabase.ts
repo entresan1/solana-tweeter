@@ -216,11 +216,11 @@ export const profileService = {
   // Create or update user profile
   async upsertProfile(profile: Omit<UserProfile, 'id' | 'created_at' | 'updated_at'>) {
     try {
-      const response = await fetch('/api/user-profiles', {
+      // Import CSRF service dynamically to avoid circular imports
+      const { csrfService } = await import('./csrf-service');
+      
+      const response = await csrfService.makeAuthenticatedRequest('/api/user-profiles', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ profile })
       });
 
@@ -255,11 +255,10 @@ export const profileService = {
 
   // Update profile picture
   async updateProfilePicture(walletAddress: string, imageUrl: string) {
-    const response = await fetch('/api/user-profiles', {
+    const { csrfService } = await import('./csrf-service');
+    
+    const response = await csrfService.makeAuthenticatedRequest('/api/user-profiles', {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({ 
         walletAddress,
         profile: { profile_picture_url: imageUrl }
@@ -283,11 +282,10 @@ export const profileService = {
 
   // Update nickname
   async updateNickname(walletAddress: string, nickname: string) {
-    const response = await fetch('/api/user-profiles', {
+    const { csrfService } = await import('./csrf-service');
+    
+    const response = await csrfService.makeAuthenticatedRequest('/api/user-profiles', {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({ 
         walletAddress,
         profile: { nickname }
