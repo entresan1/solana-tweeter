@@ -35,10 +35,22 @@ function validateProfileData(profile) {
   
   // Validate URL format for profile picture
   if (sanitizedProfile.profile_picture_url) {
-    try {
-      new URL(sanitizedProfile.profile_picture_url);
-    } catch {
-      return { valid: false, error: 'Invalid profile picture URL format' };
+    // Check if it's a base64 data URL (starts with data:)
+    if (sanitizedProfile.profile_picture_url.startsWith('data:')) {
+      // Validate base64 data URL format
+      if (!sanitizedProfile.profile_picture_url.match(/^data:image\/(jpeg|jpg|png|gif|webp);base64,/)) {
+        return { valid: false, error: 'Invalid base64 image format. Only JPEG, PNG, GIF, and WebP are supported.' };
+      }
+    } else {
+      // Validate regular HTTP/HTTPS URL
+      try {
+        const url = new URL(sanitizedProfile.profile_picture_url);
+        if (!['http:', 'https:'].includes(url.protocol)) {
+          return { valid: false, error: 'Profile picture URL must use HTTP or HTTPS protocol' };
+        }
+      } catch {
+        return { valid: false, error: 'Invalid profile picture URL format' };
+      }
     }
   }
   
