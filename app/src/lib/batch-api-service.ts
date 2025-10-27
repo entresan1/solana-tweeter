@@ -320,10 +320,23 @@ class BatchAPIService {
       }
     } catch (error) {
       console.error('Error fetching profiles batch:', error);
-      // Clear pending requests
-      addresses.forEach(address => {
+      // Fallback to individual profile requests
+      console.log('🔄 Falling back to individual profile requests...');
+      for (const address of addresses) {
+        try {
+          const response = await fetch(`/api/user-profiles?walletAddress=${encodeURIComponent(address)}`);
+          const data = await response.json();
+          if (data.success) {
+            dataCache.cacheProfile(address, data.profile);
+          } else {
+            dataCache.cacheProfile(address, null);
+          }
+        } catch (fallbackError) {
+          console.warn(`Failed to fetch profile for ${address}:`, fallbackError);
+          dataCache.cacheProfile(address, null);
+        }
         dataCache.clearPending(`profile_${address}`);
-      });
+      }
     } finally {
       const duration = performanceMonitor.endTimer('profiles_batch');
       console.log(`📊 Profiles batch processed in ${duration.toFixed(2)}ms for ${addresses.length} addresses`);
