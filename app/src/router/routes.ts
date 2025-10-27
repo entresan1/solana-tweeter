@@ -33,6 +33,11 @@ export default [
     component: TweetPage,
   },
   {
+    name: 'X402',
+    path: '/x402',
+    component: X402Page,
+  },
+  {
     name: 'NotFound',
     path: '/:pathMatch(.*)*',
     component: NotFoundPage,

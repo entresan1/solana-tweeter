@@ -141,6 +141,47 @@
         <div class="text-lg font-medium hidden md:block"
              :class="route.name === 'Profile' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">Profile</div>
       </router-link>
+      
+      <!-- X402 Proof Link -->
+      <router-link
+        :to="{ name: 'X402' }"
+        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-300 group"
+        :class="route.name === 'X402' ? 'bg-gradient-to-r from-primary-500/20 to-solana-500/20 border border-primary-500/30' : ''"
+      >
+        <div class="flex items-center justify-center w-8 h-8 rounded-xl"
+             :class="route.name === 'X402' ? 'bg-gradient-to-r from-primary-500 to-solana-500' : 'bg-dark-700 group-hover:bg-dark-600'">
+          <svg
+            v-if="route.name === 'X402'"
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 text-white"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          <svg
+            v-else
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 text-dark-300 group-hover:text-white"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+        </div>
+        <div class="text-lg font-medium hidden md:block"
+             :class="route.name === 'X402' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">x402 Proof</div>
+      </router-link>
     </div>
     
     <!-- Wallet Connection -->
