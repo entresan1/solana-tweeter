@@ -1,6 +1,6 @@
 import { TweetModel } from '@src/models/tweet.model';
 import { PublicKey } from '@solana/web3.js';
-import { getTweets, isSSEInitialized } from '@src/lib/tweets-sse-service';
+import { getTweets, isWSInitialized } from '@src/lib/websocket-service';
 
 export const fetchTweets = async (filters: any[] = []) => {
   console.log('📡 fetchTweets called with filters:', filters);
@@ -100,9 +100,9 @@ export const topicFilter = async (topic: string) => {
   try {
     console.log('🔍 topicFilter called with topic:', topic);
     
-    // Check if SSE is initialized
-    if (!isSSEInitialized()) {
-      console.log('🔍 SSE not initialized yet, returning empty array');
+    // Check if WebSocket is initialized
+    if (!isWSInitialized()) {
+      console.log('🔍 WebSocket not initialized yet, returning empty array');
       return [];
     }
     
@@ -149,9 +149,9 @@ export const searchBeacons = async (searchTerm: string) => {
       return [];
     }
     
-    // Check if SSE is initialized
-    if (!isSSEInitialized()) {
-      console.log('🔍 SSE not initialized yet, returning empty array');
+    // Check if WebSocket is initialized
+    if (!isWSInitialized()) {
+      console.log('🔍 WebSocket not initialized yet, returning empty array');
       return [];
     }
     

@@ -9,7 +9,7 @@
   import { initWallet, useWallet } from 'solana-wallets-vue';
   import { initWorkspace, useProfileAutoCreate } from '@src/hooks';
   import { onMounted, watch } from 'vue';
-  import { setCurrentUserAddress, connectTweetsSSE, isSSEInitialized } from '@src/lib/tweets-sse-service';
+  import { setCurrentUserAddress, connectWebSocket, isWSInitialized } from '@src/lib/websocket-service';
 
   const route = useRoute();
   const wallets = [new PhantomWalletAdapter(), new SolflareWalletAdapter()];
@@ -23,18 +23,18 @@
   onMounted(() => {
     initWorkspace();
     
-    // Ensure tweets SSE is connected
-    if (!isSSEInitialized()) {
-      console.log('🔌 Manually connecting tweets SSE...');
-      connectTweetsSSE();
+    // Ensure WebSocket is connected
+    if (!isWSInitialized()) {
+      console.log('🔌 Manually connecting WebSocket...');
+      connectWebSocket();
     }
     
-    // Set current user address for SSE
+    // Set current user address for WebSocket
     const currentUserAddress = wallet.value?.publicKey?.toString();
     setCurrentUserAddress(currentUserAddress || null);
   });
 
-  // Watch for wallet changes and update SSE
+  // Watch for wallet changes and update WebSocket
   watch(wallet, (newWallet) => {
     const currentUserAddress = newWallet?.publicKey?.toString();
     setCurrentUserAddress(currentUserAddress || null);

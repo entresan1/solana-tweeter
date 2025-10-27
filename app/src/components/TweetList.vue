@@ -2,7 +2,7 @@
   import { computed, toRefs, onMounted, onUnmounted, ref } from 'vue';
   import TweetCard from '@src/components/TweetCard.vue';
   import { TweetModel } from '@src/models/tweet.model';
-  import { getTweets, on, off, isSSEInitialized, connectTweetsSSE } from '@src/lib/tweets-sse-service';
+  import { getTweets, on, off, isWSInitialized, connectWebSocket } from '@src/lib/websocket-service';
   import { PublicKey } from '@solana/web3.js';
 
   interface IProps {
@@ -17,7 +17,7 @@
   const useSSE = ref(true);
 
   const orderedTweets = computed(() => {
-    if (useSSE.value && isSSEInitialized() && sseTweets.value.length > 0) {
+    if (useSSE.value && isWSInitialized() && sseTweets.value.length > 0) {
       return sseTweets.value.slice().sort((a, b) => b.timestamp - a.timestamp);
     }
     return tweets.value.slice().sort((a, b) => b.timestamp - a.timestamp);
@@ -41,16 +41,16 @@
     });
   };
 
-  // Handle new tweet from SSE
+  // Handle new tweet from WebSocket
   const handleNewTweet = (tweet: any) => {
-    console.log('📨 New tweet received via SSE:', tweet);
+    console.log('📨 New tweet received via WebSocket:', tweet);
     const tweetModel = convertBeaconToTweetModel(tweet, sseTweets.value.length);
     sseTweets.value.unshift(tweetModel);
   };
 
-  // Handle tweet update from SSE
+  // Handle tweet update from WebSocket
   const handleTweetUpdate = (tweet: any) => {
-    console.log('📨 Tweet update received via SSE:', tweet);
+    console.log('📨 Tweet update received via WebSocket:', tweet);
     const index = sseTweets.value.findIndex(t => t.id === tweet.id);
     if (index !== -1) {
       const tweetModel = convertBeaconToTweetModel(tweet, index);
@@ -58,30 +58,30 @@
     }
   };
 
-  // Handle tweets update from SSE (every 5 seconds)
+  // Handle tweets update from WebSocket (every 5 seconds)
   const handleTweetsUpdate = (tweets: any[]) => {
-    console.log('📨 Tweets update received via SSE:', tweets);
+    console.log('📨 Tweets update received via WebSocket:', tweets);
     sseTweets.value = tweets.map((tweet, index) => convertBeaconToTweetModel(tweet, index));
   };
 
-  // Handle initial tweets load from SSE
+  // Handle initial tweets load from WebSocket
   const handleTweetsLoaded = (tweets: any[]) => {
-    console.log('📨 Initial tweets loaded via SSE:', tweets);
+    console.log('📨 Initial tweets loaded via WebSocket:', tweets);
     sseTweets.value = tweets.map((tweet, index) => convertBeaconToTweetModel(tweet, index));
   };
 
   onMounted(() => {
-    // Connect to tweets SSE
-    connectTweetsSSE();
+    // Connect to WebSocket
+    connectWebSocket();
     
-    // Set up SSE event listeners
+    // Set up WebSocket event listeners
     on('new_tweet', handleNewTweet);
     on('tweet_update', handleTweetUpdate);
     on('tweets_update', handleTweetsUpdate);
     on('tweets_loaded', handleTweetsLoaded);
     
-    // Initialize with current SSE data if available
-    if (isSSEInitialized()) {
+    // Initialize with current WebSocket data if available
+    if (isWSInitialized()) {
       const currentTweets = getTweets();
       if (currentTweets.length > 0) {
         sseTweets.value = currentTweets.map((tweet, index) => convertBeaconToTweetModel(tweet, index));

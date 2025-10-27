@@ -29,7 +29,10 @@
   };
 
   const search = async () => {
-    if (!searchTerm.value.trim()) {
+    // Ensure searchTerm is a string
+    const searchValue = String(searchTerm.value || '');
+    
+    if (!searchValue.trim()) {
       // If search is empty, reload all tweets
       loading.value = true;
       try {
@@ -48,7 +51,7 @@
     isSearching.value = true;
     
     try {
-      const searchResults = await searchBeacons(searchTerm.value);
+      const searchResults = await searchBeacons(searchValue);
       tweets.value = searchResults;
       console.log('🔍 Search results:', searchResults.length);
     } catch (error) {
