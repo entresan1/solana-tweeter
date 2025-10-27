@@ -45,9 +45,11 @@ async function verifyX402Payment(proof, connection) {
       return { valid: false, error: 'Missing payment proof' };
     }
 
-    // Create secure cache key with hash
+    // Create secure cache key with hash including nonce and timestamp to prevent replay attacks
+    const nonce = proof.nonce || 'default';
+    const timestamp = proof.timestamp || Date.now();
     const cacheKey = crypto.createHash('sha256')
-      .update(`${proof.transaction}-${proof.amount || '0.001'}`)
+      .update(`${proof.transaction}-${proof.amount || '0.001'}-${nonce}-${timestamp}`)
       .digest('hex');
     
     // Check cache first

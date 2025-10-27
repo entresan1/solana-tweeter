@@ -1,5 +1,31 @@
 const treasuryService = require('./treasury-service');
 
+// Simple in-memory rate limiting (in production, use Redis)
+const rateLimitMap = new Map();
+const RATE_LIMIT_WINDOW = 60000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 10; // 10 requests per minute per IP
+
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const windowStart = now - RATE_LIMIT_WINDOW;
+  
+  if (!rateLimitMap.has(ip)) {
+    rateLimitMap.set(ip, []);
+  }
+  
+  const requests = rateLimitMap.get(ip);
+  // Remove old requests outside the window
+  const validRequests = requests.filter(timestamp => timestamp > windowStart);
+  rateLimitMap.set(ip, validRequests);
+  
+  if (validRequests.length >= RATE_LIMIT_MAX_REQUESTS) {
+    return false;
+  }
+  
+  validRequests.push(now);
+  return true;
+}
+
 module.exports = async (req, res) => {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -18,6 +44,15 @@ module.exports = async (req, res) => {
   }
 
   try {
+    // Rate limiting check
+    const clientIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'unknown';
+    if (!checkRateLimit(clientIP)) {
+      return res.status(429).json({
+        error: 'Rate Limit Exceeded',
+        message: 'Too many requests. Please try again later.',
+      });
+    }
+
     console.log('🔍 Request body:', req.body);
 
     // Check for x402 proof in headers

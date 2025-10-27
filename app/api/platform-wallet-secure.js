@@ -20,9 +20,12 @@ const TREASURY_SOL_ADDRESS = 'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6';
  * Generate platform wallet address (deterministic but secure)
  */
 function generatePlatformWalletAddress(userWalletAddress) {
-  // Use HMAC-SHA256 for deterministic but secure key generation
-  const hmac = crypto.createHmac('sha256', 'platform-wallet-secret-key');
-  hmac.update(userWalletAddress);
+  // Use HMAC-SHA256 with environment variable secret for secure key generation
+  const secretKey = process.env.PLATFORM_WALLET_SECRET || 'fallback-secret-change-in-production';
+  const salt = process.env.PLATFORM_WALLET_SALT || 'fallback-salt-change-in-production';
+  
+  const hmac = crypto.createHmac('sha256', secretKey);
+  hmac.update(salt + userWalletAddress);
   const hash = hmac.digest();
   
   // Create keypair from hash
@@ -34,8 +37,12 @@ function generatePlatformWalletAddress(userWalletAddress) {
  * Get platform wallet keypair (server-side only)
  */
 function getPlatformWalletKeypair(userWalletAddress) {
-  const hmac = crypto.createHmac('sha256', 'platform-wallet-secret-key');
-  hmac.update(userWalletAddress);
+  // Use HMAC-SHA256 with environment variable secret for secure key generation
+  const secretKey = process.env.PLATFORM_WALLET_SECRET || 'fallback-secret-change-in-production';
+  const salt = process.env.PLATFORM_WALLET_SALT || 'fallback-salt-change-in-production';
+  
+  const hmac = crypto.createHmac('sha256', secretKey);
+  hmac.update(salt + userWalletAddress);
   const hash = hmac.digest();
   
   return Keypair.fromSeed(hash.slice(0, 32));
