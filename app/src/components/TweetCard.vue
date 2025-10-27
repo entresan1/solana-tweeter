@@ -173,6 +173,9 @@ import PlatformWalletModal from './PlatformWalletModal.vue';
       console.error('❌ Error loading like data:', error);
       console.error('❌ Error details:', error.message);
       console.error('❌ Error stack:', error.stack);
+      // Set default values on error
+      likeCount.value = 0;
+      isLiked.value = false;
     }
   };
 
