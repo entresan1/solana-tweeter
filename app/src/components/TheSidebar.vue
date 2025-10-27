@@ -238,7 +238,7 @@
           </svg>
         </div>
         <div class="text-lg font-medium hidden md:block"
-             :class="route.name === 'X402' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">x402 Proof</div>
+             :class="route.name === 'X402' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">x402</div>
       </router-link>
       
       <!-- Notification Icon -->

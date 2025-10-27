@@ -4,11 +4,11 @@
       <!-- Header -->
       <div class="text-center mb-12">
         <h1 class="text-4xl font-bold text-white mb-4">
-          <span class="text-primary-500">x402</span> Payment Proof
+          <span class="text-primary-500">x402</span> Protocol
         </h1>
-        <p class="text-xl text-dark-300 max-w-3xl mx-auto">
+        <p class="text-xl text-dark-300 max-w-4xl mx-auto">
           Trench Beacon uses the <strong>x402 Payment Required</strong> protocol for transparent, on-chain payments.
-          Every beacon requires a verifiable 0.001 SOL payment to our public treasury.
+          Every beacon requires a verifiable 0.001 SOL payment to our public treasury, and users can tip each other with custom SOL amounts.
         </p>
       </div>
 
@@ -43,6 +43,153 @@
               </a>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- How x402 Works -->
+      <div class="card mb-8">
+        <h2 class="text-2xl font-semibold text-white mb-4 flex items-center">
+          <svg class="w-6 h-6 mr-2 text-primary-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+          </svg>
+          How x402 Works
+        </h2>
+        <div class="bg-dark-800 rounded-lg p-6">
+          <div class="grid md:grid-cols-2 gap-8">
+            <!-- Beacon Payments -->
+            <div>
+              <h3 class="text-lg font-semibold text-white mb-3 flex items-center">
+                <span class="w-6 h-6 bg-primary-500 rounded-full flex items-center justify-center text-xs font-bold mr-2">1</span>
+                Beacon Payments (0.001 SOL)
+              </h3>
+              <ul class="space-y-2 text-dark-300">
+                <li class="flex items-start">
+                  <span class="text-primary-400 mr-2">•</span>
+                  <span>Every beacon requires a 0.001 SOL payment to our treasury</span>
+                </li>
+                <li class="flex items-start">
+                  <span class="text-primary-400 mr-2">•</span>
+                  <span>Payment is verified on-chain before beacon is published</span>
+                </li>
+                <li class="flex items-start">
+                  <span class="text-primary-400 mr-2">•</span>
+                  <span>Prevents spam and ensures quality content</span>
+                </li>
+                <li class="flex items-start">
+                  <span class="text-primary-400 mr-2">•</span>
+                  <span>All payments are transparent and verifiable</span>
+                </li>
+              </ul>
+            </div>
+
+            <!-- User Tips -->
+            <div>
+              <h3 class="text-lg font-semibold text-white mb-3 flex items-center">
+                <span class="w-6 h-6 bg-solana-500 rounded-full flex items-center justify-center text-xs font-bold mr-2">2</span>
+                User Tips (Custom Amounts)
+              </h3>
+              <ul class="space-y-2 text-dark-300">
+                <li class="flex items-start">
+                  <span class="text-solana-400 mr-2">•</span>
+                  <span>Users can tip any amount (0.001 - 10 SOL)</span>
+                </li>
+                <li class="flex items-start">
+                  <span class="text-solana-400 mr-2">•</span>
+                  <span>Tips go directly to the beacon author</span>
+                </li>
+                <li class="flex items-start">
+                  <span class="text-solana-400 mr-2">•</span>
+                  <span>Each tip requires its own x402 payment</span>
+                </li>
+                <li class="flex items-start">
+                  <span class="text-solana-400 mr-2">•</span>
+                  <span>Supports both Phantom wallet and platform wallet</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Platform Wallet Benefits -->
+          <div class="mt-6 p-4 bg-gradient-to-r from-primary-500/10 to-solana-500/10 border border-primary-500/20 rounded-lg">
+            <h4 class="text-lg font-semibold text-white mb-2 flex items-center">
+              <svg class="w-5 h-5 mr-2 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" />
+              </svg>
+              Platform Wallet Benefits
+            </h4>
+            <p class="text-dark-300 text-sm">
+              Deposit SOL into your platform wallet to send beacons and tips without Phantom wallet approval for each transaction. 
+              Perfect for frequent users who want seamless interactions.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Tips -->
+      <div class="card mb-8">
+        <h2 class="text-2xl font-semibold text-white mb-4 flex items-center">
+          <svg class="w-6 h-6 mr-2 text-primary-500" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" />
+          </svg>
+          Recent Tips
+        </h2>
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr class="border-b border-dark-700">
+                <th class="text-left py-3 px-4 text-dark-300">Tipper</th>
+                <th class="text-left py-3 px-4 text-dark-300">Recipient</th>
+                <th class="text-left py-3 px-4 text-dark-300">Amount</th>
+                <th class="text-left py-3 px-4 text-dark-300">Message</th>
+                <th class="text-left py-3 px-4 text-dark-300">Beacon</th>
+                <th class="text-left py-3 px-4 text-dark-300">Time</th>
+                <th class="text-left py-3 px-4 text-dark-300">Type</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="loadingTips" class="border-b border-dark-700">
+                <td colspan="7" class="py-8 text-center text-dark-400">
+                  <div class="flex items-center justify-center">
+                    <svg class="w-5 h-5 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Loading tips...
+                  </div>
+                </td>
+              </tr>
+              <tr v-else-if="recentTips.length === 0" class="border-b border-dark-700">
+                <td colspan="7" class="py-8 text-center text-dark-400">
+                  No tips found
+                </td>
+              </tr>
+              <tr v-else v-for="tip in recentTips" :key="tip.id" class="border-b border-dark-700 hover:bg-dark-800">
+                <td class="py-3 px-4">
+                  <span class="font-mono text-sm">{{ tip.tipperDisplay }}</span>
+                </td>
+                <td class="py-3 px-4">
+                  <span class="font-mono text-sm">{{ tip.recipient.slice(0, 8) }}...{{ tip.recipient.slice(-8) }}</span>
+                </td>
+                <td class="py-3 px-4">
+                  <span class="text-green-400 font-semibold">{{ tip.amount }} SOL</span>
+                </td>
+                <td class="py-3 px-4">
+                  <span class="text-sm text-dark-300">{{ tip.message || '-' }}</span>
+                </td>
+                <td class="py-3 px-4">
+                  <span class="text-sm text-dark-300">{{ tip.beacon.content.slice(0, 20) }}{{ tip.beacon.content.length > 20 ? '...' : '' }}</span>
+                </td>
+                <td class="py-3 px-4 text-sm text-dark-300">
+                  {{ formatTimestamp(tip.timestamp) }}
+                </td>
+                <td class="py-3 px-4">
+                  <span class="text-xs px-2 py-1 rounded-full" :class="tip.platformWallet ? 'bg-yellow-500/20 text-yellow-400' : 'bg-blue-500/20 text-blue-400'">
+                    {{ tip.platformWallet ? 'Platform' : 'Phantom' }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -223,14 +370,19 @@ import { TREASURY_SOL_ADDRESS } from '@src/lib/x402';
 const treasuryAddress = TREASURY_SOL_ADDRESS;
 const payments = ref<any[]>([]);
 const loadingPayments = ref(false);
+const recentTips = ref<any[]>([]);
+const loadingTips = ref(false);
 const copying = ref(false);
 const verificationTx = ref('');
 const verificationResult = ref<any>(null);
 const verifying = ref(false);
 
-// Load payments on mount
+// Load data on mount
 onMounted(async () => {
-  await loadPayments();
+  await Promise.all([
+    loadPayments(),
+    loadRecentTips()
+  ]);
 });
 
 // Load recent payments
@@ -246,6 +398,22 @@ const loadPayments = async () => {
     console.error('Failed to load payments:', error);
   } finally {
     loadingPayments.value = false;
+  }
+};
+
+// Load recent tips
+const loadRecentTips = async () => {
+  loadingTips.value = true;
+  try {
+    const response = await fetch('/api/recent-tips?limit=20');
+    if (response.ok) {
+      const data = await response.json();
+      recentTips.value = data.tips || [];
+    }
+  } catch (error) {
+    console.error('Failed to load recent tips:', error);
+  } finally {
+    loadingTips.value = false;
   }
 };
 
