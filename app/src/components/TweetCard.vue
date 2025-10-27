@@ -439,7 +439,7 @@ import PlatformWalletModal from './PlatformWalletModal.vue';
     showTipModal.value = true;
   };
 
-  const handleShare = async () => {
+  const handleShareLink = async () => {
     if (!tweet.value?.id) {
       console.error('Cannot share: tweet ID not available');
       return;
@@ -724,7 +724,7 @@ Come beacon at @https://trenchbeacon.com/`;
               <span class="text-sm">Tip</span>
             </button>
             <button 
-              @click="handleShare"
+              @click="handleShareLink"
               class="flex items-center space-x-2 text-dark-400 hover:text-green-400 transition-colors duration-300 hover:scale-110"
               :title="'Share beacon #' + tweet.id"
             >
