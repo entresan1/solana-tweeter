@@ -3,6 +3,8 @@ import { toRefs, computed, ref, onMounted, watch } from 'vue';
 import { TweetModel } from '@src/models/tweet.model';
 import { useWorkspace } from '@src/hooks/useWorkspace';
 import { profileService, interactionService, tipService } from '@src/lib/supabase';
+import { platformWalletService } from '@src/lib/platform-wallet';
+import PlatformWalletModal from './PlatformWalletModal.vue';
 
   interface IProps {
     tweet: TweetModel;
@@ -30,6 +32,9 @@ import { profileService, interactionService, tipService } from '@src/lib/supabas
   const totalTips = ref(0);
   const tipCount = ref(0);
   const loadingTips = ref(false);
+  const showPlatformWalletModal = ref(false);
+  const platformBalance = ref(0);
+  const usePlatformWallet = ref(false);
 
   // Function to load profile data for the current tweet
   const loadProfileData = async () => {
@@ -79,6 +84,19 @@ import { profileService, interactionService, tipService } from '@src/lib/supabas
     }
   };
 
+  // Function to load platform wallet data
+  const loadPlatformWalletData = async () => {
+    if (wallet.value?.publicKey) {
+      try {
+        const userAddress = wallet.value.publicKey.toBase58();
+        platformBalance.value = await platformWalletService.getBalance(userAddress);
+      } catch (error) {
+        console.warn('Failed to load platform wallet data:', error);
+        platformBalance.value = 0;
+      }
+    }
+  };
+
   // Watch for tweet changes and reload profile data
   watch(tweet, loadProfileData, { immediate: true });
   watch(tweet, loadTipData, { immediate: true });
@@ -91,6 +109,9 @@ import { profileService, interactionService, tipService } from '@src/lib/supabas
     
     // Profile data and tip data are now loaded by the watchers, so we just need to load like data
     await loadLikeData();
+    
+    // Load platform wallet data
+    await loadPlatformWalletData();
     
     // Automatically load replies
     await loadReplies();
@@ -305,27 +326,55 @@ import { profileService, interactionService, tipService } from '@src/lib/supabas
     try {
       const amount = parseFloat(tipAmount.value);
       
-      // Import the tip client function
-      const { sendTipWithPayment } = await import('@src/lib/x402-tip-client');
-      
-      const result = await sendTipWithPayment(
-        tweet.value?.author?.toBase58() || '',
-        amount,
-        tipMessage.value || '',
-        tweet.value?.id || 0,
-        wallet.value
-      );
+      if (usePlatformWallet.value) {
+        // Use platform wallet (no Phantom approval needed)
+        const { sendTipWithPlatformWallet } = await import('@src/lib/x402-platform-client');
+        
+        const result = await sendTipWithPlatformWallet(
+          tweet.value?.author?.toBase58() || '',
+          amount,
+          tipMessage.value || '',
+          tweet.value?.id || 0,
+          wallet.value.publicKey.toBase58()
+        );
 
-      if (result.success) {
-        console.log('💰 Tip sent successfully:', result);
-        tipAmount.value = '';
-        tipMessage.value = '';
-        showTipModal.value = false;
-        // Refresh tip data to show updated totals
-        await loadTipData();
-        // You could add a success notification here
+        if (result.success) {
+          console.log('💰 Tip sent successfully from platform wallet:', result);
+          tipAmount.value = '';
+          tipMessage.value = '';
+          showTipModal.value = false;
+          // Refresh tip data and platform wallet balance
+          await loadTipData();
+          await loadPlatformWalletData();
+        } else {
+          if (result.requiresDeposit) {
+            tipErrorMessage.value = 'Insufficient platform wallet balance. Please deposit more SOL or use Phantom wallet.';
+          } else {
+            tipErrorMessage.value = result.message || 'Failed to send tip from platform wallet';
+          }
+        }
       } else {
-        tipErrorMessage.value = result.message || 'Failed to send tip';
+        // Use Phantom wallet (requires approval)
+        const { sendTipWithPayment } = await import('@src/lib/x402-tip-client');
+        
+        const result = await sendTipWithPayment(
+          tweet.value?.author?.toBase58() || '',
+          amount,
+          tipMessage.value || '',
+          tweet.value?.id || 0,
+          wallet.value
+        );
+
+        if (result.success) {
+          console.log('💰 Tip sent successfully from Phantom:', result);
+          tipAmount.value = '';
+          tipMessage.value = '';
+          showTipModal.value = false;
+          // Refresh tip data to show updated totals
+          await loadTipData();
+        } else {
+          tipErrorMessage.value = result.message || 'Failed to send tip';
+        }
       }
     } catch (error: any) {
       console.error('Tip error:', error);
@@ -342,6 +391,14 @@ import { profileService, interactionService, tipService } from '@src/lib/supabas
     } finally {
       isTipping.value = false;
     }
+  };
+
+  const handlePlatformWalletModal = () => {
+    showPlatformWalletModal.value = true;
+  };
+
+  const handlePlatformWalletBalanceUpdated = async () => {
+    await loadPlatformWalletData();
   };
 
   const handleShare = () => {
@@ -644,6 +701,62 @@ Come beacon at @https://trenchbeacon.com/`;
           ></textarea>
         </div>
 
+        <!-- Wallet Selection -->
+        <div class="space-y-3">
+          <h4 class="text-sm font-medium text-white">Choose Payment Method</h4>
+          
+          <!-- Platform Wallet Option -->
+          <div class="p-3 border rounded-lg" :class="usePlatformWallet ? 'border-yellow-500/50 bg-yellow-500/10' : 'border-dark-600'">
+            <label class="flex items-center space-x-3 cursor-pointer">
+              <input
+                v-model="usePlatformWallet"
+                type="radio"
+                :value="true"
+                class="text-yellow-500 focus:ring-yellow-500"
+              />
+              <div class="flex-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-medium text-white">Platform Wallet</span>
+                  <span class="text-xs text-yellow-400">{{ platformBalance.toFixed(6) }} SOL</span>
+                </div>
+                <p class="text-xs text-dark-400 mt-1">Instant tips without Phantom approval</p>
+              </div>
+            </label>
+          </div>
+
+          <!-- Phantom Wallet Option -->
+          <div class="p-3 border rounded-lg" :class="!usePlatformWallet ? 'border-blue-500/50 bg-blue-500/10' : 'border-dark-600'">
+            <label class="flex items-center space-x-3 cursor-pointer">
+              <input
+                v-model="usePlatformWallet"
+                type="radio"
+                :value="false"
+                class="text-blue-500 focus:ring-blue-500"
+              />
+              <div class="flex-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-medium text-white">Phantom Wallet</span>
+                  <span class="text-xs text-blue-400">Requires approval</span>
+                </div>
+                <p class="text-xs text-dark-400 mt-1">Traditional wallet with popup approval</p>
+              </div>
+            </label>
+          </div>
+
+          <!-- Platform Wallet Management -->
+          <div v-if="usePlatformWallet" class="flex space-x-2">
+            <button
+              @click="handlePlatformWalletModal"
+              class="btn-secondary text-xs px-3 py-1"
+            >
+              Manage Platform Wallet
+            </button>
+            <span class="text-xs text-dark-400 self-center">
+              Deposit SOL for instant tips
+            </span>
+          </div>
+        </div>
+
         <!-- Payment Info -->
         <div class="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
           <div class="flex items-center justify-between text-sm">
@@ -653,6 +766,10 @@ Come beacon at @https://trenchbeacon.com/`;
           <div class="flex items-center justify-between text-sm mt-1">
             <span class="text-dark-300">To:</span>
             <span class="text-dark-300 font-mono text-xs">{{ tweet?.author?.toBase58().slice(0, 8) }}...{{ tweet?.author?.toBase58().slice(-8) }}</span>
+          </div>
+          <div v-if="usePlatformWallet" class="flex items-center justify-between text-sm mt-1">
+            <span class="text-dark-300">From:</span>
+            <span class="text-yellow-400 text-xs">Platform Wallet</span>
           </div>
         </div>
 
@@ -688,6 +805,13 @@ Come beacon at @https://trenchbeacon.com/`;
         </div>
       </div>
     </div>
+
+    <!-- Platform Wallet Modal -->
+    <PlatformWalletModal
+      :is-open="showPlatformWalletModal"
+      @close="showPlatformWalletModal = false"
+      @balance-updated="handlePlatformWalletBalanceUpdated"
+    />
   </div>
 </template>
 
