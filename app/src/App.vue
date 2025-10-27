@@ -9,7 +9,7 @@
   import { initWallet, useWallet } from 'solana-wallets-vue';
   import { initWorkspace, useProfileAutoCreate } from '@src/hooks';
   import { onMounted, watch } from 'vue';
-  import { setCurrentUserAddress, connectWebSocket, isWSInitialized } from '@src/lib/websocket-service';
+  import { initializeTweetsService } from '@src/lib/http-tweets-service';
 
   const route = useRoute();
   const wallets = [new PhantomWalletAdapter(), new SolflareWalletAdapter()];
@@ -23,21 +23,14 @@
   onMounted(() => {
     initWorkspace();
     
-    // Ensure WebSocket is connected
-    if (!isWSInitialized()) {
-      console.log('🔌 Manually connecting WebSocket...');
-      connectWebSocket();
-    }
-    
-    // Set current user address for WebSocket
-    const currentUserAddress = wallet.value?.publicKey?.toString();
-    setCurrentUserAddress(currentUserAddress || null);
+    // Initialize HTTP tweets service
+    console.log('🚀 Starting HTTP tweets service...');
+    initializeTweetsService();
   });
 
-  // Watch for wallet changes and update WebSocket
+  // Watch for wallet changes
   watch(wallet, (newWallet) => {
-    const currentUserAddress = newWallet?.publicKey?.toString();
-    setCurrentUserAddress(currentUserAddress || null);
+    console.log('👤 Wallet changed:', newWallet?.publicKey?.toString());
   });
 </script>
 

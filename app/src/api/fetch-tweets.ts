@@ -1,14 +1,14 @@
 import { TweetModel } from '@src/models/tweet.model';
 import { PublicKey } from '@solana/web3.js';
-import { getTweets, isWSInitialized } from '@src/lib/websocket-service';
+import { getTweets, isServiceInitialized } from '@src/lib/http-tweets-service';
 
 export const fetchTweets = async (filters: any[] = []) => {
   console.log('📡 fetchTweets called with filters:', filters);
   
   try {
-    // Check if WebSocket is initialized
-    if (!isWSInitialized()) {
-      console.log('📡 WebSocket not initialized yet, returning empty array');
+    // Check if HTTP service is initialized
+    if (!isServiceInitialized()) {
+      console.log('📡 HTTP service not initialized yet, returning empty array');
       return [];
     }
     

@@ -2,7 +2,7 @@
   import { computed, toRefs, onMounted, onUnmounted, ref } from 'vue';
   import TweetCard from '@src/components/TweetCard.vue';
   import { TweetModel } from '@src/models/tweet.model';
-  import { getTweets, on, off, isWSInitialized, connectWebSocket } from '@src/lib/websocket-service';
+  import { getTweets, on, off, isServiceInitialized, initializeTweetsService } from '@src/lib/http-tweets-service';
   import { PublicKey } from '@solana/web3.js';
 
   interface IProps {
@@ -17,7 +17,7 @@
   const useSSE = ref(true);
 
   const orderedTweets = computed(() => {
-    if (useSSE.value && isWSInitialized() && sseTweets.value.length > 0) {
+    if (useSSE.value && isServiceInitialized() && sseTweets.value.length > 0) {
       return sseTweets.value.slice().sort((a, b) => b.timestamp - a.timestamp);
     }
     return tweets.value.slice().sort((a, b) => b.timestamp - a.timestamp);
@@ -71,17 +71,17 @@
   };
 
   onMounted(() => {
-    // Connect to WebSocket
-    connectWebSocket();
+    // Initialize HTTP service
+    initializeTweetsService();
     
-    // Set up WebSocket event listeners
+    // Set up event listeners
     on('new_tweet', handleNewTweet);
     on('tweet_update', handleTweetUpdate);
     on('tweets_update', handleTweetsUpdate);
     on('tweets_loaded', handleTweetsLoaded);
     
-    // Initialize with current WebSocket data if available
-    if (isWSInitialized()) {
+    // Initialize with current data if available
+    if (isServiceInitialized()) {
       const currentTweets = getTweets();
       if (currentTweets.length > 0) {
         sseTweets.value = currentTweets.map((tweet, index) => convertBeaconToTweetModel(tweet, index));
