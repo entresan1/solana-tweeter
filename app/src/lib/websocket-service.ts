@@ -32,8 +32,10 @@ let currentUserAddress: string | null = null;
  */
 export function connectWebSocket() {
   console.log('🔌 WebSocket disabled, using API polling for real-time updates');
-  // Skip WebSocket entirely and go straight to API polling
-  loadTweetsDirectly();
+  // Add a small delay to ensure the app is fully loaded
+  setTimeout(() => {
+    loadTweetsDirectly();
+  }, 1000);
 }
 
 /**
@@ -64,11 +66,19 @@ async function loadTweetsDirectly() {
     }
 
     if (data.success) {
-      tweets.value = data.data.tweets || [];
+      // Ensure we have a valid array
+      const tweetsData = Array.isArray(data.data.tweets) ? data.data.tweets : [];
+      tweets.value = tweetsData;
       isInitialized.value = true;
 
       console.log('✅ Loaded tweets directly:', tweets.value.length);
-      emit('tweets_loaded', tweets.value);
+      
+      // Emit event safely
+      try {
+        emit('tweets_loaded', tweets.value);
+      } catch (error) {
+        console.error('❌ Error emitting tweets_loaded:', error);
+      }
       
       // Start polling for updates every 10 seconds
       startPolling();
@@ -101,10 +111,17 @@ function startPolling() {
 
       if (data.success && data.data.tweets) {
         // Only update if we have new tweets or if this is the first load
-        const newTweets = data.data.tweets;
+        const newTweets = Array.isArray(data.data.tweets) ? data.data.tweets : [];
         if (tweets.value.length === 0 || newTweets.length !== tweets.value.length) {
           tweets.value = newTweets;
-          emit('tweets_update', newTweets);
+          
+          // Emit event safely
+          try {
+            emit('tweets_update', newTweets);
+          } catch (error) {
+            console.error('❌ Error emitting tweets_update:', error);
+          }
+          
           console.log('🔄 Polling update:', newTweets.length, 'tweets');
         }
       }
@@ -176,9 +193,19 @@ export function getNewTweetsCount() {
  * Event emitter
  */
 function emit(event: string, data?: any) {
-  const listeners = eventListeners.get(event);
-  if (listeners) {
-    listeners.forEach(listener => listener(data));
+  try {
+    const listeners = eventListeners.get(event);
+    if (listeners) {
+      listeners.forEach(listener => {
+        try {
+          listener(data);
+        } catch (error) {
+          console.error(`❌ Error in event listener for ${event}:`, error);
+        }
+      });
+    }
+  } catch (error) {
+    console.error(`❌ Error emitting event ${event}:`, error);
   }
 }
 
@@ -202,8 +229,5 @@ export function off(event: string, listener: Function) {
   }
 }
 
-// Auto-connect on module load
-if (typeof window !== 'undefined') {
-  // Start API polling immediately
-  connectWebSocket();
-}
+// Auto-connect disabled to prevent router errors
+// Components will call connectWebSocket() when ready
