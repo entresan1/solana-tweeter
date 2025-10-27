@@ -145,7 +145,7 @@ function handleTweetsSSEMessage(data: any) {
       // Check for new tweets (not from current user)
       const currentUserAddress = getCurrentUserAddress();
       if (currentUserAddress && newTweets.length > 0) {
-        const newTweetsFromOthers = newTweets.filter(t => 
+        const newTweetsFromOthers = newTweets.filter((t: any) => 
           t.author !== currentUserAddress && 
           (typeof t.timestamp === 'number' ? t.timestamp : new Date(t.timestamp).getTime()) > lastTweetTimestamp.value
         );
