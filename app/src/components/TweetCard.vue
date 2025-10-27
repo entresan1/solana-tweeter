@@ -498,7 +498,14 @@ import { TweetModel } from '@src/models/tweet.model';
       
       if (usePlatformWallet.value) {
         // Use platform wallet (no Phantom approval needed)
-        const { sendTipWithPlatformWallet } = await import('@src/lib/x402-platform-client');
+        let sendTipWithPlatformWallet;
+        try {
+          const module = await import('@src/lib/x402-platform-client');
+          sendTipWithPlatformWallet = module.sendTipWithPlatformWallet;
+        } catch (error) {
+          console.error('Failed to load x402-platform-client:', error);
+          throw new Error('Platform wallet service temporarily unavailable. Please try again.');
+        }
         
         const result = await sendTipWithPlatformWallet(
           tweet.value?.author?.toBase58() || '',

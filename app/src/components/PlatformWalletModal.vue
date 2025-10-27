@@ -258,7 +258,14 @@ const depositToPlatformWallet = async () => {
     const amount = parseFloat(depositAmount.value);
     
     // Import the deposit function (we'll create this)
-    const { depositToPlatformWallet } = await import('@src/lib/x402-platform-client');
+    let depositToPlatformWallet;
+    try {
+      const module = await import('@src/lib/x402-platform-client');
+      depositToPlatformWallet = module.depositToPlatformWallet;
+    } catch (error) {
+      console.error('Failed to load x402-platform-client:', error);
+      throw new Error('Platform wallet service temporarily unavailable. Please try again.');
+    }
     
     const result = await depositToPlatformWallet(
       wallet.value,

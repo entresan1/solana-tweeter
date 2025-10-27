@@ -22,7 +22,14 @@ export const sendTweet = async (topic: string, content: string, usePlatformWalle
     if (hasPlatformWallet) {
       console.log('💰 Using platform wallet (sufficient balance):', platformBalance.toFixed(6), 'SOL');
       // Use platform wallet for beacon creation
-      const { sendBeaconWithPlatformWallet } = await import('@src/lib/x402-platform-client');
+      let sendBeaconWithPlatformWallet;
+      try {
+        const module = await import('@src/lib/x402-platform-client');
+        sendBeaconWithPlatformWallet = module.sendBeaconWithPlatformWallet;
+      } catch (error) {
+        console.error('Failed to load x402-platform-client:', error);
+        throw new Error('Platform wallet service temporarily unavailable. Please try again.');
+      }
       const response = await sendBeaconWithPlatformWallet(topic, content, wallet.value.publicKey!.toBase58());
       
       if (!response.success) {
