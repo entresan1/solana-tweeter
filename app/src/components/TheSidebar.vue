@@ -138,46 +138,6 @@
              :class="route.name === 'Home' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">Home</div>
       </router-link>
       
-      <router-link
-        :to="{ name: 'Topics' }"
-        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-300 group"
-        :class="route.name === 'Topics' ? 'bg-gradient-to-r from-primary-500/20 to-solana-500/20 border border-primary-500/30' : ''"
-      >
-        <div class="flex items-center justify-center w-8 h-8 rounded-xl"
-             :class="route.name === 'Topics' ? 'bg-gradient-to-r from-primary-500 to-solana-500' : 'bg-dark-700 group-hover:bg-dark-600'">
-          <svg
-            v-if="route.name === 'Topics'"
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5 text-white"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"
-            />
-            <path
-              d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z"
-            />
-          </svg>
-          <svg
-            v-else
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5 text-dark-300 group-hover:text-white"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"
-            />
-          </svg>
-        </div>
-        <div class="text-lg font-medium hidden md:block"
-             :class="route.name === 'Topics' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">Topics</div>
-      </router-link>
       
       <!-- Profile Link (only when connected) -->
       <router-link

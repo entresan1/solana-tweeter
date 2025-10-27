@@ -1,5 +1,4 @@
 import HomePage from '@src/pages/PageHome.vue';
-import TopicsPage from '@src/pages/PageTopics.vue';
 import UsersPage from '@src/pages/PageUsers.vue';
 import ProfilePage from '@src/pages/PageProfile.vue';
 import TweetPage from '@src/pages/PageTweet.vue';
@@ -11,11 +10,6 @@ export default [
     name: 'Home',
     path: '/',
     component: HomePage,
-  },
-  {
-    name: 'Topics',
-    path: '/topics/:topic?',
-    component: TopicsPage,
   },
   {
     name: 'Users',

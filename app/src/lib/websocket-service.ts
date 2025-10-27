@@ -100,10 +100,13 @@ function startPolling() {
       const data = await response.json();
 
       if (data.success && data.data.tweets) {
-        // Update tweets with new data
-        tweets.value = data.data.tweets;
-        emit('tweets_update', data.data.tweets);
-        console.log('🔄 Polling update:', data.data.tweets.length, 'tweets');
+        // Only update if we have new tweets or if this is the first load
+        const newTweets = data.data.tweets;
+        if (tweets.value.length === 0 || newTweets.length !== tweets.value.length) {
+          tweets.value = newTweets;
+          emit('tweets_update', newTweets);
+          console.log('🔄 Polling update:', newTweets.length, 'tweets');
+        }
       }
     } catch (error) {
       console.error('❌ Error in polling update:', error);

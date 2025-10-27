@@ -5,7 +5,6 @@
   import { useFromRoute } from '@src/hooks';
   import { TweetModel } from '@src/models/tweet.model';
   import TweetList from '@src/components/TweetList.vue';
-  import TweetSearch from '@src/components/TweetSearch.vue';
 
   // Data.
   const router = useRouter();
@@ -44,29 +43,6 @@
 </script>
 
 <template>
-  <tweet-search
-    v-model="author"
-    placeholder="public key"
-    :disabled="!author"
-    @search="search"
-  >
-    <template #icon>
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        class="h-5 w-5"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-        />
-      </svg>
-    </template>
-  </tweet-search>
   <div v-if="viewedAuthor">
     <tweet-list :tweets="tweets" :loading="loading"></tweet-list>
     <div v-if="tweets.length === 0" class="p-8 text-dark-400 text-center">
