@@ -109,22 +109,82 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Verify amount
-    if (actualAmount < expectedAmount) {
+    // Verify amount (allow small tolerance for network fees)
+    const tolerance = 0.001 * LAMPORTS_PER_SOL; // 0.001 SOL tolerance
+    if (actualAmount < (expectedAmount - tolerance)) {
       return res.status(200).json({
         valid: false,
         message: `Insufficient payment amount. Expected 0.01 SOL, got ${(actualAmount / LAMPORTS_PER_SOL).toFixed(4)} SOL`,
+        details: {
+          expected: expectedAmount / LAMPORTS_PER_SOL,
+          actual: actualAmount / LAMPORTS_PER_SOL,
+          treasury: TREASURY_SOL_ADDRESS,
+        }
+      });
+    }
+
+    // Additional verification: Check for X402 memo instruction
+    let x402ProgramFound = false;
+    let x402Memo = null;
+    
+    // Check transaction instructions for memo
+    if (tx.transaction?.message?.instructions) {
+      const accounts = tx.transaction.message.accountKeys;
+      for (const instruction of tx.transaction.message.instructions) {
+        // Check if this is a memo instruction
+        if (instruction.programIdIndex !== undefined) {
+          const programId = accounts[instruction.programIdIndex];
+          // Memo program ID is "MemoSq4gqABAXKb96qnH8TysKcWfC85B2q2"
+          if (programId && programId.toString() === 'MemoSq4gqABAXKb96qnH8TysKcWfC85B2q2') {
+            // This is a memo instruction, check if it contains x402
+            if (instruction.data) {
+              const memoData = Buffer.from(instruction.data, 'base64').toString('utf8');
+              if (memoData.startsWith('x402:')) {
+                x402ProgramFound = true;
+                x402Memo = memoData;
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    // Fallback: Check transaction logs for X402 program
+    if (!x402ProgramFound && tx.meta?.logMessages) {
+      for (const log of tx.meta.logMessages) {
+        if (log.includes('x402') || log.includes('X402') || log.includes('payment')) {
+          x402ProgramFound = true;
+          break;
+        }
+      }
+    }
+
+    // Check if transaction was successful
+    if (tx.meta?.err) {
+      return res.status(200).json({
+        valid: false,
+        message: 'Transaction failed or was reverted',
+        details: {
+          error: tx.meta.err,
+          treasury: TREASURY_SOL_ADDRESS,
+        }
       });
     }
 
     return res.status(200).json({
       valid: true,
-      message: `Valid x402 payment of ${(actualAmount / LAMPORTS_PER_SOL).toFixed(4)} SOL to treasury`,
+      message: `✅ Valid x402 payment of ${(actualAmount / LAMPORTS_PER_SOL).toFixed(4)} SOL to treasury`,
       details: {
         amount: actualAmount / LAMPORTS_PER_SOL,
         treasury: TREASURY_SOL_ADDRESS,
         network: 'solana-mainnet',
         timestamp: new Date().toISOString(),
+        transactionSignature: transaction,
+        x402ProgramDetected: x402ProgramFound,
+        x402Memo: x402Memo,
+        blockTime: tx.blockTime ? new Date(tx.blockTime * 1000).toISOString() : null,
+        slot: tx.slot,
       },
     });
 

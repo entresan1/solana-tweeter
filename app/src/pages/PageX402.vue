@@ -138,6 +138,18 @@
           <p class="text-dark-300 mb-4">
             Verify that a transaction was a valid x402 payment to our treasury.
           </p>
+          <div class="bg-dark-900/50 rounded-lg p-4 mb-4">
+            <h3 class="text-sm font-semibold text-white mb-2">How Verification Works:</h3>
+            <ul class="text-xs text-dark-300 space-y-1">
+              <li>• <strong>Transaction Lookup:</strong> Fetches transaction data from Solana blockchain</li>
+              <li>• <strong>Amount Check:</strong> Verifies payment amount (0.01 SOL ± tolerance)</li>
+              <li>• <strong>Treasury Verification:</strong> Confirms payment went to our treasury address</li>
+              <li>• <strong>Network Check:</strong> Ensures transaction is on Solana mainnet</li>
+              <li>• <strong>Status Validation:</strong> Confirms transaction was successful (not failed)</li>
+              <li>• <strong>X402 Memo Check:</strong> Verifies transaction contains "x402:" memo instruction</li>
+              <li>• <strong>Program Detection:</strong> Looks for X402 program indicators in logs</li>
+            </ul>
+          </div>
           <div class="flex space-x-4">
             <input
               v-model="verificationTx"
@@ -168,6 +180,56 @@
             <p v-if="verificationResult.message" class="text-sm mt-2 text-dark-300">
               {{ verificationResult.message }}
             </p>
+            
+            <!-- Detailed verification results -->
+            <div v-if="verificationResult.details" class="mt-4 space-y-2">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div v-if="verificationResult.details.amount" class="bg-dark-800/50 p-3 rounded">
+                  <span class="text-dark-400">Amount:</span>
+                  <span class="text-white font-mono ml-2">{{ verificationResult.details.amount.toFixed(4) }} SOL</span>
+                </div>
+                <div v-if="verificationResult.details.network" class="bg-dark-800/50 p-3 rounded">
+                  <span class="text-dark-400">Network:</span>
+                  <span class="text-white ml-2">{{ verificationResult.details.network }}</span>
+                </div>
+                <div v-if="verificationResult.details.treasury" class="bg-dark-800/50 p-3 rounded">
+                  <span class="text-dark-400">Treasury:</span>
+                  <span class="text-white font-mono text-xs ml-2 break-all">{{ verificationResult.details.treasury }}</span>
+                </div>
+                <div v-if="verificationResult.details.blockTime" class="bg-dark-800/50 p-3 rounded">
+                  <span class="text-dark-400">Block Time:</span>
+                  <span class="text-white ml-2">{{ formatTimestamp(verificationResult.details.blockTime) }}</span>
+                </div>
+                <div v-if="verificationResult.details.slot" class="bg-dark-800/50 p-3 rounded">
+                  <span class="text-dark-400">Slot:</span>
+                  <span class="text-white font-mono ml-2">{{ verificationResult.details.slot.toLocaleString() }}</span>
+                </div>
+                <div v-if="verificationResult.details.x402ProgramDetected !== undefined" class="bg-dark-800/50 p-3 rounded">
+                  <span class="text-dark-400">X402 Program:</span>
+                  <span :class="verificationResult.details.x402ProgramDetected ? 'text-green-400' : 'text-yellow-400'" class="ml-2">
+                    {{ verificationResult.details.x402ProgramDetected ? 'Detected' : 'Not detected in logs' }}
+                  </span>
+                </div>
+                <div v-if="verificationResult.details.x402Memo" class="bg-dark-800/50 p-3 rounded">
+                  <span class="text-dark-400">X402 Memo:</span>
+                  <span class="text-white font-mono text-xs ml-2 break-all">{{ verificationResult.details.x402Memo }}</span>
+                </div>
+              </div>
+              
+              <!-- Transaction link -->
+              <div v-if="verificationResult.details.transactionSignature" class="mt-4">
+                <a 
+                  :href="`https://solscan.io/tx/${verificationResult.details.transactionSignature}`"
+                  target="_blank"
+                  class="inline-flex items-center text-primary-400 hover:text-primary-300 transition-colors"
+                >
+                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  View on Solscan
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </div>

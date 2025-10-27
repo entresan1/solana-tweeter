@@ -1,4 +1,5 @@
 import { Connection, Transaction, SystemProgram, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { createMemoInstruction } from '@solana/spl-memo';
 import { createX402Proof, X402_CONFIG } from './x402';
 
 // Solana connection (same as existing)
@@ -58,8 +59,9 @@ export async function payForX402AndRetry(
       throw new Error('Wallet not connected');
     }
 
-    // 3) Create + send the x402 payment tx for 0.01 SOL (on mainnet)
-    const paymentTx = await createPaymentTransaction(wallet.publicKey);
+    // 3) Create + send the x402 payment tx for 0.01 SOL (on mainnet) with unique payment ID
+    const paymentId = `x402_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const paymentTx = await createPaymentTransaction(wallet.publicKey, paymentId);
     const signedTx = await wallet.signTransaction(paymentTx);
     const signature = await connection.sendRawTransaction(signedTx.serialize(), {
       skipPreflight: false,
@@ -93,11 +95,12 @@ export async function payForX402AndRetry(
 }
 
 /**
- * Create payment transaction to treasury
+ * Create payment transaction to treasury with X402 memo
  * @param fromPubkey - Sender's public key
+ * @param paymentId - Unique payment identifier for X402 verification
  * @returns Transaction object
  */
-async function createPaymentTransaction(fromPubkey: PublicKey): Promise<Transaction> {
+async function createPaymentTransaction(fromPubkey: PublicKey, paymentId?: string): Promise<Transaction> {
   // Get recent blockhash
   const { blockhash } = await connection.getLatestBlockhash('confirmed');
   
@@ -115,6 +118,18 @@ async function createPaymentTransaction(fromPubkey: PublicKey): Promise<Transact
   });
 
   transaction.add(transferInstruction);
+  
+  // Add X402 memo for on-chain verification
+  if (paymentId) {
+    const memoInstruction = createMemoInstruction(`x402:${paymentId}`, [fromPubkey]);
+    transaction.add(memoInstruction);
+  } else {
+    // Generate a unique payment ID if not provided
+    const uniqueId = `beacon_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const memoInstruction = createMemoInstruction(`x402:${uniqueId}`, [fromPubkey]);
+    transaction.add(memoInstruction);
+  }
+  
   return transaction;
 }
 

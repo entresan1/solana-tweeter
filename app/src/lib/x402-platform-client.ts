@@ -1,4 +1,5 @@
 import { Connection, Transaction, SystemProgram, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { createMemoInstruction } from '@solana/spl-memo';
 import { platformWalletService } from './platform-wallet';
 
 // Solana connection
@@ -262,8 +263,9 @@ async function payForX402AndRetry(
       throw new Error('Wallet not connected');
     }
 
-    // 3) Create + send the x402 payment tx
-    const paymentTx = await createPaymentTransaction(wallet.publicKey, payment.recipient, amount);
+    // 3) Create + send the x402 payment tx with unique payment ID
+    const paymentId = `x402_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const paymentTx = await createPaymentTransaction(wallet.publicKey, payment.recipient, amount, paymentId);
     const signedTx = await wallet.signTransaction(paymentTx);
     const signature = await connection.sendRawTransaction(signedTx.serialize(), {
       skipPreflight: false,
@@ -297,13 +299,14 @@ async function payForX402AndRetry(
 }
 
 /**
- * Create payment transaction
+ * Create payment transaction with X402 memo
  * @param fromPubkey - Sender's public key
  * @param toAddress - Recipient's address
  * @param amount - Amount in SOL
+ * @param paymentId - Unique payment identifier for X402 verification
  * @returns Transaction object
  */
-async function createPaymentTransaction(fromPubkey: PublicKey, toAddress: string, amount: number): Promise<Transaction> {
+async function createPaymentTransaction(fromPubkey: PublicKey, toAddress: string, amount: number, paymentId?: string): Promise<Transaction> {
   const toPubkey = new PublicKey(toAddress);
   const lamports = amount * LAMPORTS_PER_SOL;
 
@@ -321,6 +324,18 @@ async function createPaymentTransaction(fromPubkey: PublicKey, toAddress: string
   });
 
   transaction.add(transferInstruction);
+  
+  // Add X402 memo for on-chain verification
+  if (paymentId) {
+    const memoInstruction = createMemoInstruction(`x402:${paymentId}`, [fromPubkey]);
+    transaction.add(memoInstruction);
+  } else {
+    // Generate a unique payment ID if not provided
+    const uniqueId = `beacon_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const memoInstruction = createMemoInstruction(`x402:${uniqueId}`, [fromPubkey]);
+    transaction.add(memoInstruction);
+  }
+  
   return transaction;
 }
 
