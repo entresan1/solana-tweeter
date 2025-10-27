@@ -210,7 +210,7 @@ module.exports = async (req, res) => {
 
     // Save beacon to Supabase database
     const beaconData = {
-      topic: topic || 'general', // Default topic if not provided
+      topic: topic && topic.trim() ? topic.trim() : 'general', // Ensure topic is never null/empty
       content,
       author,
       author_display: author_display || author.slice(0, 8) + '...',
@@ -249,7 +249,7 @@ module.exports = async (req, res) => {
       const { data: savedBeacon, error: dbError } = await supabase
         .from('beacons')
         .insert([{
-          topic: beaconData.topic,
+          topic: beaconData.topic || 'general', // Ensure topic is never null
           content: beaconData.content,
           author: beaconData.author,
           author_display: beaconData.author_display,
