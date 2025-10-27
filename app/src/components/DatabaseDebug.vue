@@ -30,7 +30,6 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { supabase } from '@src/lib/supabase';
 import { useWorkspace } from '@src/hooks';
 
 const { wallet } = useWorkspace();
@@ -54,19 +53,18 @@ const testConnection = async () => {
     connectionStatus.value = 'testing';
     error.value = '';
     
-    // Test basic connection
-    const { data, error: queryError } = await supabase
-      .from('beacons')
-      .select('count', { count: 'exact', head: true });
+    // Test connection via server-side API
+    const response = await fetch('/api/beacons?limit=1');
+    const data = await response.json();
     
-    if (queryError) {
-      console.error('❌ Database test failed:', queryError);
+    if (!response.ok || !data.success) {
+      console.error('❌ Database test failed:', data.error);
       connectionStatus.value = 'failed';
-      error.value = queryError.message;
+      error.value = data.error || 'API request failed';
     } else {
       console.log('✅ Database test successful');
       connectionStatus.value = 'success';
-      beaconCount.value = data?.length || 0;
+      beaconCount.value = data.beacons?.length || 0;
     }
   } catch (err: any) {
     console.error('❌ Database test error:', err);
