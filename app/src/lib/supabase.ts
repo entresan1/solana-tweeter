@@ -121,12 +121,14 @@ export const beaconService = {
   }
 }
 
-// Simple cache to avoid repeated queries for non-existent profiles
+// Enhanced cache to avoid repeated queries for non-existent profiles
 const profileCache = new Map<string, { profile: any | null; timestamp: number }>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes (increased from 5)
 
 // Track ongoing requests to prevent duplicate API calls
 const pendingRequests = new Map<string, Promise<any>>();
+const requestQueue = new Map<string, number>(); // Track request timestamps
+const MIN_REQUEST_INTERVAL = 200; // Minimum 200ms between requests for same wallet
 
 // Tip service
 export const tipService = {
@@ -154,7 +156,7 @@ export const tipService = {
 
 // User profile service - now uses server-side API
 export const profileService = {
-  // Get user profile by wallet address
+  // Get user profile by wallet address with enhanced rate limiting
   async getProfile(walletAddress: string) {
     // Check cache first
     const cached = profileCache.get(walletAddress);
@@ -169,7 +171,18 @@ export const profileService = {
       return await pendingRequests.get(walletAddress);
     }
     
+    // Rate limiting: check if we've made a request too recently
+    const lastRequest = requestQueue.get(walletAddress);
+    const now = Date.now();
+    if (lastRequest && (now - lastRequest) < MIN_REQUEST_INTERVAL) {
+      console.log('🎯 Rate limiting: waiting for wallet:', walletAddress.slice(0, 8) + '...');
+      await new Promise(resolve => setTimeout(resolve, MIN_REQUEST_INTERVAL - (now - lastRequest)));
+    }
+    
     console.log('🎯 Cache miss for wallet:', walletAddress.slice(0, 8) + '...');
+    
+    // Update request timestamp
+    requestQueue.set(walletAddress, now);
     
     // Create a new request and store it
     const requestPromise = this._fetchProfile(walletAddress);
@@ -187,12 +200,19 @@ export const profileService = {
   // Internal method to actually fetch the profile
   async _fetchProfile(walletAddress: string) {
     try {
-      // Add a small delay to prevent rate limiting
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
       const response = await fetch(`/api/user-profiles?walletAddress=${encodeURIComponent(walletAddress)}`);
 
       if (!response.ok) {
+        if (response.status === 404) {
+          // Profile doesn't exist, cache null result
+          profileCache.set(walletAddress, { profile: null, timestamp: Date.now() });
+          return null;
+        }
+        if (response.status === 429) {
+          // Rate limited, wait a bit and throw error to retry later
+          console.warn('Rate limited, will retry later');
+          throw new Error('Rate limited');
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
@@ -203,12 +223,14 @@ export const profileService = {
         profileCache.set(walletAddress, { profile: data.profile, timestamp: Date.now() });
         return data.profile;
       } else {
-        throw new Error(data.error || 'Failed to fetch profile');
+        // Profile doesn't exist, cache null result
+        profileCache.set(walletAddress, { profile: null, timestamp: Date.now() });
+        return null;
       }
     } catch (error) {
       console.warn('⚠️ Profile fetch failed:', error);
-      profileCache.set(walletAddress, { profile: null, timestamp: Date.now() });
-      return null;
+      // Don't cache errors, let them retry
+      throw error;
     }
   },
 
@@ -249,6 +271,7 @@ export const profileService = {
   clearCache() {
     profileCache.clear();
     pendingRequests.clear();
+    requestQueue.clear();
   },
 
   // Update profile picture

@@ -40,11 +40,21 @@ export function connectTweetsSSE() {
   try {
     const baseUrl = window.location.origin;
     eventSource = new EventSource(`${baseUrl}/api/tweets-sse`);
+    
+    // Set a timeout to fallback to direct API if SSE doesn't connect quickly
+    const connectionTimeout = setTimeout(() => {
+      if (!isConnected.value) {
+        console.warn('⚠️ SSE connection timeout, falling back to direct API');
+        loadTweetsDirectly();
+      }
+    }, 5000); // 5 second timeout
 
     eventSource.onopen = () => {
       console.log('📡 Tweets SSE connected');
+      console.log('📡 SSE URL:', `${baseUrl}/api/tweets-sse`);
       isConnected.value = true;
       reconnectAttempts = 0;
+      clearTimeout(connectionTimeout); // Clear the connection timeout
       if (reconnectTimeout) {
         clearTimeout(reconnectTimeout);
         reconnectTimeout = null;
@@ -53,33 +63,62 @@ export function connectTweetsSSE() {
 
     eventSource.onmessage = (event) => {
       try {
+        console.log('📨 Raw SSE message received:', event.data);
         const data = JSON.parse(event.data);
         handleTweetsSSEMessage(data);
       } catch (error) {
-        console.error('Failed to parse tweets SSE message:', error);
+        console.error('❌ Error parsing SSE message:', error);
+        console.error('❌ Raw message:', event.data);
       }
     };
 
     eventSource.onerror = (error) => {
-      console.error('Tweets SSE connection error:', error);
+      console.error('❌ Tweets SSE connection error:', error);
       isConnected.value = false;
       
       // Attempt reconnection
       if (reconnectAttempts < maxReconnectAttempts) {
         reconnectAttempts++;
         const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
-        console.log(`Reconnecting tweets SSE in ${delay}ms (attempt ${reconnectAttempts}/${maxReconnectAttempts})`);
+        console.log(`🔄 Reconnecting tweets SSE in ${delay}ms (attempt ${reconnectAttempts}/${maxReconnectAttempts})`);
         
         reconnectTimeout = setTimeout(() => {
           connectTweetsSSE();
         }, delay);
       } else {
-        console.error('Max reconnection attempts reached for tweets SSE');
+        console.error('❌ Max reconnection attempts reached for tweets SSE, falling back to direct API');
+        // Fallback to direct API call
+        loadTweetsDirectly();
       }
     };
 
   } catch (error) {
     console.error('Failed to create tweets SSE connection:', error);
+    // Fallback to direct API call
+    loadTweetsDirectly();
+  }
+}
+
+/**
+ * Fallback function to load tweets directly via API
+ */
+async function loadTweetsDirectly() {
+  try {
+    console.log('🔄 Loading tweets directly via API...');
+    const response = await fetch('/api/tweets-unified?page=1&limit=20');
+    const data = await response.json();
+    
+    if (data.success) {
+      tweets.value = data.data.tweets || [];
+      isInitialized.value = true;
+      
+      console.log('✅ Loaded tweets directly:', tweets.value.length);
+      emit('tweets_loaded', tweets.value);
+    } else {
+      console.error('❌ Failed to load tweets directly:', data.message);
+    }
+  } catch (error) {
+    console.error('❌ Error loading tweets directly:', error);
   }
 }
 
@@ -110,6 +149,7 @@ function handleTweetsSSEMessage(data: any) {
   switch (data.type) {
     case 'connected':
       connectionId.value = data.id;
+      console.log('✅ SSE connected with ID:', data.id);
       break;
 
     case 'ping':
@@ -117,9 +157,13 @@ function handleTweetsSSEMessage(data: any) {
       break;
 
     case 'initial_data':
+      console.log('📊 Initial data received:', data.data);
       // Initial tweets load
       tweets.value = data.data.tweets || [];
       isInitialized.value = true;
+      
+      console.log('📊 Loaded tweets count:', tweets.value.length);
+      console.log('📊 First tweet:', tweets.value[0]);
       
       // Update pagination
       Object.assign(pagination, data.data.pagination || {});
@@ -135,9 +179,12 @@ function handleTweetsSSEMessage(data: any) {
       break;
 
     case 'tweets_update':
+      console.log('🔄 Tweets update received:', data.data);
       // Periodic tweets update (every 5 seconds)
       const newTweets = data.data.tweets || [];
       tweets.value = newTweets;
+      
+      console.log('🔄 Updated tweets count:', newTweets.length);
       
       // Update pagination
       Object.assign(pagination, data.data.pagination || {});

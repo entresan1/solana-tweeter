@@ -9,9 +9,7 @@
   import { initWallet, useWallet } from 'solana-wallets-vue';
   import { initWorkspace, useProfileAutoCreate } from '@src/hooks';
   import { onMounted, watch } from 'vue';
-  import { notificationService } from '@src/lib/notification-service';
   import { setCurrentUserAddress, connectTweetsSSE, isSSEInitialized } from '@src/lib/tweets-sse-service';
-  import { sseDebug } from '@src/lib/sse-debug';
 
   const route = useRoute();
   const wallets = [new PhantomWalletAdapter(), new SolflareWalletAdapter()];
@@ -31,23 +29,15 @@
       connectTweetsSSE();
     }
     
-    // Start checking for new beacons with current user address
+    // Set current user address for SSE
     const currentUserAddress = wallet.value?.publicKey?.toString();
     setCurrentUserAddress(currentUserAddress || null);
-    notificationService.startPeriodicCheck(currentUserAddress);
-    
-    // Debug SSE connection
-    setTimeout(() => {
-      sseDebug.testConnection();
-    }, 2000);
   });
 
-  // Watch for wallet changes and update notification service
+  // Watch for wallet changes and update SSE
   watch(wallet, (newWallet) => {
     const currentUserAddress = newWallet?.publicKey?.toString();
     setCurrentUserAddress(currentUserAddress || null);
-    // Restart periodic check with new user address
-    notificationService.startPeriodicCheck(currentUserAddress);
   });
 </script>
 

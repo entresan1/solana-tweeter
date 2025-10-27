@@ -144,15 +144,19 @@ import { getSafeImageUrl, shouldDisplayImage } from '@src/lib/image-utils';
     console.log('🎯 tweet.value?.id:', tweet.value?.id);
     console.log('🎯 tweet.value?.author:', tweet.value?.author);
     
-    // Profile data and tip data are now loaded by the watchers, so we just need to load like data
-    await loadLikeData();
-    await loadRugData();
+    // Load data in parallel for better performance
+    const loadPromises = [
+      loadLikeData(),
+      loadRugData(),
+      loadReplies()
+    ];
     
-    // Load platform wallet data
-    await loadPlatformWalletData();
+    // Only load platform wallet data if user is connected
+    if (wallet.value?.publicKey) {
+      loadPromises.push(loadPlatformWalletData());
+    }
     
-    // Automatically load replies
-    await loadReplies();
+    await Promise.all(loadPromises);
     showReplies.value = true;
   });
 
