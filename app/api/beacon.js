@@ -218,7 +218,7 @@ module.exports = async (req, res) => {
       treasury_transaction: proof.transaction,
     };
 
-    console.log('💾 Saving beacon to database:', beaconData);
+    console.log('💾 Saving beacon to database (v2):', beaconData);
 
     try {
       // Import beaconService (we need to adjust the path for Vercel)
