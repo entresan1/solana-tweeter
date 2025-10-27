@@ -87,8 +87,13 @@ module.exports = async (req, res) => {
 
     // Broadcast new beacon via SSE
     try {
-      const { broadcastNewBeacon } = require('./events');
-      broadcastNewBeacon(savedBeacon);
+      const eventsModule = require('./events');
+      if (eventsModule.broadcastNewBeacon) {
+        eventsModule.broadcastNewBeacon(savedBeacon);
+        console.log('📡 Beacon broadcasted via SSE');
+      } else {
+        console.log('⚠️ broadcastNewBeacon function not available');
+      }
     } catch (error) {
       console.error('Failed to broadcast new beacon:', error);
       // Don't fail the request if SSE broadcast fails

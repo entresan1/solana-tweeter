@@ -157,13 +157,21 @@ function handleSSEMessage(data: any) {
   }
 }
 
+// Store current user address
+let currentUserAddress: string | null = null;
+
 /**
- * Get current user address (you'll need to implement this based on your wallet setup)
+ * Set current user address
+ */
+export function setCurrentUserAddress(address: string | null) {
+  currentUserAddress = address;
+}
+
+/**
+ * Get current user address
  */
 function getCurrentUserAddress(): string | null {
-  // This should return the current connected wallet address
-  // You'll need to integrate with your wallet service
-  return null; // Placeholder
+  return currentUserAddress;
 }
 
 /**

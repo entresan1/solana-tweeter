@@ -1,4 +1,12 @@
 const { createClient } = require('@supabase/supabase-js');
+const { 
+  generatePlatformWalletAddress, 
+  getPlatformWalletBalance,
+  sendFromPlatformWallet,
+  savePlatformWalletTransaction,
+  connection,
+  TREASURY_SOL_ADDRESS 
+} = require('./platform-wallet-secure');
 
 module.exports = async (req, res) => {
   // Set CORS headers

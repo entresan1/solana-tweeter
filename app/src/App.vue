@@ -10,6 +10,7 @@
   import { initWorkspace, useProfileAutoCreate } from '@src/hooks';
   import { onMounted, watch } from 'vue';
   import { notificationService } from '@src/lib/notification-service';
+  import { setCurrentUserAddress } from '@src/lib/sse-service';
 
   const route = useRoute();
   const wallets = [new PhantomWalletAdapter(), new SolflareWalletAdapter()];
@@ -24,12 +25,14 @@
     initWorkspace();
     // Start checking for new beacons with current user address
     const currentUserAddress = wallet.value?.publicKey?.toString();
+    setCurrentUserAddress(currentUserAddress);
     notificationService.startPeriodicCheck(currentUserAddress);
   });
 
   // Watch for wallet changes and update notification service
   watch(wallet, (newWallet) => {
     const currentUserAddress = newWallet?.publicKey?.toString();
+    setCurrentUserAddress(currentUserAddress);
     // Restart periodic check with new user address
     notificationService.startPeriodicCheck(currentUserAddress);
   });

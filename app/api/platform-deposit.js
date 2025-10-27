@@ -24,11 +24,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Initialize Solana connection
-    const connection = new Connection(
-      'https://small-twilight-sponge.solana-mainnet.quiknode.pro/71bdb31dd3e965467b1393cebaaebe69d481dbeb/',
-      'confirmed'
-    );
+    // Use connection from secure service
 
     console.log('💰 Platform deposit request body:', req.body);
 
