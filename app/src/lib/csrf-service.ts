@@ -17,7 +17,7 @@ async function fetchCsrf(): Promise<string> {
   const now = Date.now();
   if (cached.token && now - cached.ts < 5 * 60_000) return cached.token;
 
-  console.debug('[csrf] Fetching CSRF token');
+  console.debug('[csrf] Fetching CSRF token - v2');
   console.debug('[csrf] Origin:', location.origin);
   console.debug('[csrf] Has cookies:', document.cookie.length > 0);
   console.debug('[csrf] XSRF cookie:', document.cookie.includes('XSRF-TOKEN='));
