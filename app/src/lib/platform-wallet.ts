@@ -1,4 +1,4 @@
-import { Keypair, PublicKey, Connection, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { Keypair, PublicKey, Connection, SystemProgram, LAMPORTS_PER_SOL, Transaction } from '@solana/web3.js';
 import { createHash } from 'crypto';
 
 // Solana connection
