@@ -1,6 +1,5 @@
 const { 
-  secureAuthMiddleware, 
-  generateCSRFToken 
+  secureAuthMiddleware
 } = require('./secure-auth-middleware');
 
 module.exports = async (req, res) => {
@@ -15,17 +14,11 @@ async function handleRequest(req, res) {
     const { method } = req;
     
     if (method === 'GET') {
-      // Generate and return CSRF token
-      const csrfToken = generateCSRFToken();
+      // The middleware already generated a token and set it in the response headers
+      // We just need to return it in the response body
+      const csrfToken = res.getHeader('X-CSRF-Token');
       
-      // Set token in both header and cookie for double-submit pattern
-      res.setHeader('X-CSRF-Token', csrfToken);
-      res.setHeader('X-XSRF-TOKEN', csrfToken);
-      
-      // Set cookie with SameSite=Lax for same-origin requests
-      res.setHeader('Set-Cookie', `XSRF-TOKEN=${csrfToken}; Path=/; SameSite=Lax; HttpOnly=false; Secure=true`);
-      
-      console.log('🔐 CSRF token generated and sent:', csrfToken);
+      console.log('🔐 CSRF token from middleware:', csrfToken);
       
       return res.json({ 
         success: true, 
