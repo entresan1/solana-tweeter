@@ -22,8 +22,8 @@ async function fetchCsrf(): Promise<string> {
   console.debug('[csrf] Has cookies:', document.cookie.length > 0);
   console.debug('[csrf] XSRF cookie:', document.cookie.includes('XSRF-TOKEN='));
 
-  // Use beacons endpoint to get CSRF token (fallback until /api/csrf is deployed)
-  const res = await fetch('/api/beacons?limit=1', {
+  // Use dedicated CSRF endpoint for token generation
+  const res = await fetch('/api/csrf', {
     method: 'GET',
     credentials: 'include',
     headers: { 

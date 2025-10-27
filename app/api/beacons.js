@@ -1,18 +1,14 @@
 const treasuryService = require('./treasury-service');
-const { generateCSRFToken } = require('./secure-auth-middleware');
+const { secureAuthMiddleware } = require('./secure-auth-middleware');
 
 module.exports = async (req, res) => {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-  
-  // Generate and send CSRF token for GET requests
-  const csrfToken = generateCSRFToken();
-  res.setHeader('X-CSRF-Token', csrfToken);
-  res.setHeader('Access-Control-Expose-Headers', 'X-CSRF-Token');
+  // Apply security middleware for consistent CSRF token management
+  secureAuthMiddleware(req, res, () => {
+    handleRequest(req, res);
+  });
+};
 
+async function handleRequest(req, res) {
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
@@ -64,4 +60,4 @@ module.exports = async (req, res) => {
       message: 'Failed to fetch beacons'
     });
   }
-};
+}
