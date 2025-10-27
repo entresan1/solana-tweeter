@@ -15,7 +15,7 @@ export const sendTweet = async (topic: string, content: string, usePlatformWalle
     console.log('🚀 Sending beacon with x402 payment...', { usePlatformWallet });
     
     // Always try platform wallet first if user has one, regardless of preference
-    const userAddress = wallet.value.publicKey.toBase58();
+    const userAddress = wallet.value.publicKey!.toBase58();
     const platformBalance = await platformWalletService.getBalance(userAddress);
     const hasPlatformWallet = platformBalance > 0.001; // Check if has enough for beacon (0.001 SOL)
     
@@ -23,7 +23,7 @@ export const sendTweet = async (topic: string, content: string, usePlatformWalle
       console.log('💰 Using platform wallet (sufficient balance):', platformBalance.toFixed(6), 'SOL');
       // Use platform wallet for beacon creation
       const { sendBeaconWithPlatformWallet } = await import('@src/lib/x402-platform-client');
-      const response = await sendBeaconWithPlatformWallet(topic, content, wallet.value.publicKey.toBase58());
+      const response = await sendBeaconWithPlatformWallet(topic, content, wallet.value.publicKey!.toBase58());
       
       if (!response.success) {
         // If platform wallet fails, fall back to Phantom wallet
@@ -42,13 +42,13 @@ export const sendTweet = async (topic: string, content: string, usePlatformWalle
       // Create a proper TweetModel instance
       const mockKey = new PublicKey(mockKeyBytes);
       const tweetModel = new TweetModel(mockKey, {
-        author: wallet.value.publicKey,
+        author: wallet.value.publicKey!,
         timestamp: { toNumber: () => Date.now() / 1000 },
         topic: topic,
         content: content,
         id: response.beacon?.id || Date.now(),
         treasuryTransaction: response.payment?.transaction || 'platform-wallet-tx',
-        author_display: wallet.value.publicKey.toBase58().slice(0, 8) + '...'
+        author_display: wallet.value.publicKey!.toBase58().slice(0, 8) + '...'
       });
       
       return tweetModel;
@@ -70,15 +70,15 @@ export const sendTweet = async (topic: string, content: string, usePlatformWalle
       mockKeyBytes[0] = 1; // Mark as beacon
       mockKeyBytes[31] = 0x42; // Mark as beacon
       
-      // Return a proper TweetModel instance
-      const tweetModel = new TweetModel(new PublicKey(mockKeyBytes), {
-        author: wallet.value.publicKey,
-        timestamp: { toNumber: () => Date.now() / 1000 },
-        topic,
-        content,
-        treasuryTransaction: response.payment?.transaction || 'unknown',
-        author_display: wallet.value.publicKey.toBase58().slice(0, 8) + '...'
-      });
+        // Return a proper TweetModel instance
+        const tweetModel = new TweetModel(new PublicKey(mockKeyBytes), {
+          author: wallet.value.publicKey!,
+          timestamp: { toNumber: () => Date.now() / 1000 },
+          topic,
+          content,
+          treasuryTransaction: response.payment?.transaction || 'unknown',
+          author_display: wallet.value.publicKey!.toBase58().slice(0, 8) + '...'
+        });
       
       console.log('✅ Created TweetModel for new beacon:', tweetModel);
       return tweetModel;
