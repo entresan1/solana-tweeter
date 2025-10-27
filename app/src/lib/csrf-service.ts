@@ -110,7 +110,15 @@ export const csrfService = {
   },
   
   async makeAuthenticatedRequest(url: string, options: RequestInit = {}): Promise<Response> {
-    const result = await makeAuthenticatedRequest(url, options);
+    // Convert RequestInit to ReqOpts
+    const reqOpts: ReqOpts = {
+      method: options.method,
+      body: options.body,
+      headers: options.headers as Record<string, string> | undefined,
+      // Don't include auth in legacy mode
+    };
+    
+    const result = await makeAuthenticatedRequest(url, reqOpts);
     return result as any; // Type assertion for compatibility
   },
   
