@@ -120,7 +120,16 @@ export const topicFilter = async (topic: string) => {
     
     // Get tweets from HTTP service and filter by topic
     const allTweets = getTweets();
-    const tweets = allTweets.filter(tweet => tweet.topic === topic);
+    console.log('🔍 All tweets count:', allTweets.length);
+    console.log('🔍 Looking for topic:', topic);
+    
+    const tweets = allTweets.filter(tweet => {
+      const matches = tweet.topic === topic;
+      if (matches) {
+        console.log('🔍 Found matching tweet:', tweet.id, 'with topic', tweet.topic);
+      }
+      return matches;
+    });
     console.log('🔍 Found tweets for topic:', tweets.length);
     
     // Convert to TweetModel format for compatibility

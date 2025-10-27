@@ -3,6 +3,7 @@ import UsersPage from '@src/pages/PageUsers.vue';
 import ProfilePage from '@src/pages/PageProfile.vue';
 import TweetPage from '@src/pages/PageTweet.vue';
 import X402Page from '@src/pages/PageX402.vue';
+import TopicPage from '@src/pages/PageTopic.vue';
 import NotFoundPage from '@src/pages/PageNotFound.vue';
 
 export default [
@@ -15,6 +16,12 @@ export default [
     name: 'Users',
     path: '/users/:author?',
     component: UsersPage,
+    props: true,
+  },
+  {
+    name: 'Topic',
+    path: '/topic/:topic?',
+    component: TopicPage,
     props: true,
   },
   {
