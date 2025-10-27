@@ -454,23 +454,49 @@ import { TweetModel } from '@src/models/tweet.model';
     }
 
     try {
-      // Create the beacon URL
-      const baseUrl = window.location.origin;
-      const beaconUrl = `${baseUrl}/tweet/${tweet.value.id}`;
+      // Find the tweet card element
+      const tweetCard = document.querySelector(`[data-tweet-id="${tweet.value.id}"]`);
+      if (!tweetCard) {
+        console.error('Tweet card element not found');
+        return;
+      }
+
+      // Use html2canvas to capture the tweet card
+      const { default: html2canvas } = await import('html2canvas');
       
-      // Copy to clipboard
-      await navigator.clipboard.writeText(beaconUrl);
-      
-      // Show success feedback (you could replace this with a toast notification)
-      console.log('✅ Beacon link copied to clipboard:', beaconUrl);
-      
-      // Optional: Show a temporary success message
-      // You could implement a toast notification system here
-      alert('Beacon link copied to clipboard!');
-      
+      const canvas = await html2canvas(tweetCard as HTMLElement, {
+        backgroundColor: '#0f0f23', // Dark background
+        scale: 2, // Higher resolution
+        useCORS: true,
+        allowTaint: true
+      });
+
+      // Convert canvas to blob
+      canvas.toBlob(async (blob) => {
+        if (!blob) return;
+
+        try {
+          // Copy image to clipboard
+          const item = new ClipboardItem({ 'image/png': blob });
+          await navigator.clipboard.write([item]);
+          
+          console.log('✅ Beacon screenshot copied to clipboard');
+          alert('Beacon screenshot copied to clipboard!');
+        } catch (error) {
+          console.error('❌ Failed to copy screenshot to clipboard:', error);
+          // Fallback: download the image
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `beacon-${tweet.value.id}.png`;
+          a.click();
+          URL.revokeObjectURL(url);
+          alert('Screenshot downloaded!');
+        }
+      }, 'image/png');
     } catch (error) {
-      console.error('❌ Failed to copy beacon link:', error);
-      alert('Failed to copy link. Please try again.');
+      console.error('❌ Failed to capture beacon screenshot:', error);
+      alert('Failed to capture screenshot. Please try again.');
     }
   };
 
@@ -607,7 +633,7 @@ Come beacon at @https://trenchbeacon.com/`;
 </script>
 
 <template>
-  <div class="card group relative overflow-hidden">
+  <div class="card group relative overflow-hidden" :data-tweet-id="tweet?.id">
     
     <div class="flex items-start space-x-4 relative z-10">
       <!-- Enhanced Avatar -->
@@ -809,9 +835,10 @@ Come beacon at @https://trenchbeacon.com/`;
             </div>
             <div class="flex-1 min-w-0">
               <div class="flex items-center space-x-2">
-                <span class="text-xs font-medium text-yellow-400">{{ tip.amount }} SOL</span>
+                <span class="text-xs font-medium text-yellow-400">{{ tip.recipient_amount || tip.amount }} SOL</span>
                 <span class="text-xs text-dark-400">from</span>
                 <span class="text-xs text-primary-400">{{ tip.tipper_display || tip.tipper?.slice(0, 8) + '...' }}</span>
+                <span v-if="tip.treasury_fee && tip.treasury_fee > 0" class="text-xs text-dark-500">(+{{ tip.treasury_fee }} SOL to treasury)</span>
               </div>
               <div v-if="tip.message" class="text-xs text-dark-300 mt-1">{{ tip.message }}</div>
             </div>
@@ -935,6 +962,18 @@ Come beacon at @https://trenchbeacon.com/`;
           <p class="text-dark-400 text-xs mt-1">
             Min: 0.001 SOL • Max: 10 SOL
           </p>
+          
+          <!-- Treasury Fee Info -->
+          <div v-if="tipAmount && parseFloat(tipAmount) > 0" class="mt-2 p-2 bg-dark-700/50 rounded-lg text-xs">
+            <div class="flex justify-between items-center text-dark-300">
+              <span>Recipient receives:</span>
+              <span class="text-yellow-400 font-medium">{{ (parseFloat(tipAmount) * 0.95).toFixed(6) }} SOL</span>
+            </div>
+            <div class="flex justify-between items-center text-dark-400 mt-1">
+              <span>Treasury fee (5%):</span>
+              <span class="text-primary-400">{{ (parseFloat(tipAmount) * 0.05).toFixed(6) }} SOL</span>
+            </div>
+          </div>
         </div>
 
         <!-- Tip Message -->

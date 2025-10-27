@@ -83,6 +83,14 @@
     isPlatformWalletDropdownOpen.value = false;
   };
 
+  // Help modal state
+  const showHelpModal = ref(false);
+
+  // Toggle help modal
+  const toggleHelpModal = () => {
+    showHelpModal.value = !showHelpModal.value;
+  };
+
 </script>
 
 <template>
@@ -138,6 +146,19 @@
         <div class="text-lg font-medium hidden md:block"
              :class="route.name === 'Home' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">Home</div>
       </SafeRouterLink>
+
+      <!-- Help Button -->
+      <button
+        @click="toggleHelpModal"
+        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-300 group"
+      >
+        <div class="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 group-hover:from-blue-500/30 group-hover:to-purple-500/30 transition-all duration-300">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400 group-hover:text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div class="text-lg font-medium hidden md:block text-dark-400 group-hover:text-blue-300">Help</div>
+      </button>
       
       
       <!-- Profile Link (only when connected) -->
@@ -274,7 +295,7 @@
               @click="showPrivateKey"
               class="w-full text-xs btn-primary py-2 px-3 rounded-lg"
             >
-              Show Private Key
+              Copy Private Key
             </button>
           </div>
         </div>
@@ -289,4 +310,46 @@
     </div>
     
   </aside>
+
+  <!-- Help Modal -->
+  <div v-if="showHelpModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div class="bg-dark-800 rounded-2xl p-6 max-w-md w-full border border-dark-700">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-bold text-white">How Trench Beacon Works</h3>
+        <button @click="toggleHelpModal" class="text-dark-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      
+      <div class="space-y-4 text-dark-300">
+        <div>
+          <h4 class="font-semibold text-white mb-2">🔗 Platform Wallet</h4>
+          <p class="text-sm">A shared wallet for platform operations. Deposit SOL to use for beacons and tips without individual wallet transactions.</p>
+        </div>
+        
+        <div>
+          <h4 class="font-semibold text-white mb-2">📡 Beacons</h4>
+          <p class="text-sm">Post messages, share thoughts, or announcements. Each beacon costs a small fee from the platform wallet.</p>
+        </div>
+        
+        <div>
+          <h4 class="font-semibold text-white mb-2">💰 Tips & Fees</h4>
+          <p class="text-sm">Tip beacons you like! 5% of tips go to treasury. All beacon fees and tip fees fund strategic buybacks, creating a flywheel effect.</p>
+        </div>
+        
+        <div>
+          <h4 class="font-semibold text-white mb-2">🔄 Flywheel Effect</h4>
+          <p class="text-sm">More activity → More fees → More buybacks → Higher value → More activity. A self-reinforcing cycle!</p>
+        </div>
+      </div>
+      
+      <div class="mt-6 flex justify-end">
+        <button @click="toggleHelpModal" class="btn-primary px-4 py-2 rounded-lg text-sm">
+          Got it!
+        </button>
+      </div>
+    </div>
+  </div>
 </template>

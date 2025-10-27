@@ -91,10 +91,22 @@ module.exports = async (req, res) => {
       });
     }
 
+    // Calculate 5% treasury fee
+    const treasuryFee = tipAmount * 0.05;
+    const recipientAmount = tipAmount - treasuryFee;
+
+    console.log('💰 Tip breakdown:', {
+      originalAmount: tipAmount,
+      treasuryFee: treasuryFee,
+      recipientAmount: recipientAmount
+    });
+
     // Save tip to Supabase database
     const tipData = {
       recipient,
       amount: tipAmount,
+      recipient_amount: recipientAmount,
+      treasury_fee: treasuryFee,
       message: message || '',
       beacon_id: beaconId,
       tipper,
