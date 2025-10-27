@@ -144,6 +144,20 @@ function logAuditEvent(ip, method, endpoint, userWallet, action, details = {}) {
   console.log('🔍 AUDIT:', JSON.stringify(logEntry));
 }
 
+// Parse cookies from request headers
+function parseCookies(cookieHeader) {
+  const cookies = {};
+  if (cookieHeader) {
+    cookieHeader.split(';').forEach(cookie => {
+      const parts = cookie.trim().split('=');
+      if (parts.length === 2) {
+        cookies[parts[0]] = decodeURIComponent(parts[1]);
+      }
+    });
+  }
+  return cookies;
+}
+
 // Main authentication middleware
 function secureAuthMiddleware(req, res, next) {
   const clientIP = req.headers['x-forwarded-for'] || 
@@ -153,6 +167,11 @@ function secureAuthMiddleware(req, res, next) {
   
   const method = req.method;
   const endpoint = req.url;
+  
+  // Parse cookies from headers if not already parsed
+  if (!req.cookies) {
+    req.cookies = parseCookies(req.headers.cookie);
+  }
   
   // Set security headers
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -272,13 +291,19 @@ function secureAuthMiddleware(req, res, next) {
     const csrfToken = generateCSRFToken();
     res.setHeader('X-CSRF-Token', csrfToken);
     
-    // Set double-submit cookie for client-side access
-    res.cookie('XSRF-TOKEN', csrfToken, { 
-      httpOnly: false, 
-      sameSite: 'Lax', 
-      secure: process.env.NODE_ENV === 'production',
-      path: '/' 
-    });
+    // Set double-submit cookie for client-side access using Set-Cookie header
+    const cookieOptions = [
+      `XSRF-TOKEN=${csrfToken}`,
+      'HttpOnly=false',
+      'SameSite=Lax',
+      'Path=/'
+    ];
+    
+    if (process.env.NODE_ENV === 'production') {
+      cookieOptions.push('Secure');
+    }
+    
+    res.setHeader('Set-Cookie', cookieOptions.join('; '));
   }
   
   next();
