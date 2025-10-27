@@ -318,12 +318,13 @@ export const interactionService = {
     console.debug('[beacon] XSRF cookie:', document.cookie.includes('XSRF-TOKEN='));
 
     try {
-      const { authFetch } = await import('./csrf-service');
+      const { postJSON } = await import('./csrf-service');
       
-      const data = await authFetch('/api/beacon-interactions', {
-        method: 'POST',
-        body: JSON.stringify({ beaconId, userWallet, action: 'like' }),
-      }, { walletAddress: userWallet });
+      const data = await postJSON('/api/beacon-interactions', { 
+        beaconId, 
+        userWallet, 
+        action: 'like' 
+      });
       
       if (data.success) {
         console.log('✅ likeBeacon success:', data.like);
@@ -418,12 +419,13 @@ export const interactionService = {
     console.debug('[beacon] XSRF cookie:', document.cookie.includes('XSRF-TOKEN='));
 
     try {
-      const { authFetch } = await import('./csrf-service');
+      const { postJSON } = await import('./csrf-service');
       
-      const data = await authFetch('/api/beacon-replies', {
-        method: 'POST',
-        body: JSON.stringify({ beaconId, userWallet, content }),
-      }, { walletAddress: userWallet });
+      const data = await postJSON('/api/beacon-replies', { 
+        beaconId, 
+        userWallet, 
+        content 
+      });
       
       if (data.success) {
         console.log('✅ replyToBeacon success:', data.reply);

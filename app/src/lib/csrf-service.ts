@@ -5,10 +5,12 @@ export type AuthContext = {
   bearerToken?: string;     // if you use JWT (e.g., Supabase/NextAuth)
 };
 
-// Cookie helper
+// Cookie helper with proper URL decoding for Laravel-style checks
 function getCookie(name: string): string | null {
-  const m = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1') + '=([^;]*)'));
-  return m ? decodeURIComponent(m[1]) : null;
+  const m = document.cookie.match(
+    new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1') + '=([^;]*)')
+  );
+  return m ? decodeURIComponent(m[1]) : null; // ⚠ decode for Laravel-style checks
 }
 
 let cached = { token: '' as string, ts: 0 };
@@ -17,7 +19,7 @@ async function fetchCsrf(): Promise<string> {
   const now = Date.now();
   if (cached.token && now - cached.ts < 5 * 60_000) return cached.token;
 
-  console.debug('[csrf] Fetching CSRF token - v2');
+  console.debug('[csrf] Fetching CSRF token - v3');
   console.debug('[csrf] Origin:', location.origin);
   console.debug('[csrf] Has cookies:', document.cookie.length > 0);
   console.debug('[csrf] XSRF cookie:', document.cookie.includes('XSRF-TOKEN='));
@@ -63,12 +65,14 @@ async function fetchCsrf(): Promise<string> {
 export async function authFetch(url: string, init: RequestInit = {}, auth?: AuthContext) {
   const token = await fetchCsrf();
 
-  // Build headers with the primary CSRF header name that our server expects
+  // Build headers with multiple CSRF header variants (covers Laravel, Rails, Express/csurf, Django)
   const base: Record<string, string> = {
     'Content-Type': 'application/json',
     'X-Requested-With': 'XMLHttpRequest',
-    // Primary header name that our server expects
+    // Send common variants — server will accept the one it knows:
+    'X-XSRF-TOKEN': token,
     'X-CSRF-Token': token,
+    'X-CSRFToken': token,
   };
   
   if (auth?.bearerToken) base['Authorization'] = `Bearer ${auth.bearerToken}`;
@@ -136,3 +140,36 @@ export const csrfService = {
 
 // Export the new function for direct use
 export { authFetch as makeAuthenticatedRequest };
+
+// Drop-in postJSON function for easy usage
+export async function postJSON(url: string, body: unknown, extraHeaders: Record<string,string> = {}) {
+  // Prefer double-submit cookie. If your backend also exposes /api/csrf, you can fetch it too.
+  const token =
+    getCookie('XSRF-TOKEN') || // Laravel/Express(csurf) common
+    getCookie('csrftoken')   || // Django
+    getCookie('csrfToken')   || // Next/Auth custom
+    '';
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
+    // send common variants — server will accept the one it knows:
+    'X-XSRF-TOKEN': token,
+    'X-CSRF-Token': token,
+    'X-CSRFToken': token,
+    ...extraHeaders,
+  };
+
+  const res = await fetch(url, {
+    method: 'POST',
+    credentials: 'include',    // ✅ send cookies
+    headers,
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`HTTP ${res.status} :: ${text}`);
+  }
+  return res.headers.get('content-type')?.includes('application/json') ? res.json() : res.text();
+}

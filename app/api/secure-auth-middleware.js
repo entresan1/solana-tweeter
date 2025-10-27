@@ -218,14 +218,22 @@ function secureAuthMiddleware(req, res, next) {
                      req.headers['csrf-token'] ||
                      req.headers['CSRF-Token'];
     
+    // Also check for double-submit cookie pattern
+    const cookieToken = req.cookies?.XSRF_TOKEN || req.cookies?.xsrf_token || req.cookies?.csrfToken;
+    
     console.log('🔐 CSRF validation for', method, endpoint);
-    console.log('🔐 Received token:', csrfToken);
+    console.log('🔐 Received token from header:', csrfToken);
+    console.log('🔐 Received token from cookie:', cookieToken);
     console.log('🔐 Available tokens:', Array.from(csrfTokens.keys()));
     console.log('🔐 All headers:', Object.keys(req.headers).filter(h => h.toLowerCase().includes('csrf')));
-    console.log('🔐 All request headers:', JSON.stringify(req.headers, null, 2));
+    console.log('🔐 All cookies:', Object.keys(req.cookies || {}));
     console.log('🔐 Request body:', JSON.stringify(req.body, null, 2));
     
-    if (!csrfToken || !verifyCSRFToken(csrfToken)) {
+    // Verify either header token or cookie token matches stored token
+    const isValidToken = (csrfToken && verifyCSRFToken(csrfToken)) || 
+                        (cookieToken && verifyCSRFToken(cookieToken));
+    
+    if (!isValidToken) {
       console.log('❌ CSRF token validation failed');
       logAuditEvent(clientIP, method, endpoint, null, 'CSRF_TOKEN_INVALID');
       return res.status(403).json({
@@ -263,6 +271,14 @@ function secureAuthMiddleware(req, res, next) {
   if (method === 'GET') {
     const csrfToken = generateCSRFToken();
     res.setHeader('X-CSRF-Token', csrfToken);
+    
+    // Set double-submit cookie for client-side access
+    res.cookie('XSRF-TOKEN', csrfToken, { 
+      httpOnly: false, 
+      sameSite: 'Lax', 
+      secure: process.env.NODE_ENV === 'production',
+      path: '/' 
+    });
   }
   
   next();
