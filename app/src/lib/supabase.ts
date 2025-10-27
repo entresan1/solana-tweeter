@@ -315,15 +315,15 @@ export const interactionService = {
     console.log('🔥 likeBeacon called with:', { beaconId, userWallet });
     console.debug('[beacon] Origin:', location.origin);
     console.debug('[beacon] Has cookies:', document.cookie.length > 0);
+    console.debug('[beacon] XSRF cookie:', document.cookie.includes('XSRF-TOKEN='));
 
     try {
-      const { makeAuthenticatedRequest } = await import('./csrf-service');
+      const { authFetch } = await import('./csrf-service');
       
-      const data = await makeAuthenticatedRequest('/api/beacon-interactions', {
+      const data = await authFetch('/api/beacon-interactions', {
         method: 'POST',
         body: JSON.stringify({ beaconId, userWallet, action: 'like' }),
-        auth: { walletAddress: userWallet }
-      });
+      }, { walletAddress: userWallet });
       
       if (data.success) {
         console.log('✅ likeBeacon success:', data.like);
@@ -342,13 +342,12 @@ export const interactionService = {
     console.log('💔 unlikeBeacon called with:', { beaconId, userWallet });
 
     try {
-      const { makeAuthenticatedRequest } = await import('./csrf-service');
+      const { authFetch } = await import('./csrf-service');
       
-      const data = await makeAuthenticatedRequest('/api/beacon-interactions', {
+      const data = await authFetch('/api/beacon-interactions', {
         method: 'DELETE',
         body: JSON.stringify({ beaconId, userWallet, action: 'like' }),
-        auth: { walletAddress: userWallet }
-      });
+      }, { walletAddress: userWallet });
       
       if (data.success) {
         console.log('✅ unlikeBeacon success');
@@ -416,15 +415,15 @@ export const interactionService = {
     console.log('💬 replyToBeacon called with:', { beaconId, userWallet, content });
     console.debug('[beacon] Origin:', location.origin);
     console.debug('[beacon] Has cookies:', document.cookie.length > 0);
+    console.debug('[beacon] XSRF cookie:', document.cookie.includes('XSRF-TOKEN='));
 
     try {
-      const { makeAuthenticatedRequest } = await import('./csrf-service');
+      const { authFetch } = await import('./csrf-service');
       
-      const data = await makeAuthenticatedRequest('/api/beacon-replies', {
+      const data = await authFetch('/api/beacon-replies', {
         method: 'POST',
         body: JSON.stringify({ beaconId, userWallet, content }),
-        auth: { walletAddress: userWallet }
-      });
+      }, { walletAddress: userWallet });
       
       if (data.success) {
         console.log('✅ replyToBeacon success:', data.reply);
