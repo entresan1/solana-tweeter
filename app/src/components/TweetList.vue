@@ -2,7 +2,8 @@
   import { computed, toRefs, onMounted, onUnmounted, ref } from 'vue';
   import TweetCard from '@src/components/TweetCard.vue';
   import { TweetModel } from '@src/models/tweet.model';
-  import { getBeacons, on, off } from '@src/lib/sse-service';
+  import { getBeacons, on, off, isSSEInitialized } from '@src/lib/sse-service';
+  import { PublicKey } from '@solana/web3.js';
 
   interface IProps {
     tweets: Array<TweetModel>;
@@ -16,7 +17,7 @@
   const useSSE = ref(true);
 
   const orderedTweets = computed(() => {
-    if (useSSE.value && sseTweets.value.length > 0) {
+    if (useSSE.value && isSSEInitialized() && sseTweets.value.length > 0) {
       return sseTweets.value.slice().sort((a, b) => b.timestamp - a.timestamp);
     }
     return tweets.value.slice().sort((a, b) => b.timestamp - a.timestamp);
@@ -29,8 +30,8 @@
     mockKeyBytes[0] = index + 1;
     mockKeyBytes[31] = 0x42;
     
-    return new TweetModel(new (window as any).solanaWeb3.PublicKey(mockKeyBytes), {
-      author: new (window as any).solanaWeb3.PublicKey(beacon.author),
+    return new TweetModel(new PublicKey(mockKeyBytes), {
+      author: new PublicKey(beacon.author),
       timestamp: { toNumber: () => beacon.timestamp / 1000 },
       topic: beacon.topic,
       content: beacon.content,
@@ -69,10 +70,12 @@
     on('beacon_update', handleBeaconUpdate);
     on('beacons_loaded', handleBeaconsLoaded);
     
-    // Initialize with current SSE data
-    const currentBeacons = getBeacons();
-    if (currentBeacons.length > 0) {
-      sseTweets.value = currentBeacons.map((beacon, index) => convertBeaconToTweetModel(beacon, index));
+    // Initialize with current SSE data if available
+    if (isSSEInitialized()) {
+      const currentBeacons = getBeacons();
+      if (currentBeacons.length > 0) {
+        sseTweets.value = currentBeacons.map((beacon, index) => convertBeaconToTweetModel(beacon, index));
+      }
     }
   });
 

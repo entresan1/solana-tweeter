@@ -1,11 +1,17 @@
 import { TweetModel } from '@src/models/tweet.model';
 import { PublicKey } from '@solana/web3.js';
-import { getBeacons, on, off } from '@src/lib/sse-service';
+import { getBeacons, isSSEInitialized } from '@src/lib/sse-service';
 
 export const fetchTweets = async (filters: any[] = []) => {
   console.log('📡 fetchTweets called with filters:', filters);
   
   try {
+    // Check if SSE is initialized
+    if (!isSSEInitialized()) {
+      console.log('📡 SSE not initialized yet, returning empty array');
+      return [];
+    }
+    
     // Get beacons from SSE service instead of direct database call
     const beacons = getBeacons();
     console.log('📡 Fetched beacons from SSE service:', beacons);
@@ -50,6 +56,13 @@ export const fetchTweets = async (filters: any[] = []) => {
 export const authorFilter = async (authorBase58PublicKey: string) => {
   try {
     console.log('👤 authorFilter called with author:', authorBase58PublicKey);
+    
+    // Check if SSE is initialized
+    if (!isSSEInitialized()) {
+      console.log('👤 SSE not initialized yet, returning empty array');
+      return [];
+    }
+    
     // Get beacons from SSE service and filter by author
     const allBeacons = getBeacons();
     const beacons = allBeacons.filter(beacon => beacon.author === authorBase58PublicKey);
@@ -86,6 +99,13 @@ export const authorFilter = async (authorBase58PublicKey: string) => {
 export const topicFilter = async (topic: string) => {
   try {
     console.log('🔍 topicFilter called with topic:', topic);
+    
+    // Check if SSE is initialized
+    if (!isSSEInitialized()) {
+      console.log('🔍 SSE not initialized yet, returning empty array');
+      return [];
+    }
+    
     // Get beacons from SSE service and filter by topic
     const allBeacons = getBeacons();
     const beacons = allBeacons.filter(beacon => beacon.topic === topic);
@@ -126,6 +146,12 @@ export const searchBeacons = async (searchTerm: string) => {
     // Return empty array if search term is empty
     if (!searchTerm || searchTerm.trim() === '') {
       console.log('🔍 Empty search term, returning empty array');
+      return [];
+    }
+    
+    // Check if SSE is initialized
+    if (!isSSEInitialized()) {
+      console.log('🔍 SSE not initialized yet, returning empty array');
       return [];
     }
     

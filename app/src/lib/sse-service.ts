@@ -9,6 +9,7 @@ const lastPing = ref<number | null>(null);
 const beacons = ref<any[]>([]);
 const newBeaconsCount = ref(0);
 const lastBeaconTimestamp = ref<number>(0);
+const isInitialized = ref(false);
 
 // Event listeners
 const eventListeners = new Map<string, Set<Function>>();
@@ -110,6 +111,7 @@ function handleSSEMessage(data: any) {
     case 'beacons':
       // Initial beacons load
       beacons.value = data.data || [];
+      isInitialized.value = true;
       if (beacons.value.length > 0) {
         lastBeaconTimestamp.value = Math.max(
           ...beacons.value.map(b => 
@@ -210,6 +212,13 @@ export function resetNotificationCount() {
  */
 export function getBeacons() {
   return beacons.value;
+}
+
+/**
+ * Check if SSE is initialized
+ */
+export function isSSEInitialized() {
+  return isInitialized.value;
 }
 
 /**
