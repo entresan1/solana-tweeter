@@ -3,7 +3,6 @@
   import { useRoute } from 'vue-router';
   import { ref, onMounted, watch } from 'vue';
   import { platformWalletService } from '@src/lib/platform-wallet';
-  import PlatformWalletModal from './PlatformWalletModal.vue';
   import NotificationIcon from './NotificationIcon.vue';
   
   const { connected, wallet } = useWallet();
@@ -11,7 +10,6 @@
   
   const platformWalletAddress = ref('');
   const platformBalance = ref(0);
-  const showPlatformWalletModal = ref(false);
   
   // Load platform wallet data when wallet connects
   const loadPlatformWalletData = async () => {
@@ -54,12 +52,24 @@
     }
   };
   
-  const openPlatformWalletModal = () => {
-    showPlatformWalletModal.value = true;
-  };
-  
-  const handlePlatformWalletBalanceUpdated = async () => {
-    await loadPlatformWalletData();
+  const showPrivateKey = async () => {
+    if (!wallet.value?.publicKey) return;
+    
+    try {
+      const userAddress = wallet.value.publicKey.toBase58();
+      const privateKey = platformWalletService.getPlatformWalletPrivateKey(userAddress);
+      
+      // Show private key in a secure way (you might want to add a confirmation dialog)
+      const confirmed = confirm('⚠️ WARNING: This will reveal your platform wallet private key. Only do this if you want to withdraw funds. Continue?');
+      
+      if (confirmed) {
+        await navigator.clipboard.writeText(privateKey);
+        alert('Private key copied to clipboard. Keep it secure!');
+      }
+    } catch (error) {
+      console.error('Failed to get private key:', error);
+      alert('Failed to get private key');
+    }
   };
 
   const handleNotificationClick = () => {
@@ -283,10 +293,10 @@
             Copy Address
           </button>
           <button
-            @click="openPlatformWalletModal"
+            @click="showPrivateKey"
             class="w-full text-xs btn-primary py-1 px-2"
           >
-            Manage
+            Show Private Key
           </button>
         </div>
       </div>
@@ -299,11 +309,5 @@
       </div>
     </div>
     
-    <!-- Platform Wallet Modal -->
-    <PlatformWalletModal
-      :is-open="showPlatformWalletModal"
-      @close="showPlatformWalletModal = false"
-      @balance-updated="handlePlatformWalletBalanceUpdated"
-    />
   </aside>
 </template>

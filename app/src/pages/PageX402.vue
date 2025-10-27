@@ -125,13 +125,13 @@
         </div>
       </div>
 
-      <!-- Recent Tips -->
+      <!-- Live Payment Feed -->
       <div class="card mb-8">
         <h2 class="text-2xl font-semibold text-white mb-4 flex items-center">
           <svg class="w-6 h-6 mr-2 text-primary-500" fill="currentColor" viewBox="0 0 20 20">
             <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" />
           </svg>
-          Recent Tips
+          Live Payment Feed (Last 10)
         </h2>
         <div class="overflow-x-auto">
           <table class="w-full">
@@ -381,7 +381,7 @@ const verifying = ref(false);
 onMounted(async () => {
   await Promise.all([
     loadPayments(),
-    loadRecentTips()
+    loadLivePayments()
   ]);
 });
 
@@ -401,17 +401,17 @@ const loadPayments = async () => {
   }
 };
 
-// Load recent tips
-const loadRecentTips = async () => {
+// Load live payment feed (last 10)
+const loadLivePayments = async () => {
   loadingTips.value = true;
   try {
-    const response = await fetch('/api/recent-tips?limit=20');
+    const response = await fetch('/api/recent-tips?limit=10');
     if (response.ok) {
       const data = await response.json();
       recentTips.value = data.tips || [];
     }
   } catch (error) {
-    console.error('Failed to load recent tips:', error);
+    console.error('Failed to load live payments:', error);
   } finally {
     loadingTips.value = false;
   }

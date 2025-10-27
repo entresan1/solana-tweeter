@@ -11,6 +11,7 @@
   import { onMounted, watch } from 'vue';
   import { notificationService } from '@src/lib/notification-service';
   import { setCurrentUserAddress, connectSSE, isSSEInitialized } from '@src/lib/sse-service';
+  import { sseDebug } from '@src/lib/sse-debug';
 
   const route = useRoute();
   const wallets = [new PhantomWalletAdapter(), new SolflareWalletAdapter()];
@@ -34,6 +35,11 @@
     const currentUserAddress = wallet.value?.publicKey?.toString();
     setCurrentUserAddress(currentUserAddress || null);
     notificationService.startPeriodicCheck(currentUserAddress);
+    
+    // Debug SSE connection
+    setTimeout(() => {
+      sseDebug.testConnection();
+    }, 2000);
   });
 
   // Watch for wallet changes and update notification service

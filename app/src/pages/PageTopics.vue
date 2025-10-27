@@ -53,8 +53,8 @@
     <!-- Search bar - always visible -->
     <tweet-search
       placeholder="topic"
-      :disabled="!slugTopic"
-      :model-value="slugTopic"
+      :disabled="!topic"
+      :model-value="topic"
       @update:model-value="(value) => (topic = value)"
       @search="search"
     >

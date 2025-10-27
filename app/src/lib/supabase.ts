@@ -149,7 +149,7 @@ export const tipService = {
   }
 };
 
-// User profile service
+// User profile service - now uses server-side API
 export const profileService = {
   // Get user profile by wallet address
   async getProfile(walletAddress: string) {
@@ -162,32 +162,21 @@ export const profileService = {
     
     console.log('🎯 Cache miss for wallet:', walletAddress.slice(0, 8) + '...');
     try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('wallet_address', walletAddress)
-        .single()
-      
-      if (error) {
-        if (error.code === 'PGRST116') {
-          // No profile found - this is normal
-          profileCache.set(walletAddress, { profile: null, timestamp: Date.now() });
-          return null;
-        } else if (error.code === 'PGRST301' || error.message?.includes('406')) {
-          // 406 Not Acceptable - likely RLS issue, treat as no profile found
-          console.warn('⚠️ Profile fetch blocked by RLS (406) - treating as no profile found');
-          profileCache.set(walletAddress, { profile: null, timestamp: Date.now() });
-          return null;
-        } else {
-          console.warn('⚠️ Profile fetch failed:', error.message);
-          profileCache.set(walletAddress, { profile: null, timestamp: Date.now() });
-          return null;
-        }
+      const response = await fetch(`/api/user-profiles?walletAddress=${encodeURIComponent(walletAddress)}`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      const data = await response.json();
       
-      // Cache successful result
-      profileCache.set(walletAddress, { profile: data, timestamp: Date.now() });
-      return data;
+      if (data.success) {
+        // Cache successful result
+        profileCache.set(walletAddress, { profile: data.profile, timestamp: Date.now() });
+        return data.profile;
+      } else {
+        throw new Error(data.error || 'Failed to fetch profile');
+      }
     } catch (error) {
       console.warn('⚠️ Profile fetch failed:', error);
       profileCache.set(walletAddress, { profile: null, timestamp: Date.now() });
@@ -198,28 +187,30 @@ export const profileService = {
   // Create or update user profile
   async upsertProfile(profile: Omit<UserProfile, 'id' | 'created_at' | 'updated_at'>) {
     try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .upsert([{
-          ...profile,
-          updated_at: new Date().toISOString()
-        }], {
-          onConflict: 'wallet_address'
-        })
-        .select()
-        .single()
-      
-      if (error) {
-        console.error('❌ Profile upsert error:', error);
-        throw error;
+      const response = await fetch('/api/user-profiles', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ profile })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      const data = await response.json();
       
-      console.log('✅ Profile upserted successfully:', data);
-      
-      // Clear cache for this wallet address
-      profileCache.delete(profile.wallet_address);
-      
-      return data;
+      if (data.success) {
+        console.log('✅ Profile upserted successfully:', data.profile);
+        
+        // Clear cache for this wallet address
+        profileCache.delete(profile.wallet_address);
+        
+        return data.profile;
+      } else {
+        throw new Error(data.error || 'Failed to upsert profile');
+      }
     } catch (error) {
       console.error('❌ Profile upsert failed:', error);
       throw error;
@@ -233,62 +224,88 @@ export const profileService = {
 
   // Update profile picture
   async updateProfilePicture(walletAddress: string, imageUrl: string) {
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .update({ 
-        profile_picture_url: imageUrl,
-        updated_at: new Date().toISOString()
+    const response = await fetch('/api/user-profiles', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        walletAddress,
+        profile: { profile_picture_url: imageUrl }
       })
-      .eq('wallet_address', walletAddress)
-      .select()
-      .single()
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
     
-    if (error) throw error
-    return data
+    if (data.success) {
+      // Clear cache for this wallet address
+      profileCache.delete(walletAddress);
+      return data.profile;
+    } else {
+      throw new Error(data.error || 'Failed to update profile picture');
+    }
   },
 
   // Update nickname
   async updateNickname(walletAddress: string, nickname: string) {
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .update({ 
-        nickname: nickname,
-        updated_at: new Date().toISOString()
+    const response = await fetch('/api/user-profiles', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        walletAddress,
+        profile: { nickname }
       })
-      .eq('wallet_address', walletAddress)
-      .select()
-      .single()
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
     
-    if (error) throw error
-    return data
+    if (data.success) {
+      // Clear cache for this wallet address
+      profileCache.delete(walletAddress);
+      return data.profile;
+    } else {
+      throw new Error(data.error || 'Failed to update nickname');
+    }
   }
 }
 
-// Like and reply service
+// Like and reply service - now uses server-side API
 export const interactionService = {
   // Like a beacon
   async likeBeacon(beaconId: number, userWallet: string) {
     console.log('🔥 likeBeacon called with:', { beaconId, userWallet });
     
     try {
-      const { data, error } = await supabase
-        .from('beacon_likes')
-        .insert([{
-          beacon_id: beaconId,
-          user_wallet: userWallet
-        }])
-        .select()
-        .single()
-      
-      console.log('🔥 likeBeacon result:', { data, error });
-      
-      if (error) {
-        console.error('❌ likeBeacon error:', error);
-        throw error;
+      const response = await fetch('/api/beacon-interactions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ beaconId, userWallet, action: 'like' })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      const data = await response.json();
       
-      console.log('✅ likeBeacon success:', data);
-      return data;
+      if (data.success) {
+        console.log('✅ likeBeacon success:', data.like);
+        return data.like;
+      } else {
+        throw new Error(data.error || 'Failed to like beacon');
+      }
     } catch (error) {
       console.error('❌ likeBeacon exception:', error);
       throw error;
@@ -300,20 +317,25 @@ export const interactionService = {
     console.log('💔 unlikeBeacon called with:', { beaconId, userWallet });
     
     try {
-      const { error } = await supabase
-        .from('beacon_likes')
-        .delete()
-        .eq('beacon_id', beaconId)
-        .eq('user_wallet', userWallet)
-      
-      console.log('💔 unlikeBeacon result:', { error });
-      
-      if (error) {
-        console.error('❌ unlikeBeacon error:', error);
-        throw error;
+      const response = await fetch('/api/beacon-interactions', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ beaconId, userWallet, action: 'like' })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      const data = await response.json();
       
-      console.log('✅ unlikeBeacon success');
+      if (data.success) {
+        console.log('✅ unlikeBeacon success');
+      } else {
+        throw new Error(data.error || 'Failed to unlike beacon');
+      }
     } catch (error) {
       console.error('❌ unlikeBeacon exception:', error);
       throw error;
@@ -325,23 +347,20 @@ export const interactionService = {
     console.log('🔍 hasUserLiked called with:', { beaconId, userWallet });
     
     try {
-      const { data, error } = await supabase
-        .from('beacon_likes')
-        .select('id')
-        .eq('beacon_id', beaconId)
-        .eq('user_wallet', userWallet)
-        .single()
-      
-      console.log('🔍 hasUserLiked result:', { data, error });
-      
-      if (error && error.code !== 'PGRST116') {
-        console.error('❌ hasUserLiked error:', error);
-        throw error;
+      const response = await fetch(`/api/beacon-interactions?beaconId=${beaconId}&userWallet=${userWallet}`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      const data = await response.json();
       
-      const result = !!data;
-      console.log('✅ hasUserLiked success:', result);
-      return result;
+      if (data.success) {
+        console.log('✅ hasUserLiked success:', data.hasUserLiked);
+        return data.hasUserLiked;
+      } else {
+        throw new Error(data.error || 'Failed to check like status');
+      }
     } catch (error) {
       console.error('❌ hasUserLiked exception:', error);
       throw error;
@@ -353,21 +372,20 @@ export const interactionService = {
     console.log('📊 getLikeCount called with:', { beaconId });
     
     try {
-      const { count, error } = await supabase
-        .from('beacon_likes')
-        .select('*', { count: 'exact', head: true })
-        .eq('beacon_id', beaconId)
-      
-      console.log('📊 getLikeCount result:', { count, error });
-      
-      if (error) {
-        console.error('❌ getLikeCount error:', error);
-        throw error;
+      const response = await fetch(`/api/beacon-interactions?beaconId=${beaconId}`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      const data = await response.json();
       
-      const result = count || 0;
-      console.log('✅ getLikeCount success:', result);
-      return result;
+      if (data.success) {
+        console.log('✅ getLikeCount success:', data.likeCount);
+        return data.likeCount;
+      } else {
+        throw new Error(data.error || 'Failed to get like count');
+      }
     } catch (error) {
       console.error('❌ getLikeCount exception:', error);
       throw error;
@@ -379,25 +397,26 @@ export const interactionService = {
     console.log('💬 replyToBeacon called with:', { beaconId, userWallet, content });
     
     try {
-      const { data, error } = await supabase
-        .from('beacon_replies')
-        .insert([{
-          beacon_id: beaconId,
-          user_wallet: userWallet,
-          content: content
-        }])
-        .select()
-        .single()
-      
-      console.log('💬 replyToBeacon result:', { data, error });
-      
-      if (error) {
-        console.error('❌ replyToBeacon error:', error);
-        throw error;
+      const response = await fetch('/api/beacon-replies', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ beaconId, userWallet, content })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      const data = await response.json();
       
-      console.log('✅ replyToBeacon success:', data);
-      return data;
+      if (data.success) {
+        console.log('✅ replyToBeacon success:', data.reply);
+        return data.reply;
+      } else {
+        throw new Error(data.error || 'Failed to reply to beacon');
+      }
     } catch (error) {
       console.error('❌ replyToBeacon exception:', error);
       throw error;
@@ -406,13 +425,23 @@ export const interactionService = {
 
   // Get replies for a beacon
   async getBeaconReplies(beaconId: number) {
-    const { data, error } = await supabase
-      .from('beacon_replies')
-      .select('*')
-      .eq('beacon_id', beaconId)
-      .order('created_at', { ascending: true })
-    
-    if (error) throw error
-    return data || []
+    try {
+      const response = await fetch(`/api/beacon-replies?beaconId=${beaconId}`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        return data.replies || [];
+      } else {
+        throw new Error(data.error || 'Failed to get beacon replies');
+      }
+    } catch (error) {
+      console.error('❌ getBeaconReplies exception:', error);
+      throw error;
+    }
   }
 }
