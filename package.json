@@ -1,7 +1,7 @@
 {
     "name": "trench-beacon",
     "version": "1.0.0",
-    "description": "Decentralized Social Network on Solana",
+    "description": "Degentralized Network on Solana",
     "scripts": {
         "dev": "cd app && yarn dev",
         "build": "cd app && yarn build",

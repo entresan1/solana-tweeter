@@ -1,12 +1,12 @@
 # Trench Beacon 🌐
 
-A decentralized social network built on the Solana blockchain with a beautiful dark, elegant, and professional UI.
+A degentralized network built on the Solana blockchain with a beautiful dark, elegant, and professional UI.
 
 ## Features ✨
 
 - **Dark Theme**: Professional dark interface with glass morphism effects
 - **Solana Integration**: Connect with Phantom, Solflare, and other Solana wallets
-- **Decentralized**: All tweets are stored on the Solana blockchain
+- **Degentralized **: All tweets are stored on the degens minds.
 - **Real-time**: Live updates from the blockchain
 - **Responsive**: Works on desktop and mobile devices
 - **Professional UI**: Modern design with smooth animations
