@@ -57,13 +57,13 @@ export const authorFilter = async (authorBase58PublicKey: string) => {
   try {
     console.log('👤 authorFilter called with author:', authorBase58PublicKey);
     
-    // Check if WebSocket is initialized
-    if (!isWSInitialized()) {
-      console.log('👤 WebSocket not initialized yet, returning empty array');
+    // Check if HTTP service is initialized
+    if (!isServiceInitialized()) {
+      console.log('👤 HTTP service not initialized yet, returning empty array');
       return [];
     }
     
-    // Get tweets from WebSocket service and filter by author
+    // Get tweets from HTTP service and filter by author
     const allTweets = getTweets();
     const tweets = allTweets.filter(tweet => tweet.author === authorBase58PublicKey);
     console.log('👤 Found tweets for author:', tweets.length);
@@ -100,13 +100,13 @@ export const topicFilter = async (topic: string) => {
   try {
     console.log('🔍 topicFilter called with topic:', topic);
     
-    // Check if WebSocket is initialized
-    if (!isWSInitialized()) {
-      console.log('🔍 WebSocket not initialized yet, returning empty array');
+    // Check if HTTP service is initialized
+    if (!isServiceInitialized()) {
+      console.log('🔍 HTTP service not initialized yet, returning empty array');
       return [];
     }
     
-    // Get tweets from WebSocket service and filter by topic
+    // Get tweets from HTTP service and filter by topic
     const allTweets = getTweets();
     const tweets = allTweets.filter(tweet => tweet.topic === topic);
     console.log('🔍 Found tweets for topic:', tweets.length);
@@ -149,13 +149,13 @@ export const searchBeacons = async (searchTerm: string) => {
       return [];
     }
     
-    // Check if WebSocket is initialized
-    if (!isWSInitialized()) {
-      console.log('🔍 WebSocket not initialized yet, returning empty array');
+    // Check if HTTP service is initialized
+    if (!isServiceInitialized()) {
+      console.log('🔍 HTTP service not initialized yet, returning empty array');
       return [];
     }
     
-    // Get all tweets from WebSocket service and filter by content
+    // Get all tweets from HTTP service and filter by content
     const allTweets = getTweets();
     console.log('🔍 Total tweets fetched:', allTweets.length);
     
