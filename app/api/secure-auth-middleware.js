@@ -194,15 +194,22 @@ function secureAuthMiddleware(req, res, next) {
   
   // CSRF protection for state-changing operations
   if (['POST', 'PUT', 'DELETE'].includes(method) && req.body && Object.keys(req.body).length > 0) {
-    const csrfToken = req.headers['x-csrf-token'];
+    const csrfToken = req.headers['x-csrf-token'] || req.headers['X-CSRF-Token'];
+    
+    console.log('🔐 CSRF validation for', method, endpoint);
+    console.log('🔐 Received token:', csrfToken);
+    console.log('🔐 Available tokens:', Array.from(csrfTokens.keys()));
     
     if (!csrfToken || !verifyCSRFToken(csrfToken)) {
+      console.log('❌ CSRF token validation failed');
       logAuditEvent(clientIP, method, endpoint, null, 'CSRF_TOKEN_INVALID');
       return res.status(403).json({
         error: 'CSRF Token Required',
         message: 'Invalid or missing CSRF token for this operation.'
       });
     }
+    
+    console.log('✅ CSRF token validation passed');
   }
   
   // Extract user wallet from request (if available)

@@ -60,16 +60,25 @@ class CSRFService {
   async makeAuthenticatedRequest(url: string, options: RequestInit = {}): Promise<Response> {
     const token = await this.getToken();
     
+    console.log('🔐 Making authenticated request to:', url);
+    console.log('🔐 Using CSRF token:', token);
+    
     const headers = {
       'Content-Type': 'application/json',
       'X-CSRF-Token': token,
       ...options.headers
     };
 
-    return fetch(url, {
+    console.log('🔐 Request headers:', headers);
+
+    const response = await fetch(url, {
       ...options,
       headers
     });
+    
+    console.log('🔐 Response status:', response.status);
+    
+    return response;
   }
 }
 
