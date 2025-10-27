@@ -36,28 +36,35 @@ export class NotificationService {
   }
 
   // Check for new beacons
-  public async checkForNewBeacons(): Promise<void> {
+  public async checkForNewBeacons(currentUserAddress?: string): Promise<void> {
     try {
       console.log('🔔 Checking for new beacons...');
       
       // Fetch recent beacons
       const beacons = await beaconService.fetchBeacons();
       
-      // Count beacons newer than our last check
+      // Count beacons newer than our last check, excluding user's own beacons
       const newBeacons = beacons.filter(beacon => {
         const beaconTime = typeof beacon.timestamp === 'number' 
           ? beacon.timestamp 
           : new Date(beacon.timestamp).getTime();
-        return beaconTime > this.lastBeaconTimestamp;
+        
+        // Only count if it's newer than our last check
+        const isNew = beaconTime > this.lastBeaconTimestamp;
+        
+        // Exclude user's own beacons if currentUserAddress is provided
+        const isNotOwnBeacon = !currentUserAddress || beacon.author !== currentUserAddress;
+        
+        return isNew && isNotOwnBeacon;
       });
 
       if (newBeacons.length > 0) {
-        console.log(`🔔 Found ${newBeacons.length} new beacons!`);
+        console.log(`🔔 Found ${newBeacons.length} new beacons (excluding own beacons)!`);
         this.newBeaconCount += newBeacons.length;
         this.notifyListeners();
       }
 
-      // Update timestamp to the latest beacon
+      // Update timestamp to the latest beacon (including own beacons for timestamp tracking)
       if (beacons.length > 0) {
         const latestBeacon = beacons[0]; // They're ordered by timestamp desc
         const latestTime = typeof latestBeacon.timestamp === 'number' 
@@ -83,10 +90,10 @@ export class NotificationService {
   }
 
   // Start periodic checking (every 30 seconds)
-  public startPeriodicCheck(): void {
+  public startPeriodicCheck(currentUserAddress?: string): void {
     console.log('🔔 Starting periodic beacon check...');
     setInterval(() => {
-      this.checkForNewBeacons();
+      this.checkForNewBeacons(currentUserAddress);
     }, 30000); // Check every 30 seconds
   }
 }

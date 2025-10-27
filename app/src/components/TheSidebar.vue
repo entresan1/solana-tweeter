@@ -61,6 +61,14 @@
   const handlePlatformWalletBalanceUpdated = async () => {
     await loadPlatformWalletData();
   };
+
+  const handleNotificationClick = () => {
+    // Reset notification count and refresh the page
+    import('@src/lib/notification-service').then(({ notificationService }) => {
+      notificationService.resetNotificationCount();
+      window.location.reload();
+    });
+  };
 </script>
 
 <template>
@@ -242,7 +250,7 @@
       </router-link>
       
       <!-- Notification Icon -->
-      <div class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full flex items-center justify-center md:justify-start transition-all duration-300 group">
+      <div class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full flex items-center justify-center md:justify-start transition-all duration-300 group cursor-pointer" @click="handleNotificationClick">
         <NotificationIcon />
         <div class="text-lg font-medium hidden md:block text-dark-400 group-hover:text-primary-300 ml-4">
           Notifications

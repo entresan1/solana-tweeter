@@ -6,13 +6,14 @@
     PhantomWalletAdapter,
     SolflareWalletAdapter,
   } from '@solana/wallet-adapter-wallets';
-  import { initWallet } from 'solana-wallets-vue';
+  import { initWallet, useWallet } from 'solana-wallets-vue';
   import { initWorkspace, useProfileAutoCreate } from '@src/hooks';
-  import { onMounted } from 'vue';
+  import { onMounted, watch } from 'vue';
   import { notificationService } from '@src/lib/notification-service';
 
   const route = useRoute();
   const wallets = [new PhantomWalletAdapter(), new SolflareWalletAdapter()];
+  const { wallet } = useWallet();
 
   initWallet({ wallets, autoConnect: true });
   
@@ -21,8 +22,16 @@
   
   onMounted(() => {
     initWorkspace();
-    // Start checking for new beacons
-    notificationService.startPeriodicCheck();
+    // Start checking for new beacons with current user address
+    const currentUserAddress = wallet.value?.publicKey?.toString();
+    notificationService.startPeriodicCheck(currentUserAddress);
+  });
+
+  // Watch for wallet changes and update notification service
+  watch(wallet, (newWallet) => {
+    const currentUserAddress = newWallet?.publicKey?.toString();
+    // Restart periodic check with new user address
+    notificationService.startPeriodicCheck(currentUserAddress);
   });
 </script>
 
