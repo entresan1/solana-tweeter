@@ -30,16 +30,19 @@ export const sendTweet = async (topic: string, content: string, usePlatformWalle
       mockKeyBytes[0] = 1; // Mark as beacon
       mockKeyBytes[31] = 0x42; // Mark as beacon
       
-      return {
-        id: response.beacon?.id || Date.now(),
+      // Create a proper TweetModel instance
+      const mockKey = new PublicKey(mockKeyBytes);
+      const tweetModel = new TweetModel(mockKey, {
+        author: wallet.value.publicKey,
+        timestamp: { toNumber: () => Date.now() / 1000 },
         topic: topic,
         content: content,
-        author: new PublicKey(mockKeyBytes),
-        authorDisplay: wallet.value.publicKey.toBase58().slice(0, 8) + '...',
-        timestamp: Date.now(),
+        id: response.beacon?.id || Date.now(),
         treasuryTransaction: response.payment?.transaction || 'platform-wallet-tx',
-        platformWallet: true
-      } as TweetModel;
+        author_display: wallet.value.publicKey.toBase58().slice(0, 8) + '...'
+      });
+      
+      return tweetModel;
     } else {
       // Use x402 client to send beacon with automatic payment
       const response = await sendBeaconWithPayment(topic, content, wallet.value);

@@ -35,7 +35,7 @@ import PlatformWalletModal from './PlatformWalletModal.vue';
   const showPlatformWalletModal = ref(false);
   const platformBalance = ref(0);
   const usePlatformWallet = ref(false);
-  const tipMessages = ref([]);
+  const tipMessages = ref<any[]>([]);
   const showTipMessages = ref(false);
   const loadingTipMessages = ref(false);
 
