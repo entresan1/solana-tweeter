@@ -121,19 +121,22 @@ export const beaconService = {
   }
 }
 
+// Simple cache to avoid repeated queries for non-existent profiles
+const profileCache = new Map<string, { profile: any | null; timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 // User profile service
 export const profileService = {
-  // Simple cache to avoid repeated queries for non-existent profiles
-  profileCache: new Map<string, { profile: any | null; timestamp: number }>(),
-  CACHE_TTL: 5 * 60 * 1000, // 5 minutes
-
   // Get user profile by wallet address
   async getProfile(walletAddress: string) {
     // Check cache first
-    const cached = profileService.profileCache.get(walletAddress);
-    if (cached && (Date.now() - cached.timestamp) < profileService.CACHE_TTL) {
+    const cached = profileCache.get(walletAddress);
+    if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
+      console.log('🎯 Cache hit for wallet:', walletAddress.slice(0, 8) + '...');
       return cached.profile;
     }
+    
+    console.log('🎯 Cache miss for wallet:', walletAddress.slice(0, 8) + '...');
     try {
       const { data, error } = await supabase
         .from('user_profiles')
@@ -144,26 +147,26 @@ export const profileService = {
       if (error) {
         if (error.code === 'PGRST116') {
           // No profile found - this is normal
-          profileService.profileCache.set(walletAddress, { profile: null, timestamp: Date.now() });
+          profileCache.set(walletAddress, { profile: null, timestamp: Date.now() });
           return null;
         } else if (error.code === 'PGRST301' || error.message?.includes('406')) {
           // 406 Not Acceptable - likely RLS issue, treat as no profile found
           console.warn('⚠️ Profile fetch blocked by RLS (406) - treating as no profile found');
-          profileService.profileCache.set(walletAddress, { profile: null, timestamp: Date.now() });
+          profileCache.set(walletAddress, { profile: null, timestamp: Date.now() });
           return null;
         } else {
           console.warn('⚠️ Profile fetch failed:', error.message);
-          profileService.profileCache.set(walletAddress, { profile: null, timestamp: Date.now() });
+          profileCache.set(walletAddress, { profile: null, timestamp: Date.now() });
           return null;
         }
       }
       
       // Cache successful result
-      profileService.profileCache.set(walletAddress, { profile: data, timestamp: Date.now() });
+      profileCache.set(walletAddress, { profile: data, timestamp: Date.now() });
       return data;
     } catch (error) {
       console.warn('⚠️ Profile fetch failed:', error);
-      profileService.profileCache.set(walletAddress, { profile: null, timestamp: Date.now() });
+      profileCache.set(walletAddress, { profile: null, timestamp: Date.now() });
       return null;
     }
   },
@@ -190,7 +193,7 @@ export const profileService = {
       console.log('✅ Profile upserted successfully:', data);
       
       // Clear cache for this wallet address
-      profileService.profileCache.delete(profile.wallet_address);
+      profileCache.delete(profile.wallet_address);
       
       return data;
     } catch (error) {
@@ -201,7 +204,7 @@ export const profileService = {
 
   // Clear profile cache (useful for testing or manual cache invalidation)
   clearCache() {
-    profileService.profileCache.clear();
+    profileCache.clear();
   },
 
   // Update profile picture

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { toRefs, computed, ref, onMounted } from 'vue';
+  import { toRefs, computed, ref, onMounted, watch } from 'vue';
   import { TweetModel } from '@src/models/tweet.model';
   import { useWorkspace } from '@src/hooks/useWorkspace';
   import { profileService, interactionService } from '@src/lib/supabase';
@@ -23,12 +23,8 @@
   const showReplies = ref(false);
   const loadingReplies = ref(false);
 
-  onMounted(async () => {
-    console.log('🎯 TweetCard onMounted called');
-    console.log('🎯 tweet.value:', tweet.value);
-    console.log('🎯 tweet.value?.id:', tweet.value?.id);
-    console.log('🎯 tweet.value?.author:', tweet.value?.author);
-    
+  // Function to load profile data for the current tweet
+  const loadProfileData = async () => {
     if (tweet.value?.author) {
       try {
         const profile = await profileService.getProfile(tweet.value.author.toBase58());
@@ -39,15 +35,34 @@
         } else {
           // No profile found - use default display name
           authorDisplayName.value = tweet.value.author.toBase58().slice(0, 8) + '...';
+          authorProfile.value = null;
+          authorAvatar.value = '';
         }
       } catch (error) {
         // Handle 406 and other errors gracefully
         console.warn('Profile fetch failed (this is normal for new users):', error);
         authorDisplayName.value = tweet.value.author.toBase58().slice(0, 8) + '...';
+        authorProfile.value = null;
+        authorAvatar.value = '';
       }
+    } else {
+      // Reset profile data if no author
+      authorProfile.value = null;
+      authorDisplayName.value = '';
+      authorAvatar.value = '';
     }
+  };
 
-    // Load like status and count
+  // Watch for tweet changes and reload profile data
+  watch(tweet, loadProfileData, { immediate: true });
+
+  onMounted(async () => {
+    console.log('🎯 TweetCard onMounted called');
+    console.log('🎯 tweet.value:', tweet.value);
+    console.log('🎯 tweet.value?.id:', tweet.value?.id);
+    console.log('🎯 tweet.value?.author:', tweet.value?.author);
+    
+    // Profile data is now loaded by the watcher, so we just need to load like data
     await loadLikeData();
     
     // Automatically load replies
