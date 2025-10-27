@@ -224,8 +224,16 @@ module.exports = async (req, res) => {
       // Import beaconService (we need to adjust the path for Vercel)
       const { createClient } = require('@supabase/supabase-js');
       
-      const supabaseUrl = process.env.VITE_SUPABASE_URL;
-      const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+      const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+      const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+      
+      console.log('🔍 Environment variables check:');
+      console.log('VITE_SUPABASE_URL:', process.env.VITE_SUPABASE_URL ? 'SET' : 'NOT SET');
+      console.log('SUPABASE_URL:', process.env.SUPABASE_URL ? 'SET' : 'NOT SET');
+      console.log('VITE_SUPABASE_ANON_KEY:', process.env.VITE_SUPABASE_ANON_KEY ? 'SET' : 'NOT SET');
+      console.log('SUPABASE_ANON_KEY:', process.env.SUPABASE_ANON_KEY ? 'SET' : 'NOT SET');
+      console.log('Final supabaseUrl:', supabaseUrl ? 'SET' : 'NOT SET');
+      console.log('Final supabaseKey:', supabaseKey ? 'SET' : 'NOT SET');
       
       if (!supabaseUrl || !supabaseKey) {
         console.error('❌ Missing Supabase environment variables');
