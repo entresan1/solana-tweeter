@@ -253,7 +253,7 @@ module.exports = async (req, res) => {
           content: beaconData.content,
           author: beaconData.author,
           author_display: beaconData.author_display,
-          timestamp: new Date(beaconData.timestamp).toISOString(),
+          timestamp: beaconData.timestamp, // Keep as bigint (milliseconds)
           treasury_transaction: beaconData.treasury_transaction,
         }])
         .select()

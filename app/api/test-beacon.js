@@ -31,7 +31,7 @@ module.exports = async (req, res) => {
       content: 'Test beacon content',
       author: 'test-author-123',
       author_display: 'test-author...',
-      timestamp: new Date().toISOString(),
+      timestamp: Date.now(), // Use bigint (milliseconds) instead of ISO string
       treasury_transaction: 'test-tx-123',
     };
 
