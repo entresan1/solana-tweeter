@@ -97,8 +97,10 @@ export const fetchTweets = async (filters: any[] = []) => {
 
 export const authorFilter = async (authorBase58PublicKey: string) => {
   try {
+    console.log('👤 authorFilter called with author:', authorBase58PublicKey);
     // Fetch beacons by author from Supabase
     const beacons = await beaconService.fetchBeaconsByAuthor(authorBase58PublicKey);
+    console.log('👤 Found beacons for author:', beacons.length);
     
     // Convert to TweetModel format for compatibility
     return beacons.map((beacon: any, index: number) => {
@@ -130,8 +132,10 @@ export const authorFilter = async (authorBase58PublicKey: string) => {
 
 export const topicFilter = async (topic: string) => {
   try {
+    console.log('🔍 topicFilter called with topic:', topic);
     // Fetch beacons by topic from Supabase
     const beacons = await beaconService.fetchBeaconsByTopic(topic);
+    console.log('🔍 Found beacons for topic:', beacons.length);
     
     // Convert to TweetModel format for compatibility
     return beacons.map((beacon: any, index: number) => {
@@ -164,14 +168,23 @@ export const topicFilter = async (topic: string) => {
 // Search beacons by content (not just topic)
 export const searchBeacons = async (searchTerm: string) => {
   try {
+    console.log('🔍 searchBeacons called with searchTerm:', searchTerm);
+    // Return empty array if search term is empty
+    if (!searchTerm || searchTerm.trim() === '') {
+      console.log('🔍 Empty search term, returning empty array');
+      return [];
+    }
+    
     // Fetch all beacons and filter by content
     const allBeacons = await beaconService.fetchBeacons();
+    console.log('🔍 Total beacons fetched:', allBeacons.length);
     
     // Filter beacons that contain the search term in content or topic
     const filteredBeacons = allBeacons.filter((beacon: any) => 
       beacon.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
       beacon.topic.toLowerCase().includes(searchTerm.toLowerCase())
     );
+    console.log('🔍 Filtered beacons:', filteredBeacons.length);
     
     // Convert to TweetModel format for compatibility
     return filteredBeacons.map((beacon: any, index: number) => {

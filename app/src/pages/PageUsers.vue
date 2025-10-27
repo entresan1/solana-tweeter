@@ -23,7 +23,7 @@
     if (author.value === viewedAuthor.value) return;
     try {
       loading.value = true;
-      const fetchedTweets = await fetchTweets([authorFilter(author.value)]);
+      const fetchedTweets = await authorFilter(author.value);
       tweets.value = fetchedTweets;
       viewedAuthor.value = author.value;
     } finally {

@@ -1,89 +1,28 @@
 import { TweetModel } from '@src/models/tweet.model';
 import { useWorkspace } from '@src/hooks';
-import { Connection, Transaction, SystemProgram, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { beaconService } from '@src/lib/supabase';
-
-// Treasury address for beacon payments
-const TREASURY_ADDRESS = 'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6';
+import { PublicKey } from '@solana/web3.js';
+import { sendBeaconWithPayment } from '@src/lib/x402-client';
 
 export const sendTweet = async (topic: string, content: string) => {
-  const { wallet, connection } = useWorkspace();
+  const { wallet } = useWorkspace();
 
   try {
     if (!wallet.value?.publicKey) {
       throw new Error('Wallet not connected');
     }
 
-    // Create treasury public key
-    let treasuryPubkey;
-    try {
-      treasuryPubkey = new PublicKey(TREASURY_ADDRESS);
-    } catch (error) {
-      console.error('Invalid treasury address:', TREASURY_ADDRESS);
-      throw new Error('Invalid treasury address');
-    }
+    console.log('🚀 Sending beacon with x402 payment...');
     
-    // Get recent blockhash
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+    // Use x402 client to send beacon with automatic payment
+    const response = await sendBeaconWithPayment(topic, content, wallet.value);
     
-    // Create transfer instruction (0.001 SOL to treasury)
-    const transferInstruction = SystemProgram.transfer({
-      fromPubkey: wallet.value.publicKey,
-      toPubkey: treasuryPubkey,
-      lamports: 0.001 * LAMPORTS_PER_SOL, // 0.001 SOL
-    });
-
-    // Create transaction
-    const transaction = new Transaction({
-      recentBlockhash: blockhash,
-      feePayer: wallet.value.publicKey,
-    });
-
-    transaction.add(transferInstruction);
-
-    // Sign transaction
-    const signedTransaction = await wallet.value.signTransaction(transaction);
-
-    // Send transaction
-    const signature = await connection.sendRawTransaction(
-      signedTransaction.serialize(),
-      {
-        skipPreflight: false,
-        preflightCommitment: 'confirmed',
-      }
-    );
-
-    // Confirm transaction
-    await connection.confirmTransaction(
-      { signature, blockhash, lastValidBlockHeight },
-      'confirmed'
-    );
-
-    // Store beacon data in Supabase database
-    const beaconData = {
-      topic,
-      content,
-      author: wallet.value.publicKey.toString(),
-      author_display: wallet.value.publicKey.toString().slice(0, 8) + '...',
-      timestamp: Date.now(),
-      treasury_transaction: signature,
-    };
-
-    // Save to Supabase database
-    try {
-      await beaconService.createBeacon(beaconData);
-      console.log('Beacon saved to Supabase database');
-    } catch (error) {
-      console.error('Error saving to Supabase:', error);
-      console.log('Saving to localStorage as backup...');
-      
-      // Fallback to localStorage if database fails
-      const existingBeacons = JSON.parse(localStorage.getItem('beacons') || '[]');
-      existingBeacons.push(beaconData);
-      localStorage.setItem('beacons', JSON.stringify(existingBeacons));
+    if (!response.success) {
+      throw new Error(response.message || 'Failed to send beacon');
     }
 
-    // Create a mock PublicKey for compatibility (not from signature)
+    console.log('✅ Beacon sent successfully:', response);
+
+    // Create a mock PublicKey for compatibility
     const mockKeyBytes = new Uint8Array(32);
     mockKeyBytes.fill(0);
     mockKeyBytes[0] = 1; // Mark as beacon
@@ -95,7 +34,7 @@ export const sendTweet = async (topic: string, content: string) => {
       timestamp: { toNumber: () => Date.now() / 1000 },
       topic,
       content,
-      treasuryTransaction: signature,
+      treasuryTransaction: response.payment?.transaction || 'unknown',
       author_display: wallet.value.publicKey.toBase58().slice(0, 8) + '...'
     });
     
@@ -107,8 +46,8 @@ export const sendTweet = async (topic: string, content: string) => {
     // Handle specific error cases
     if (error.message?.includes('User rejected') || error.message?.includes('rejected')) {
       throw new Error('Transaction was cancelled by user');
-    } else if (error.message?.includes('Invalid public key') || error.message?.includes('Invalid treasury address')) {
-      throw new Error('Invalid treasury address configuration');
+    } else if (error.message?.includes('Payment Required') || error.message?.includes('402')) {
+      throw new Error('Payment verification failed. Please try again.');
     } else if (error.message?.includes('insufficient funds') || error.message?.includes('Insufficient')) {
       throw new Error('Insufficient SOL balance. Please add funds to your wallet.');
     } else if (error.message?.includes('network') || error.message?.includes('connection')) {

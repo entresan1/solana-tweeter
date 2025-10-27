@@ -26,8 +26,8 @@
 
     try {
       loading.value = true;
-      // Use searchBeacons to search through all beacons for the topic
-      tweets.value = await searchBeacons(slugTopic.value);
+      // Use topicFilter for exact topic matching
+      tweets.value = await topicFilter(slugTopic.value);
       viewedTopic.value = slugTopic.value;
     } finally {
       loading.value = false;
