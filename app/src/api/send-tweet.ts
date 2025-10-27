@@ -43,31 +43,32 @@ export const sendTweet = async (topic: string, content: string, usePlatformWalle
     } else {
       // Use x402 client to send beacon with automatic payment
       const response = await sendBeaconWithPayment(topic, content, wallet.value);
-    
-    if (!response.success) {
-      throw new Error(response.message || 'Failed to send beacon');
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to send beacon');
+      }
+
+      console.log('✅ Beacon sent successfully:', response);
+
+      // Create a mock PublicKey for compatibility
+      const mockKeyBytes = new Uint8Array(32);
+      mockKeyBytes.fill(0);
+      mockKeyBytes[0] = 1; // Mark as beacon
+      mockKeyBytes[31] = 0x42; // Mark as beacon
+      
+      // Return a proper TweetModel instance
+      const tweetModel = new TweetModel(new PublicKey(mockKeyBytes), {
+        author: wallet.value.publicKey,
+        timestamp: { toNumber: () => Date.now() / 1000 },
+        topic,
+        content,
+        treasuryTransaction: response.payment?.transaction || 'unknown',
+        author_display: wallet.value.publicKey.toBase58().slice(0, 8) + '...'
+      });
+      
+      console.log('✅ Created TweetModel for new beacon:', tweetModel);
+      return tweetModel;
     }
-
-    console.log('✅ Beacon sent successfully:', response);
-
-    // Create a mock PublicKey for compatibility
-    const mockKeyBytes = new Uint8Array(32);
-    mockKeyBytes.fill(0);
-    mockKeyBytes[0] = 1; // Mark as beacon
-    mockKeyBytes[31] = 0x42; // Mark as beacon
-    
-    // Return a proper TweetModel instance
-    const tweetModel = new TweetModel(new PublicKey(mockKeyBytes), {
-      author: wallet.value.publicKey,
-      timestamp: { toNumber: () => Date.now() / 1000 },
-      topic,
-      content,
-      treasuryTransaction: response.payment?.transaction || 'unknown',
-      author_display: wallet.value.publicKey.toBase58().slice(0, 8) + '...'
-    });
-    
-    console.log('✅ Created TweetModel for new beacon:', tweetModel);
-    return tweetModel;
   } catch (error: any) {
     console.error('Send beacon error:', error);
     
