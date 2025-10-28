@@ -9,7 +9,8 @@ const connection = new Connection(
 );
 
 // Jupiter API configuration - Using standard Jupiter API
-const JUPITER_API_URL = 'https://quote-api.jup.ag/v6/';
+const JUPITER_QUOTE_URL = 'https://quote-api.jup.ag/v6/quote';
+const JUPITER_SWAP_URL = 'https://quote-api.jup.ag/v6/swap';
 
 /**
  * Send Jupiter swap with automatic X402 payment
@@ -27,23 +28,34 @@ export async function sendJupiterSwapWithPayment(
     console.log('🚀 Starting REAL Jupiter swap for CA token:', { tokenMint, solAmount });
     
     // 1. First, create the actual Jupiter swap transaction
-    const swapTransaction = await createJupiterSwapTransaction(
-      wallet.publicKey,
-      tokenMint,
-      solAmount
-    );
+    let swapTransaction;
+    let swapSignature;
     
-    console.log('✅ Jupiter swap transaction created');
-    
-    // 2. Sign and send the swap transaction
-    const signedSwapTx = await wallet.signTransaction(swapTransaction);
-    const swapSignature = await connection.sendRawTransaction(signedSwapTx.serialize());
-    
-    console.log('🔄 Jupiter swap transaction sent:', swapSignature);
-    
-    // 3. Wait for swap confirmation
-    await connection.confirmTransaction(swapSignature, 'confirmed');
-    console.log('✅ Jupiter swap confirmed - user now has CA tokens!');
+    try {
+      swapTransaction = await createJupiterSwapTransaction(
+        wallet.publicKey,
+        tokenMint,
+        solAmount
+      );
+      
+      console.log('✅ Jupiter swap transaction created');
+      
+      // 2. Sign and send the swap transaction
+      const signedSwapTx = await wallet.signTransaction(swapTransaction);
+      swapSignature = await connection.sendRawTransaction(signedSwapTx.serialize());
+      
+      console.log('🔄 Jupiter swap transaction sent:', swapSignature);
+      
+      // 3. Wait for swap confirmation
+      await connection.confirmTransaction(swapSignature, 'confirmed');
+      console.log('✅ Jupiter swap confirmed - user now has CA tokens!');
+      
+    } catch (jupiterError) {
+      console.error('❌ Jupiter swap failed:', jupiterError);
+      
+      // If Jupiter fails, show a helpful error message
+      throw new Error(`Jupiter swap failed: ${jupiterError.message}. Please try again or contact support if the issue persists.`);
+    }
     
     // 4. Now send X402 payment for the service
     const payload = {
@@ -216,7 +228,7 @@ export async function getJupiterQuote(
 
   try {
     // Use standard Jupiter API
-    const url = `${JUPITER_API_URL}quote?inputMint=${inputMint}&outputMint=${tokenMint}&amount=${amount}&slippageBps=${slippageBps}`;
+    const url = `${JUPITER_QUOTE_URL}?inputMint=${inputMint}&outputMint=${tokenMint}&amount=${amount}&slippageBps=${slippageBps}`;
     
     console.log('🔄 Fetching Jupiter quote from Jupiter API:', url);
     
@@ -254,6 +266,14 @@ export async function getJupiterQuote(
     };
   } catch (error: any) {
     console.error('❌ Jupiter API error:', error);
+    
+    // Handle network errors specifically
+    if (error.message.includes('Failed to fetch') || error.message.includes('ERR_NAME_NOT_RESOLVED')) {
+      return {
+        success: false,
+        error: `Network error: Unable to connect to Jupiter API. Please check your internet connection and try again.`
+      };
+    }
     
     return {
       success: false,
@@ -300,7 +320,7 @@ async function createJupiterSwapTransaction(
     const amount = Math.floor(solAmount * 1e9); // Convert SOL to lamports
     const slippageBps = 50; // 0.5% slippage tolerance
 
-    const swapUrl = `${JUPITER_API_URL}swap`;
+    const swapUrl = JUPITER_SWAP_URL;
     
     const swapRequest = {
       quoteResponse: {
