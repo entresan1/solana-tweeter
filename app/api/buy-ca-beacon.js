@@ -28,7 +28,7 @@ module.exports = async (req, res) => {
 
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-402-proof');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -48,7 +48,52 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: 'Invalid SOL amount' });
   }
 
+  // Check for X402 proof in headers
+  const x402Proof = req.headers['x-402-proof'];
+
+  if (!x402Proof) {
+    return res.status(402).json({
+      error: 'Payment Required',
+      message: 'This Jupiter swap requires a SOL payment',
+      payment: {
+        network: 'solana',
+        recipient: userWallet, // User pays themselves for the swap
+        price: { token: 'SOL', amount: solAmount },
+        config: { description: `Jupiter swap: ${solAmount} SOL → ${contractAddress}` },
+      },
+    });
+  }
+
   try {
+    // Parse and verify X402 proof
+    let proof;
+    try {
+      proof = JSON.parse(x402Proof);
+    } catch (e) {
+      return res.status(400).json({
+        error: 'Invalid Proof',
+        message: 'x-402-proof header must be valid JSON',
+      });
+    }
+
+    // Verify X402 payment
+    console.log('🔍 Verifying X402 payment for Jupiter swap:', proof);
+    const verification = await verifyX402Payment(proof, connection, userWallet, parseFloat(solAmount));
+    console.log('🔍 X402 verification result:', verification);
+    
+    if (!verification.valid) {
+      return res.status(402).json({
+        error: 'Payment Verification Failed',
+        message: verification.error || 'Invalid payment proof',
+        payment: {
+          network: 'solana',
+          recipient: userWallet,
+          price: { token: 'SOL', amount: solAmount },
+          config: { description: `Jupiter swap: ${solAmount} SOL → ${contractAddress}` },
+        },
+      });
+    }
+
     // Verify the beacon exists and is a CA beacon
     const { data: beacon, error: beaconError } = await supabase
       .from('beacons')
@@ -86,35 +131,8 @@ module.exports = async (req, res) => {
       timestamp: new Date().toISOString()
     });
 
-    // Create direct Jupiter swap transaction using QuickNode API
-    const fromPubkey = new PublicKey(userWallet);
-    
-    try {
-      // Import Jupiter swap function
-      const { createJupiterSwap } = require('../src/lib/jupiter-swap');
-      
-      // Create direct Jupiter swap transaction - no memo, no extra fees
-      const swapTransaction = await createJupiterSwap(
-        fromPubkey,
-        contractAddress,
-        parseFloat(solAmount) // Use full amount for swap
-      );
-      
-      console.log('✅ Direct Jupiter swap transaction created using QuickNode API');
-      
-      // Serialize the Jupiter transaction directly
-      const serializedTransaction = swapTransaction.serialize({
-        requireAllSignatures: false,
-        verifySignatures: false
-      });
-
-    } catch (swapError) {
-      console.error('❌ QuickNode Jupiter swap failed:', swapError);
-      return res.status(500).json({ 
-        error: 'Swap transaction creation failed', 
-        details: swapError.message 
-      });
-    }
+    // X402 payment verified - Jupiter swap will be handled by client
+    console.log('✅ X402 payment verified for Jupiter swap');
 
     // Create purchase record for database
     const purchase = {
@@ -124,8 +142,8 @@ module.exports = async (req, res) => {
       purchase_amount: parseFloat(solAmount),
       platform_fee: 0, // No platform fee - direct swap
       total_cost: totalCost,
-      transaction_data: serializedTransaction.toString('base64'),
-      status: 'pending',
+      transaction_data: null, // X402 handled by client
+      status: 'completed', // X402 verified means completed
       created_at: new Date().toISOString()
     };
 
@@ -164,11 +182,11 @@ module.exports = async (req, res) => {
     return res.status(200).json({ 
       success: true, 
       purchase: savedPurchase || purchase,
-      transaction: serializedTransaction.toString('base64'),
-      message: `Direct Jupiter swap created: ${solAmount} SOL → ${contractAddress}`,
+      message: `X402 Jupiter swap completed: ${solAmount} SOL → ${contractAddress}`,
       swapAmount: parseFloat(solAmount),
       totalCost: parseFloat(solAmount),
-      swapType: 'SOL_TO_CA'
+      swapType: 'SOL_TO_CA_X402',
+      x402Verified: true
     });
 
   } catch (error) {
@@ -176,3 +194,75 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 };
+
+/**
+ * Verify X402 payment for Jupiter swap
+ * @param proof - X402 proof object
+ * @param connection - Solana connection
+ * @param expectedRecipient - Expected recipient address
+ * @param expectedAmount - Expected amount in SOL
+ * @returns Verification result
+ */
+async function verifyX402Payment(proof, connection, expectedRecipient, expectedAmount) {
+  try {
+    // Verify transaction exists and is confirmed
+    const signature = proof.transaction;
+    const transaction = await connection.getTransaction(signature, {
+      commitment: 'confirmed',
+    });
+
+    if (!transaction) {
+      return { valid: false, error: 'Transaction not found or not confirmed' };
+    }
+
+    // Calculate expected amount
+    const expectedAmountLamports = Math.floor(expectedAmount * 1000000000); // Convert to lamports
+    
+    const expectedRecipientPubkey = new PublicKey(expectedRecipient);
+
+    // Check if transaction contains the expected transfer
+    let paymentFound = false;
+    let actualAmount = 0;
+
+    if (transaction.meta?.preBalances && transaction.meta?.postBalances) {
+      const accounts = transaction.transaction.message.accountKeys;
+      
+      // Check recipient payment
+      const recipientIndex = accounts.findIndex(key => key.equals(expectedRecipientPubkey));
+      if (recipientIndex !== -1) {
+        const preBalance = transaction.meta.preBalances[recipientIndex];
+        const postBalance = transaction.meta.postBalances[recipientIndex];
+        actualAmount = postBalance - preBalance;
+        
+        if (actualAmount >= expectedAmountLamports) {
+          paymentFound = true;
+        }
+      }
+    }
+
+    if (!paymentFound) {
+      return { 
+        valid: false, 
+        error: `Payment verification failed. Expected: ${expectedAmountLamports} lamports, Got: ${actualAmount} lamports` 
+      };
+    }
+
+    // Check for X402 memo
+    const memoFound = transaction.transaction.message.instructions.some(instruction => {
+      if (instruction.programId.toBase58() === 'MemoSq4gqABAXKb96qnH8TysKcWfC85B2q2') {
+        const memoData = Buffer.from(instruction.data, 'base64').toString();
+        return memoData.startsWith('x402:');
+      }
+      return false;
+    });
+
+    if (!memoFound) {
+      return { valid: false, error: 'X402 memo not found in transaction' };
+    }
+
+    return { valid: true };
+  } catch (error) {
+    console.error('X402 verification error:', error);
+    return { valid: false, error: `Verification failed: ${error.message}` };
+  }
+}
