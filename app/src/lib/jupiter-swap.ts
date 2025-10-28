@@ -110,11 +110,12 @@ export async function getJupiterQuote(
   tokenMint: string,
   solAmount: number
 ): Promise<any> {
-  try {
-    const inputMint = 'So11111111111111111111111111111111111111112'; // SOL mint
-    const amount = Math.floor(solAmount * 1e9); // Convert SOL to lamports
-    const slippageBps = 50; // 0.5% slippage tolerance
+  // Define variables outside try block so they're available in catch
+  const inputMint = 'So11111111111111111111111111111111111111112'; // SOL mint
+  const amount = Math.floor(solAmount * 1e9); // Convert SOL to lamports
+  const slippageBps = 50; // 0.5% slippage tolerance
 
+  try {
     // Use Metis Jupiter API through QuickNode
     const url = `${JUPITER_API_URL}jupiter/v6/quote?inputMint=${inputMint}&outputMint=${tokenMint}&amount=${amount}&slippageBps=${slippageBps}`;
     
