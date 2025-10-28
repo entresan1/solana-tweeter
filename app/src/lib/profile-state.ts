@@ -70,12 +70,21 @@ export const profileState = {
   
   // Get display name
   getDisplayName(): string {
-    return 'Profile';
+    if (!currentUserProfile.value) {
+      return 'Profile';
+    }
+    return currentUserProfile.value.nickname || currentUserProfile.value.wallet_address?.slice(0, 8) + '...' || 'Profile';
   },
   
   // Check if profile picture should be displayed
   shouldShowProfilePicture(): boolean {
-    return !!(currentUserProfile.value?.profile_picture_url);
+    const hasPicture = !!(currentUserProfile.value?.profile_picture_url);
+    console.log('🖼️ Profile picture check:', {
+      hasProfile: !!currentUserProfile.value,
+      pictureUrl: currentUserProfile.value?.profile_picture_url,
+      shouldShow: hasPicture
+    });
+    return hasPicture;
   }
 };
 
