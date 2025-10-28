@@ -28,23 +28,10 @@ export async function realCAPurchase(
     
     const userAddress = wallet.publicKey.toBase58();
     
-    // 1. Check platform wallet balance first (Smart Payment Priority)
-    const platformBalance = await platformWalletService.getBalance(userAddress);
-    const hasPlatformFunds = platformBalance >= solAmount;
-    
-    console.log('💰 Platform wallet check:', {
-      platformBalance,
-      requiredAmount: solAmount,
-      hasPlatformFunds
-    });
-    
-    if (hasPlatformFunds) {
-      console.log('✅ Using platform wallet for real CA purchase');
-      return await realPurchaseWithPlatformWallet(tokenMint, solAmount, userAddress);
-    } else {
-      console.log('💳 Using user wallet for real CA purchase');
-      return await realPurchaseWithUserWallet(tokenMint, solAmount, wallet);
-    }
+    // 1. For CA token purchases, we MUST use user wallet to get actual tokens
+    // Platform wallet can't receive CA tokens, so we need user wallet for the swap
+    console.log('💳 Using user wallet for real CA purchase (required for token receipt)');
+    return await realPurchaseWithUserWallet(tokenMint, solAmount, wallet);
   } catch (error: any) {
     console.error('❌ Real CA purchase error:', error);
     throw new Error(`Failed to purchase CA token: ${error.message}`);
@@ -93,29 +80,29 @@ async function realPurchaseWithPlatformWallet(
       console.log('✅ Solana Tracker swap simulation successful');
     }
     
-    // 4. For platform wallet, we need to create a different approach
-    // Since platform wallet can't directly sign Jupiter transactions,
-    // we'll create a payment that represents the swap value
-    const result = await platformWalletService.sendFromPlatformWallet(
-      userAddress,
-      'F7NdkGsGCFpPyaSsp4paAURZyQjTPHCCQjQHm6NwypTY', // Treasury
-      solAmount,
-      `real-ca-purchase-${tokenMint.slice(0, 8)}`
-    );
+    // 4. Execute the actual swap transaction using platform wallet
+    console.log('🔐 Platform wallet executing swap transaction...');
     
-    if (!result.success) {
-      throw new Error(result.error || 'Platform wallet transaction failed');
+    // For platform wallet, we need to execute the swap transaction
+    // Since the transaction is already built for the user's wallet, we need to modify it
+    // or create a new one for the platform wallet. For now, let's use the user wallet approach
+    // but ensure the platform wallet has enough funds
+    
+    // Check if platform wallet has enough SOL for the swap
+    const platformBalance = await platformWalletService.getBalance(userAddress);
+    if (platformBalance < solAmount) {
+      throw new Error(`Platform wallet has insufficient funds: ${platformBalance} SOL < ${solAmount} SOL required`);
     }
     
-    console.log('✅ Platform wallet real CA purchase completed:', result.signature);
+    // For now, we'll use the user wallet approach but the platform wallet will fund it
+    // This ensures the actual swap happens and user gets CA tokens
+    throw new Error('Platform wallet CA purchase temporarily disabled - please use user wallet for real CA token swaps');
     
+    // This return statement is unreachable due to the throw above
+    // but keeping it for completeness
     return {
-      success: true,
-      swapSignature: result.signature,
-      message: `✅ Real CA Purchase: Successfully purchased CA tokens using platform wallet!`,
-      purchaseType: 'PLATFORM_WALLET_REAL',
-      platformWallet: true,
-      swapData: swapResult.data
+      success: false,
+      error: 'Platform wallet CA purchase not implemented'
     };
   } catch (error: any) {
     console.error('❌ Platform wallet real CA purchase error:', error);

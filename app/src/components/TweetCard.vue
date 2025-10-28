@@ -426,8 +426,8 @@ const loadSwapQuote = async () => {
         });
         
         // Show success message with purchase type
-        const purchaseType = result.platformWallet ? 'Smart Payment (Platform Wallet)' : 'User Wallet (Solana Tracker)';
-        caBuyError.value = `✅ ${purchaseType} purchase successful! SOL swapped for CA tokens via Solana Tracker (supports Pump.fun!). Transaction: ${result.swapSignature?.slice(0, 8)}...`;
+        const purchaseType = 'User Wallet (Solana Tracker)';
+        caBuyError.value = `✅ ${purchaseType} purchase successful! SOL swapped for CA tokens via Solana Tracker (supports Pump.fun!). You now have CA tokens in your wallet! Transaction: ${result.swapSignature?.slice(0, 8)}...`;
         
         // Close modal after a delay
         setTimeout(() => {
