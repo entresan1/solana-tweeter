@@ -413,7 +413,7 @@ const loadSwapQuote = async () => {
         const { sendJupiterSwapWithPayment } = await import('../lib/x402-jupiter-client');
         
         const result = await sendJupiterSwapWithPayment(
-          contractAddress,
+          caAddress.value,
           solAmount,
           wallet.value
         );
@@ -446,7 +446,7 @@ const loadSwapQuote = async () => {
       const { sendJupiterSwapWithPayment } = await import('../lib/x402-jupiter-client');
       
       const result = await sendJupiterSwapWithPayment(
-        contractAddress,
+        caAddress.value,
         solAmount,
         wallet.value
       );
