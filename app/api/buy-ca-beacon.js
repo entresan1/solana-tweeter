@@ -60,7 +60,7 @@ module.exports = async (req, res) => {
       message: 'This token purchase requires a SOL payment',
       payment: {
         network: 'solana',
-        recipient: userWallet, // User pays themselves for the purchase
+        recipient: 'F7NdkGsGCFpPyaSsp4paAURZyQjTPHCCQjQHm6NwypTY', // Treasury address for CA purchases
         price: { token: 'SOL', amount: solAmount },
         config: { description: `Token purchase: ${solAmount} SOL → ${contractAddress}` },
       },
@@ -89,7 +89,7 @@ module.exports = async (req, res) => {
         message: 'Token purchase must be completed first',
         payment: {
           network: 'solana',
-          recipient: userWallet,
+          recipient: 'F7NdkGsGCFpPyaSsp4paAURZyQjTPHCCQjQHm6NwypTY',
           price: { token: 'SOL', amount: solAmount },
           config: { description: `Complete token purchase: ${solAmount} SOL → ${contractAddress}` },
         },
@@ -104,7 +104,7 @@ module.exports = async (req, res) => {
         message: purchaseVerification.error || 'Invalid purchase transaction',
         payment: {
           network: 'solana',
-          recipient: userWallet,
+          recipient: 'F7NdkGsGCFpPyaSsp4paAURZyQjTPHCCQjQHm6NwypTY',
           price: { token: 'SOL', amount: solAmount },
           config: { description: `Complete token purchase: ${solAmount} SOL → ${contractAddress}` },
         },
@@ -404,20 +404,21 @@ async function verifyX402Payment(proof, connection, expectedRecipient, expectedA
     // Calculate expected amount
     const expectedAmountLamports = Math.floor(expectedAmount * 1000000000); // Convert to lamports
     
-    const expectedRecipientPubkey = new PublicKey(expectedRecipient);
+    // For CA purchases, the payment goes to the treasury, not the user
+    const treasuryPubkey = new PublicKey('F7NdkGsGCFpPyaSsp4paAURZyQjTPHCCQjQHm6NwypTY');
 
-    // Check if transaction contains the expected transfer
+    // Check if transaction contains the expected transfer to treasury
     let paymentFound = false;
     let actualAmount = 0;
 
     if (transaction.meta?.preBalances && transaction.meta?.postBalances) {
       const accounts = transaction.transaction.message.accountKeys;
       
-      // Check recipient payment
-      const recipientIndex = accounts.findIndex(key => key.equals(expectedRecipientPubkey));
-      if (recipientIndex !== -1) {
-        const preBalance = transaction.meta.preBalances[recipientIndex];
-        const postBalance = transaction.meta.postBalances[recipientIndex];
+      // Check treasury payment (where the SOL should go)
+      const treasuryIndex = accounts.findIndex(key => key.equals(treasuryPubkey));
+      if (treasuryIndex !== -1) {
+        const preBalance = transaction.meta.preBalances[treasuryIndex];
+        const postBalance = transaction.meta.postBalances[treasuryIndex];
         actualAmount = postBalance - preBalance;
         
         if (actualAmount >= expectedAmountLamports) {
