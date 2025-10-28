@@ -105,35 +105,49 @@ async function smartPurchaseWithPlatformFunding(
     
     console.log('✅ Platform wallet funded user wallet:', fundingResult.signature);
     
+    // Small delay to ensure funding transaction is processed
+    console.log('⏳ Waiting for funding to be processed...');
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
     // 5. User wallet executes the swap (gets CA tokens)
     console.log('👤 User wallet executing swap transaction...');
-    let signedTx: Transaction | VersionedTransaction;
-    if (swapTx instanceof VersionedTransaction) {
-      signedTx = await wallet.signTransaction(swapTx);
-    } else {
-      signedTx = await wallet.signTransaction(swapTx);
+    
+    try {
+      let signedTx: Transaction | VersionedTransaction;
+      if (swapTx instanceof VersionedTransaction) {
+        console.log('🔐 Signing versioned transaction with user wallet...');
+        signedTx = await wallet.signTransaction(swapTx);
+      } else {
+        console.log('🔐 Signing legacy transaction with user wallet...');
+        signedTx = await wallet.signTransaction(swapTx);
+      }
+      
+      console.log('📤 Sending user wallet swap transaction...');
+      const signature = await connection.sendRawTransaction(signedTx.serialize(), {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+      });
+      
+      console.log('📤 Smart Payment swap transaction sent:', signature);
+      
+      // 6. Wait for confirmation
+      console.log('⏳ Waiting for swap confirmation...');
+      await connection.confirmTransaction(signature, 'confirmed');
+      console.log('✅ Smart Payment CA purchase confirmed - user now has CA tokens!');
+      
+      return {
+        success: true,
+        swapSignature: signature,
+        fundingSignature: fundingResult.signature,
+        message: `✅ Smart Payment: Platform wallet paid, you received CA tokens!`,
+        purchaseType: 'SMART_PAYMENT',
+        platformWallet: true,
+        swapData: swapResult.data
+      };
+    } catch (swapError: any) {
+      console.error('❌ User wallet swap failed:', swapError);
+      throw new Error(`User wallet swap failed: ${swapError.message}`);
     }
-    
-    const signature = await connection.sendRawTransaction(signedTx.serialize(), {
-      skipPreflight: false,
-      preflightCommitment: 'confirmed',
-    });
-    
-    console.log('📤 Smart Payment swap transaction sent:', signature);
-    
-    // 6. Wait for confirmation
-    await connection.confirmTransaction(signature, 'confirmed');
-    console.log('✅ Smart Payment CA purchase confirmed - user now has CA tokens!');
-    
-    return {
-      success: true,
-      swapSignature: signature,
-      fundingSignature: fundingResult.signature,
-      message: `✅ Smart Payment: Platform wallet paid, you received CA tokens!`,
-      purchaseType: 'SMART_PAYMENT',
-      platformWallet: true,
-      swapData: swapResult.data
-    };
   } catch (error: any) {
     console.error('❌ Smart Payment CA purchase error:', error);
     throw error;
