@@ -27,7 +27,7 @@ import { TweetModel } from '@src/models/tweet.model';
   const showReplyModal = ref(false);
   const replyContent = ref('');
   const replies = ref<any[]>([]);
-  const showReplies = ref(false);
+  const showReplies = ref(true); // Show replies by default
   
   // CA detection
   const isCA = computed(() => {
@@ -657,10 +657,9 @@ const loadSwapQuote = async () => {
       showReplyModal.value = false;
       console.log('✅ Reply form cleared and hidden');
       
-      // Refresh replies if they're currently shown
-      if (showReplies.value) {
-        await loadReplies();
-      }
+      // Always refresh replies and show them after submission
+      await loadReplies();
+      showReplies.value = true; // Ensure replies are visible
     } catch (error: any) {
       console.error('❌ Error submitting reply:', error);
       console.error('❌ Error details:', error.message);
@@ -1020,7 +1019,7 @@ Come beacon at @https://trenchbeacon.com/`;
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
-              <span class="text-sm">{{ showReplies ? 'Reply' : 'Replies' }}</span>
+              <span class="text-sm">Reply</span>
             </button>
             <button 
               @click="handleTip"
@@ -1134,15 +1133,18 @@ Come beacon at @https://trenchbeacon.com/`;
       </div>
     </div>
 
-    <!-- Replies Section - Only show if there are replies -->
-    <div v-if="showReplies && replies.length > 0" class="mt-4 border-t border-dark-700 pt-4">
+    <!-- Replies Section - Show if there are replies or if replies are being loaded -->
+    <div v-if="replies.length > 0 || loadingReplies" class="mt-4 border-t border-dark-700 pt-4">
       <div class="flex items-center justify-between mb-3">
-        <h4 class="text-sm font-medium text-dark-300">Replies ({{ replies.length }})</h4>
+        <h4 class="text-sm font-medium text-dark-300">
+          Replies ({{ replies.length }})
+        </h4>
         <button 
+          v-if="replies.length > 0"
           @click="toggleReplies"
-          class="text-xs text-dark-400 hover:text-primary-400 transition-colors"
+          class="text-xs text-dark-400 hover:text-primary-400 transition-colors px-2 py-1 rounded hover:bg-dark-700"
         >
-          Hide
+          {{ showReplies ? 'Hide' : 'Show' }}
         </button>
       </div>
       
@@ -1152,7 +1154,7 @@ Come beacon at @https://trenchbeacon.com/`;
       
       <!-- Scrollable replies container for 3+ replies -->
       <div 
-        v-else 
+        v-else-if="showReplies"
         :class="[
           'space-y-3',
           replies.length > 3 ? 'max-h-64 overflow-y-auto pr-2' : ''
@@ -1181,6 +1183,13 @@ Come beacon at @https://trenchbeacon.com/`;
               <p class="text-dark-100 text-sm">{{ reply.content }}</p>
             </div>
           </div>
+        </div>
+      </div>
+      
+      <!-- Hidden replies message -->
+      <div v-else-if="!showReplies && replies.length > 0" class="text-center py-4">
+        <div class="text-dark-400 text-sm">
+          {{ replies.length }} {{ replies.length === 1 ? 'reply' : 'replies' }} hidden
         </div>
       </div>
     </div>
