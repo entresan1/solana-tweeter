@@ -38,6 +38,8 @@ module.exports = async (req, res) => {
   }
 
   try {
+    console.log('Platform portfolio request for wallet:', walletAddress);
+    
     // Get platform wallet address for the user
     const platformWalletAddress = `platform_${walletAddress}`;
     

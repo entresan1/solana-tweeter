@@ -32,86 +32,98 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Get top users by beacons count
+    console.log('Leaderboard request received');
+    
+    // Get top users by beacons count - simplified query
     const { data: beaconLeaders, error: beaconError } = await supabase
       .from('beacons')
-      .select('author, author_display, count(*) as beacon_count')
-      .group('author, author_display')
-      .order('beacon_count', { ascending: false })
-      .limit(10);
+      .select('author, author_display')
+      .limit(100); // Get more data to process client-side
 
-    if (beaconError) {
-      console.error('Beacon leaderboard error:', beaconError);
+    console.log('Beacon query result:', { data: beaconLeaders?.length, error: beaconError });
+
+    let processedBeacons = [];
+    if (!beaconError && beaconLeaders) {
+      // Count beacons per author
+      const authorCounts = {};
+      beaconLeaders.forEach(beacon => {
+        const author = beacon.author;
+        const authorDisplay = beacon.author_display;
+        if (!authorCounts[author]) {
+          authorCounts[author] = { author, author_display: authorDisplay, beacon_count: 0 };
+        }
+        authorCounts[author].beacon_count++;
+      });
+      processedBeacons = Object.values(authorCounts)
+        .sort((a, b) => b.beacon_count - a.beacon_count)
+        .slice(0, 10);
     }
 
-    // Get top users by likes received
+    // Get top users by likes received - simplified query
     const { data: likeLeaders, error: likeError } = await supabase
       .from('beacon_likes')
-      .select(`
-        beacon_id,
-        beacons!inner(author, author_display)
-      `)
-      .then(async (result) => {
-        if (result.error) throw result.error;
-        
+      .select('beacon_id');
+
+    let processedLikes = [];
+    if (!likeError && likeLeaders) {
+      // Get beacon data for liked beacons
+      const beaconIds = [...new Set(likeLeaders.map(like => like.beacon_id))];
+      const { data: beacons } = await supabase
+        .from('beacons')
+        .select('id, author, author_display')
+        .in('id', beaconIds);
+
+      if (beacons) {
         // Count likes per author
         const authorLikes = {};
-        result.data.forEach(like => {
-          const author = like.beacons.author;
-          const authorDisplay = like.beacons.author_display;
-          if (!authorLikes[author]) {
-            authorLikes[author] = { author, author_display: authorDisplay, like_count: 0 };
+        likeLeaders.forEach(like => {
+          const beacon = beacons.find(b => b.id === like.beacon_id);
+          if (beacon) {
+            const author = beacon.author;
+            const authorDisplay = beacon.author_display;
+            if (!authorLikes[author]) {
+              authorLikes[author] = { author, author_display: authorDisplay, like_count: 0 };
+            }
+            authorLikes[author].like_count++;
           }
-          authorLikes[author].like_count++;
         });
-        
-        return Object.values(authorLikes).sort((a, b) => b.like_count - a.like_count).slice(0, 10);
-      });
-
-    if (likeError) {
-      console.error('Like leaderboard error:', likeError);
+        processedLikes = Object.values(authorLikes)
+          .sort((a, b) => b.like_count - a.like_count)
+          .slice(0, 10);
+      }
     }
 
-    // Get top users by tips received
+    // Get top users by tips received - simplified query
     const { data: tipLeaders, error: tipError } = await supabase
       .from('tips')
-      .select('recipient, amount')
-      .then(async (result) => {
-        if (result.error) throw result.error;
-        
-        // Get recipient profiles
-        const recipients = [...new Set(result.data.map(tip => tip.recipient))];
-        const { data: profiles } = await supabase
-          .from('user_profiles')
-          .select('wallet_address, nickname')
-          .in('wallet_address', recipients);
-        
-        // Calculate total tips per recipient
-        const recipientTips = {};
-        result.data.forEach(tip => {
-          if (!recipientTips[tip.recipient]) {
-            recipientTips[tip.recipient] = { 
-              author: tip.recipient, 
-              author_display: profiles?.find(p => p.wallet_address === tip.recipient)?.nickname || tip.recipient.slice(0, 8) + '...',
-              tip_count: 0,
-              total_tips: 0
-            };
-          }
-          recipientTips[tip.recipient].tip_count++;
-          recipientTips[tip.recipient].total_tips += parseFloat(tip.amount || 0);
-        });
-        
-        return Object.values(recipientTips).sort((a, b) => b.total_tips - a.total_tips).slice(0, 10);
-      });
+      .select('recipient, amount');
 
-    if (tipError) {
-      console.error('Tip leaderboard error:', tipError);
+    let processedTips = [];
+    if (!tipError && tipLeaders) {
+      // Calculate total tips per recipient
+      const recipientTips = {};
+      tipLeaders.forEach(tip => {
+        const recipient = tip.recipient;
+        if (!recipientTips[recipient]) {
+          recipientTips[recipient] = { 
+            author: recipient, 
+            author_display: recipient.slice(0, 8) + '...',
+            tip_count: 0,
+            total_tips: 0
+          };
+        }
+        recipientTips[recipient].tip_count++;
+        recipientTips[recipient].total_tips += parseFloat(tip.amount || 0);
+      });
+      processedTips = Object.values(recipientTips)
+        .sort((a, b) => b.total_tips - a.total_tips)
+        .slice(0, 10);
     }
 
     const leaderboard = {
-      beacons: beaconLeaders || [],
-      likes: likeLeaders || [],
-      tips: tipLeaders || []
+      beacons: processedBeacons,
+      likes: processedLikes,
+      tips: processedTips
     };
 
     res.status(200).json({
@@ -123,7 +135,8 @@ module.exports = async (req, res) => {
     console.error('Leaderboard error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch leaderboard data'
+      error: 'Failed to fetch leaderboard data',
+      details: error.message
     });
   }
 };
