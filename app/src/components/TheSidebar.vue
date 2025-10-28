@@ -3,6 +3,7 @@
   import { useRoute } from 'vue-router';
   import { ref, onMounted, watch } from 'vue';
   import { platformWalletService } from '@src/lib/platform-wallet';
+  import { notificationService } from '@src/lib/notification-service';
   import SafeRouterLink from './SafeRouterLink.vue';
   import PlatformWalletModal from './PlatformWalletModal.vue';
   
@@ -86,10 +87,19 @@
     <div class="mb-8">
       <SafeRouterLink
         :to="{ name: 'Home' }"
-        class="inline-block rounded-2xl hover:bg-dark-800/50 p-4 md:self-start transition-all duration-200 hover-lift group"
+        class="inline-block rounded-2xl hover:bg-dark-800/50 p-4 md:self-start transition-all duration-200 hover-lift group relative"
+        @click="notificationService.clearNotification()"
       >
         <div class="flex items-center space-x-3">
-            <img src="/logo.png" alt="Trench Beacon" class="h-8 w-8 rounded-lg" />
+            <div class="relative">
+              <img src="/logo.png" alt="Trench Beacon" class="h-8 w-8 rounded-lg" />
+              <!-- Notification indicator -->
+              <div 
+                v-if="notificationService.hasNewBeacons.value"
+                class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-dark-900 animate-pulse"
+                title="New beacons available - refresh to see them"
+              ></div>
+            </div>
             <span class="hidden md:block text-xl font-bold text-gradient">Trench Beacon</span>
         </div>
       </SafeRouterLink>

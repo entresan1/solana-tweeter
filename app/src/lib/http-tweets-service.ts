@@ -1,5 +1,6 @@
 // Simple HTTP-based tweets service
 import { ref } from 'vue';
+import { notificationService } from './notification-service';
 
 // Tweets data
 const tweets = ref<any[]>([]);
@@ -36,9 +37,13 @@ async function loadTweets() {
 
     if (data.success && Array.isArray(data.data.tweets)) {
       try {
+        const previousCount = tweets.value.length;
         tweets.value = data.data.tweets;
         isInitialized.value = true;
         console.log('✅ Loaded tweets via HTTP:', tweets.value.length);
+        
+        // Update notification service with beacon count
+        notificationService.updateBeaconCount(tweets.value.length);
         
         // Emit event safely
         emit('tweets_loaded', tweets.value);
@@ -75,6 +80,10 @@ function startPolling() {
         if (JSON.stringify(newTweets) !== JSON.stringify(tweets.value)) {
           try {
             tweets.value = newTweets;
+            
+            // Update notification service with beacon count
+            notificationService.updateBeaconCount(newTweets.length);
+            
             emit('tweets_update', newTweets);
             console.log('🔄 HTTP polling update:', newTweets.length, 'tweets');
           } catch (error) {
@@ -108,6 +117,9 @@ export function initializeTweetsService() {
   setTimeout(() => {
     loadTweets().then(() => {
       startPolling();
+      
+      // Initialize notification service with current beacon count
+      notificationService.initialize(tweets.value.length);
     }).catch(error => {
       console.error('❌ Error initializing tweets service:', error);
     });

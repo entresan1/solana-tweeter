@@ -2,6 +2,7 @@
   import { useRoute } from 'vue-router';
   import TheSidebar from './components/TheSidebar.vue';
   import DatabaseDebug from './components/DatabaseDebug.vue';
+  import { notificationService } from '@src/lib/notification-service';
   import {
     PhantomWalletAdapter,
     SolflareWalletAdapter,
@@ -85,7 +86,15 @@
         <header class="glass border-b border-dark-700/50 backdrop-blur-xl">
           <div class="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
             <div class="flex items-center space-x-3 sm:space-x-4">
-              <img src="/logo.png" alt="Trench Beacon" class="h-6 w-6 sm:h-8 sm:w-8 rounded-lg" />
+              <div class="relative">
+                <img src="/logo.png" alt="Trench Beacon" class="h-6 w-6 sm:h-8 sm:w-8 rounded-lg" />
+                <!-- Notification indicator -->
+                <div 
+                  v-if="notificationService.hasNewBeacons.value"
+                  class="absolute -top-1 -right-1 w-2 h-2 sm:w-3 sm:h-3 bg-red-500 rounded-full border-2 border-dark-900 animate-pulse"
+                  title="New beacons available - refresh to see them"
+                ></div>
+              </div>
               <h1 class="text-lg sm:text-xl lg:text-2xl font-bold text-gradient" v-text="route.name"></h1>
             </div>
             <div class="flex items-center space-x-2 sm:space-x-4">
