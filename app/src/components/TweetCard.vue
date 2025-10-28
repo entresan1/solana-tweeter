@@ -405,109 +405,69 @@ const loadSwapQuote = async () => {
         return;
       }
       
-      // Try Smart Payment first (Platform wallet)
+      // Try Smart Payment first (Jupiter swap with X402)
       try {
-        const { platformWalletService } = await import('../lib/platform-wallet');
-        const userWalletAddress = wallet.value.publicKey.toBase58();
+        console.log('💰 Using Smart Payment (Jupiter swap with X402)');
         
-        // Check if platform wallet has sufficient balance
-        const hasBalance = await platformWalletService.hasSufficientBalance(userWalletAddress, solAmount);
+        // Use the X402 Jupiter swap client for actual token swapping
+        const { sendJupiterSwapWithPayment } = await import('../lib/x402-jupiter-client');
         
-        if (hasBalance) {
-          console.log('💰 Using Smart Payment (Platform wallet)');
+        const result = await sendJupiterSwapWithPayment(
+          contractAddress,
+          solAmount,
+          wallet.value
+        );
+        
+        if (result.success) {
+          console.log('✅ CA beacon bought with Smart Payment!', {
+            signature: result.swapSignature,
+            amount: solAmount
+          });
           
-          // Send from platform wallet
-          const result = await platformWalletService.sendFromPlatformWallet(
-            userWalletAddress,
-            'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6', // Treasury address
-            solAmount,
-            'ca-purchase'
-          );
+          // Show success message
+          caBuyError.value = `✅ Smart Payment swap successful! SOL → CA tokens. Transaction: ${result.swapSignature?.slice(0, 8)}...`;
           
-          if (result.success) {
-            console.log('✅ CA beacon bought with Smart Payment!', {
-              signature: result.signature,
-              amount: solAmount
-            });
-            
-            // Show success message
-            caBuyError.value = `✅ Smart Payment swap successful! SOL → CA tokens. Transaction: ${result.signature?.slice(0, 8)}...`;
-            
-            // Close modal after a delay
-            setTimeout(() => {
-              closeBuyCAModal();
-              caBuyError.value = '';
-            }, 3000);
-            
-            return; // Success, exit early
-          }
+          // Close modal after a delay
+          setTimeout(() => {
+            closeBuyCAModal();
+            caBuyError.value = '';
+          }, 3000);
+          
+          return; // Success, exit early
         }
       } catch (platformError) {
         console.log('⚠️ Smart Payment failed, falling back to Phantom:', platformError);
       }
       
-      // Fallback to Phantom wallet
-      console.log('💰 Using Phantom wallet (fallback)');
+      // Fallback to Phantom wallet (also use Jupiter swap)
+      console.log('💰 Using Phantom wallet (Jupiter swap fallback)');
       
-      // Step 1: Get transaction from server
-      const response = await fetch('/api/buy-ca-beacon', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          beaconId: tweet.value.id,
-          userWallet: wallet.value.publicKey.toBase58(),
-          contractAddress: caAddress.value,
-          solAmount: solAmount
-        })
-      });
+      // Use the same X402 Jupiter swap client for consistency
+      const { sendJupiterSwapWithPayment } = await import('../lib/x402-jupiter-client');
       
-      const data = await response.json();
+      const result = await sendJupiterSwapWithPayment(
+        contractAddress,
+        solAmount,
+        wallet.value
+      );
       
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to create CA purchase transaction');
+      if (result.success) {
+        console.log('✅ CA beacon bought with Phantom!', {
+          signature: result.swapSignature,
+          amount: solAmount
+        });
+        
+        // Show success message
+        caBuyError.value = `✅ Swap successful! SOL → CA tokens. Transaction: ${result.swapSignature?.slice(0, 8)}...`;
+        
+        // Close modal after a delay
+        setTimeout(() => {
+          closeBuyCAModal();
+          caBuyError.value = '';
+        }, 3000);
+      } else {
+        throw new Error(result.error || 'Failed to complete Jupiter swap');
       }
-      
-      console.log('✅ Transaction created:', data);
-      
-      // Step 2: Sign and send transaction
-      const { Transaction } = await import('@solana/web3.js');
-      const transaction = Transaction.from(Buffer.from(data.transaction, 'base64'));
-      
-      // Sign the transaction
-      const signedTransaction = await wallet.value.signTransaction(transaction);
-      
-      // Send the transaction using QuickNode
-      const { Connection, PublicKey } = await import('@solana/web3.js');
-      const rpcUrl = 'https://small-twilight-sponge.solana-mainnet.quiknode.pro/71bdb31dd3e965467b1393cebaaebe69d481dbeb/';
-      const connection = new Connection(rpcUrl, 'confirmed');
-      
-      const signature = await connection.sendRawTransaction(signedTransaction.serialize());
-      console.log('✅ Transaction sent:', signature);
-      
-      // Wait for confirmation
-      const confirmation = await connection.confirmTransaction(signature, 'confirmed');
-      
-      if (confirmation.value.err) {
-        throw new Error('Transaction failed');
-      }
-      
-      console.log('✅ CA swap completed successfully!', {
-        signature,
-        memo: data.memo,
-        swapAmount: data.swapAmount,
-        totalCost: data.totalCost
-      });
-      
-      // Show success message
-      caBuyError.value = `✅ Swap successful! ${data.swapAmount} SOL → CA tokens. Transaction: ${signature.slice(0, 8)}...`;
-      
-      // Close modal after a delay
-      setTimeout(() => {
-        closeBuyCAModal();
-        caBuyError.value = '';
-      }, 3000);
       
     } catch (error: any) {
       console.error('❌ CA buy error:', error);
