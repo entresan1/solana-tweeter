@@ -143,7 +143,7 @@ async function purchaseWithUserWallet(
     // 1. Simulate transaction first to ensure it won't fail
     console.log('🔄 Simulating Raydium swap transaction...');
     try {
-      const simulation = await connection.simulateTransaction(purchaseTx, {
+      const simulation = await connection.simulateTransaction(purchaseTx, [], {
         sigVerify: false, // Don't verify signatures during simulation
         commitment: 'confirmed'
       });
@@ -154,7 +154,7 @@ async function purchaseWithUserWallet(
       }
       
       console.log('✅ Raydium swap simulation successful');
-    } catch (simError) {
+    } catch (simError: any) {
       console.error('❌ Raydium swap simulation error:', simError);
       throw new Error(`Transaction simulation error: ${simError.message}`);
     }
@@ -316,7 +316,7 @@ async function payForX402CAPurchaseAndRetry(
       // Simulate payment transaction first
       console.log('🔄 Simulating X402 payment transaction...');
       try {
-        const simulation = await connection.simulateTransaction(paymentTx, {
+        const simulation = await connection.simulateTransaction(paymentTx, [], {
           sigVerify: false,
           commitment: 'confirmed'
         });
@@ -327,7 +327,7 @@ async function payForX402CAPurchaseAndRetry(
         }
         
         console.log('✅ X402 payment simulation successful');
-      } catch (simError) {
+      } catch (simError: any) {
         console.error('❌ X402 payment simulation error:', simError);
         throw new Error(`Payment simulation error: ${simError.message}`);
       }

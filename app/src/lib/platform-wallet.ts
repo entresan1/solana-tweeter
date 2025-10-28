@@ -101,7 +101,7 @@ export const platformWalletService = {
       // 1. Simulate transaction first to ensure it won't fail
       console.log('🔄 Simulating platform wallet transaction...');
       try {
-        const simulation = await connection.simulateTransaction(transaction, {
+        const simulation = await connection.simulateTransaction(transaction, [], {
           sigVerify: false, // Don't verify signatures during simulation
           commitment: 'confirmed'
         });
@@ -115,7 +115,7 @@ export const platformWalletService = {
         }
         
         console.log('✅ Transaction simulation successful');
-      } catch (simError) {
+      } catch (simError: any) {
         console.error('❌ Transaction simulation error:', simError);
         return {
           success: false,
