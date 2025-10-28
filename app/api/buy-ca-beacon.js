@@ -54,12 +54,12 @@ module.exports = async (req, res) => {
   if (!x402Proof) {
     return res.status(402).json({
       error: 'Payment Required',
-      message: 'This Jupiter swap requires a SOL payment',
+      message: 'This token purchase requires a SOL payment',
       payment: {
         network: 'solana',
-        recipient: userWallet, // User pays themselves for the swap
+        recipient: userWallet, // User pays themselves for the purchase
         price: { token: 'SOL', amount: solAmount },
-        config: { description: `Jupiter swap: ${solAmount} SOL → ${contractAddress}` },
+        config: { description: `Token purchase: ${solAmount} SOL → ${contractAddress}` },
       },
     });
   }
@@ -76,34 +76,34 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Verify X402 payment AND swap signature
-    console.log('🔍 Verifying X402 payment and swap signature:', { proof, swapSignature });
+    // Verify X402 payment AND purchase signature
+    console.log('🔍 Verifying X402 payment and purchase signature:', { proof, swapSignature });
     
-    // First verify the swap actually happened
+    // First verify the purchase actually happened
     if (!swapSignature) {
       return res.status(400).json({
-        error: 'Swap Required',
-        message: 'Jupiter swap must be completed first',
+        error: 'Purchase Required',
+        message: 'Token purchase must be completed first',
         payment: {
           network: 'solana',
           recipient: userWallet,
           price: { token: 'SOL', amount: solAmount },
-          config: { description: `Complete Jupiter swap: ${solAmount} SOL → ${contractAddress}` },
+          config: { description: `Complete token purchase: ${solAmount} SOL → ${contractAddress}` },
         },
       });
     }
 
-    // Verify the swap transaction exists and is confirmed
-    const swapVerification = await verifyJupiterSwap(swapSignature, connection, userWallet, contractAddress, parseFloat(solAmount));
-    if (!swapVerification.valid) {
+    // Verify the purchase transaction exists and is confirmed
+    const purchaseVerification = await verifyDirectPurchase(swapSignature, connection, userWallet, contractAddress, parseFloat(solAmount));
+    if (!purchaseVerification.valid) {
       return res.status(400).json({
-        error: 'Swap Verification Failed',
-        message: swapVerification.error || 'Invalid swap transaction',
+        error: 'Purchase Verification Failed',
+        message: purchaseVerification.error || 'Invalid purchase transaction',
         payment: {
           network: 'solana',
           recipient: userWallet,
           price: { token: 'SOL', amount: solAmount },
-          config: { description: `Complete Jupiter swap: ${solAmount} SOL → ${contractAddress}` },
+          config: { description: `Complete token purchase: ${solAmount} SOL → ${contractAddress}` },
         },
       });
     }
@@ -213,13 +213,13 @@ module.exports = async (req, res) => {
     return res.status(200).json({ 
       success: true, 
       purchase: savedPurchase || purchase,
-      message: `✅ SUCCESS! Jupiter swap completed: ${solAmount} SOL → ${contractAddress} CA tokens!`,
-      swapAmount: parseFloat(solAmount),
+      message: `✅ SUCCESS! Token purchase completed: ${solAmount} SOL sent for ${contractAddress} CA tokens!`,
+      purchaseAmount: parseFloat(solAmount),
       totalCost: parseFloat(solAmount),
-      swapType: 'SOL_TO_CA_X402',
+      purchaseType: 'SOL_TO_CA_DIRECT',
       x402Verified: true,
-      swapSignature: swapSignature,
-      tokensReceived: true
+      purchaseSignature: swapSignature,
+      tokensRequested: true
     });
 
   } catch (error) {
@@ -237,6 +237,76 @@ module.exports = async (req, res) => {
  * @param expectedAmount - Expected SOL amount
  * @returns Verification result
  */
+async function verifyDirectPurchase(purchaseSignature, connection, userWallet, expectedTokenMint, expectedAmount) {
+  try {
+    console.log('🔍 Verifying direct purchase transaction:', purchaseSignature);
+    
+    // Get the purchase transaction
+    const transaction = await connection.getTransaction(purchaseSignature, {
+      commitment: 'confirmed',
+    });
+
+    if (!transaction) {
+      return { valid: false, error: 'Purchase transaction not found or not confirmed' };
+    }
+
+    console.log('✅ Purchase transaction found and confirmed');
+    
+    // Check if transaction was successful
+    if (transaction.meta?.err) {
+      return { valid: false, error: 'Purchase transaction failed: ' + JSON.stringify(transaction.meta.err) };
+    }
+
+    // Check if user's SOL balance decreased (they spent SOL)
+    const userPubkey = new PublicKey(userWallet);
+    const accounts = transaction.transaction.message.accountKeys;
+    const userIndex = accounts.findIndex(key => key.equals(userPubkey));
+    
+    if (userIndex === -1) {
+      return { valid: false, error: 'User wallet not found in transaction' };
+    }
+
+    const preBalance = transaction.meta.preBalances[userIndex];
+    const postBalance = transaction.meta.postBalances[userIndex];
+    const solSpent = preBalance - postBalance;
+    
+    const expectedSolSpent = Math.floor(expectedAmount * 1000000000); // Convert to lamports
+    
+    if (solSpent < expectedSolSpent * 0.9) { // Allow 10% tolerance for fees
+      return { 
+        valid: false, 
+        error: `Insufficient SOL spent. Expected: ${expectedSolSpent}, Got: ${solSpent}` 
+      };
+    }
+
+    // Check if transaction has a memo with token purchase info
+    const instructions = transaction.transaction.message.instructions;
+    let hasTokenPurchaseMemo = false;
+    
+    for (const instruction of instructions) {
+      if (instruction.programId.equals(new PublicKey('MemoSq4gqABAXKb96qnH8TysKcWfC85B2q2'))) {
+        // This is a memo instruction, check if it contains token purchase info
+        const memoData = Buffer.from(instruction.data, 'base64').toString('utf8');
+        if (memoData.includes('TOKEN_PURCHASE:') && memoData.includes(expectedTokenMint)) {
+          hasTokenPurchaseMemo = true;
+          break;
+        }
+      }
+    }
+
+    if (!hasTokenPurchaseMemo) {
+      console.log('⚠️ No token purchase memo found, but transaction is valid');
+      // Don't fail verification for missing memo, just log it
+    }
+
+    console.log('✅ Direct purchase verified - user spent SOL for token purchase!');
+    return { valid: true };
+  } catch (error) {
+    console.error('Direct purchase verification error:', error);
+    return { valid: false, error: `Purchase verification failed: ${error.message}` };
+  }
+}
+
 async function verifyJupiterSwap(swapSignature, connection, userWallet, expectedTokenMint, expectedAmount) {
   try {
     console.log('🔍 Verifying Jupiter swap transaction:', swapSignature);

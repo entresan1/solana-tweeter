@@ -405,14 +405,14 @@ const loadSwapQuote = async () => {
         return;
       }
       
-      // Try Smart Payment first (Jupiter swap with X402)
+      // Try Smart Payment first (Direct token purchase with X402)
       try {
-        console.log('💰 Using Smart Payment (Jupiter swap with X402)');
+        console.log('💰 Using Smart Payment (Direct token purchase with X402)');
         
-        // Use the X402 Jupiter swap client for actual token swapping
-        const { sendJupiterSwapWithPayment } = await import('../lib/x402-jupiter-client');
+        // Use the direct token purchase client (no Jupiter API needed)
+        const { sendDirectTokenPurchase } = await import('../lib/raydium-swap');
         
-        const result = await sendJupiterSwapWithPayment(
+        const result = await sendDirectTokenPurchase(
           caAddress.value,
           solAmount,
           wallet.value
@@ -425,7 +425,7 @@ const loadSwapQuote = async () => {
           });
           
           // Show success message
-          caBuyError.value = `✅ Smart Payment swap successful! SOL → CA tokens. Transaction: ${result.swapSignature?.slice(0, 8)}...`;
+          caBuyError.value = `✅ Smart Payment purchase successful! SOL sent for CA tokens. Transaction: ${result.swapSignature?.slice(0, 8)}...`;
           
           // Close modal after a delay
           setTimeout(() => {
@@ -439,13 +439,13 @@ const loadSwapQuote = async () => {
         console.log('⚠️ Smart Payment failed, falling back to Phantom:', platformError);
       }
       
-      // Fallback to Phantom wallet (also use Jupiter swap)
-      console.log('💰 Using Phantom wallet (Jupiter swap fallback)');
+      // Fallback to Phantom wallet (also use direct purchase)
+      console.log('💰 Using Phantom wallet (Direct purchase fallback)');
       
-      // Use the same X402 Jupiter swap client for consistency
-      const { sendJupiterSwapWithPayment } = await import('../lib/x402-jupiter-client');
+      // Use the same direct token purchase client for consistency
+      const { sendDirectTokenPurchase } = await import('../lib/raydium-swap');
       
-      const result = await sendJupiterSwapWithPayment(
+      const result = await sendDirectTokenPurchase(
         caAddress.value,
         solAmount,
         wallet.value
@@ -458,7 +458,7 @@ const loadSwapQuote = async () => {
         });
         
         // Show success message
-        caBuyError.value = `✅ Swap successful! SOL → CA tokens. Transaction: ${result.swapSignature?.slice(0, 8)}...`;
+        caBuyError.value = `✅ Purchase successful! SOL sent for CA tokens. Transaction: ${result.swapSignature?.slice(0, 8)}...`;
         
         // Close modal after a delay
         setTimeout(() => {
@@ -466,7 +466,7 @@ const loadSwapQuote = async () => {
           caBuyError.value = '';
         }, 3000);
       } else {
-        throw new Error(result.error || 'Failed to complete Jupiter swap');
+        throw new Error(result.error || 'Failed to complete token purchase');
       }
       
     } catch (error: any) {
