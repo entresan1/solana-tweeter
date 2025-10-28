@@ -664,8 +664,11 @@ const loadSwapQuote = async () => {
       console.log('✅ Reply form cleared and hidden');
       
       // Always refresh replies and show them after submission
-      await loadReplies();
-      showReplies.value = true; // Ensure replies are visible
+      // Add a small delay to ensure database is updated
+      setTimeout(async () => {
+        await loadReplies();
+        showReplies.value = true; // Ensure replies are visible
+      }, 1000);
     } catch (error: any) {
       console.error('❌ Error submitting reply:', error);
       console.error('❌ Error details:', error.message);
