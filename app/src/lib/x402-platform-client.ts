@@ -94,33 +94,16 @@ export async function sendBeaconWithPlatformWallet(
       platform_wallet: true
     };
 
-    // Wait a moment for transaction to be confirmed
-    console.log('⏳ Waiting for transaction confirmation...');
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    // Create X402 proof for the platform wallet payment
-    const proof = {
-      transaction: result.signature,
-      amount: 0.001,
-      nonce: crypto.getRandomValues(new Uint8Array(16)).join(''),
-      timestamp: Date.now()
-    };
-
-    console.log('🔍 Sending beacon with X402 proof:', proof);
-
-    // Save to database with X402 proof
+    // Save to database
     const response = await fetch('/api/save-beacon', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-402-proof': JSON.stringify(proof)
       },
       body: JSON.stringify(beaconData)
     });
 
-    console.log('📡 Response status:', response.status);
     const saveResult = await response.json();
-    console.log('📡 Response data:', saveResult);
 
     if (saveResult.success) {
       return {
@@ -137,10 +120,9 @@ export async function sendBeaconWithPlatformWallet(
         }
       };
     } else {
-      console.error('❌ Beacon save failed:', saveResult);
       return {
         success: false,
-        message: `Beacon sent but failed to save to database: ${saveResult.message || saveResult.error || 'Unknown error'}`
+        message: 'Beacon sent but failed to save to database'
       };
     }
   } catch (error) {
