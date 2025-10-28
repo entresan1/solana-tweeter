@@ -110,7 +110,7 @@ async function payForX402JupiterSwapAndRetry(
     console.log('✅ X402 payment confirmed for Jupiter swap');
 
     // 5) Create x402 proof
-    const proof = createX402Proof(signature, amount, 'solana');
+    const proof = createX402Proof(signature, amount);
     console.log('🔐 X402 proof created for Jupiter swap:', proof);
 
     // 6) Retry with x402 proof
