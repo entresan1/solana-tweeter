@@ -91,7 +91,8 @@ async function purchaseWithPlatformWallet(
       userWallet: userAddress,
       contractAddress: tokenMint,
       solAmount: solAmount,
-      swapSignature: result.signature
+      swapSignature: result.signature,
+      platformWallet: true // Flag to indicate platform wallet payment
     };
     
     const x402Result = await payForX402CAPurchaseAndRetry(
@@ -301,7 +302,7 @@ async function payForX402CAPurchaseAndRetry(
       const proof = createX402Proof(payload.swapSignature, amount);
       res = await postRequest({ 'x-402-proof': JSON.stringify(proof) });
     } else {
-      // Check if wallet is connected
+      // Check if wallet is connected (only for user wallet payments)
       if (!wallet?.publicKey) {
         throw new Error('Wallet not connected');
       }
