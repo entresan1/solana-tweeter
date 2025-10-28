@@ -9,6 +9,12 @@ const connection = new Connection(
 
 // Platform wallet service
 export const platformWalletService = {
+  // Get platform wallet address for a user
+  getPlatformWalletAddress(userWalletAddress: string): string {
+    const { address } = this.generatePlatformWallet(userWalletAddress);
+    return address;
+  },
+
   // Generate a deterministic keypair for a user based on their wallet address
   generatePlatformWallet(userWalletAddress: string): { keypair: Keypair; address: string } {
     // Create a deterministic seed from the user's wallet address using a simple hash

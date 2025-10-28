@@ -51,8 +51,10 @@ const loadPortfolio = async () => {
     const userAddress = wallet.value.publicKey.toBase58();
     const platformAddress = platformWalletService.getPlatformWalletAddress(userAddress);
     
-    // Use the robust portfolio API
-    const data = await getPlatformPortfolio(userAddress);
+    console.log('Loading portfolio for platform wallet:', platformAddress);
+    
+    // Use the robust portfolio API with platform wallet address
+    const data = await getPlatformPortfolio(platformAddress);
     
     // Convert the new API response format to our expected format
     const tokens = data.items.map((item: any) => ({
@@ -74,7 +76,7 @@ const loadPortfolio = async () => {
       tokens,
       totalValue,
       walletAddress: platformAddress,
-      privateKey: platformWallet.keypair.secretKey.toString()
+      privateKey: platformWallet.keypair.secretKey.toString('base64')
     };
   } catch (err: any) {
     console.error('Portfolio load error:', err);
