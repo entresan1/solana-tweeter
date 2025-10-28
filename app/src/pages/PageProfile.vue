@@ -169,21 +169,61 @@
       const walletAddress = wallet.value?.publicKey?.toBase58();
       if (!walletAddress) return;
 
-      // For now, we'll load all tweets and filter for interactions
-      // In a real implementation, you'd have specific API endpoints for this
-      const allTweets = await fetchTweets();
+      console.log('🔄 Loading interactions for wallet:', walletAddress);
       
-      // Filter tweets that the user has interacted with
-      // This is a simplified version - in reality you'd check likes, replies, tips
-      const interacted = allTweets.filter(tweet => {
-        // For now, just show recent tweets as "interacted"
-        // In a real app, you'd check actual interaction data
-        return tweet.author.toBase58() !== walletAddress;
-      }).slice(0, 10); // Limit to 10 most recent
-
-      interactedTweets.value = interacted;
+      // Load actual interactions (likes, replies, tips) from the database
+      const interactions = await fetchUserInteractions(walletAddress);
+      console.log('🔄 Found interactions:', interactions.length);
+      
+      interactedTweets.value = interactions;
     } catch (error) {
       console.error('Error loading interacted tweets:', error);
+      interactedTweets.value = [];
+    }
+  };
+
+  // Fetch user interactions from the database
+  const fetchUserInteractions = async (walletAddress: string) => {
+    try {
+      // Fetch liked beacons
+      const likesResponse = await fetch(`/api/user-interactions?walletAddress=${encodeURIComponent(walletAddress)}&type=likes`);
+      const likesData = await likesResponse.json();
+      
+      // Fetch replied beacons
+      const repliesResponse = await fetch(`/api/user-interactions?walletAddress=${encodeURIComponent(walletAddress)}&type=replies`);
+      const repliesData = await repliesResponse.json();
+      
+      // Fetch tipped beacons
+      const tipsResponse = await fetch(`/api/user-interactions?walletAddress=${encodeURIComponent(walletAddress)}&type=tips`);
+      const tipsData = await tipsResponse.json();
+      
+      // Combine all interactions and sort by timestamp
+      const allInteractions = [
+        ...(likesData.interactions || []).map((interaction: any) => ({
+          ...interaction,
+          interactionType: 'liked',
+          interactionTimestamp: interaction.liked_at || interaction.created_at
+        })),
+        ...(repliesData.interactions || []).map((interaction: any) => ({
+          ...interaction,
+          interactionType: 'replied',
+          interactionTimestamp: interaction.replied_at || interaction.created_at
+        })),
+        ...(tipsData.interactions || []).map((interaction: any) => ({
+          ...interaction,
+          interactionType: 'tipped',
+          interactionTimestamp: interaction.tipped_at || interaction.created_at
+        }))
+      ];
+      
+      // Sort by interaction timestamp (most recent first)
+      allInteractions.sort((a, b) => new Date(b.interactionTimestamp).getTime() - new Date(a.interactionTimestamp).getTime());
+      
+      console.log('🔄 Combined interactions:', allInteractions.length);
+      return allInteractions;
+    } catch (error) {
+      console.error('Error fetching user interactions:', error);
+      return [];
     }
   };
 
@@ -237,7 +277,7 @@
     <div class="card mb-6">
       <div class="flex items-start space-x-6">
         <!-- Profile Picture -->
-        <div class="relative">
+        <div class="relative group">
           <div class="w-24 h-24 rounded-full bg-gradient-to-r from-primary-500 to-solana-500 flex items-center justify-center overflow-hidden">
             <img 
               v-if="shouldShowProfilePicture" 
@@ -255,14 +295,24 @@
               {{ (nickname || wallet?.publicKey?.toBase58() || 'U').charAt(0).toUpperCase() }}
             </span>
           </div>
-          <div v-if="isOwnProfile && editing" class="absolute -bottom-2 -right-2">
-            <label class="cursor-pointer bg-primary-500 hover:bg-primary-600 text-white p-2 rounded-full transition-colors">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <!-- Camera overlay for editing mode -->
+          <div v-if="isOwnProfile && editing" class="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 hover:opacity-100 transition-opacity duration-200">
+            <label class="cursor-pointer bg-primary-500 hover:bg-primary-600 text-white p-3 rounded-full transition-all duration-200 hover:scale-110 shadow-lg">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
               <input type="file" accept="image/*" @change="handleImageUpload" class="hidden" />
             </label>
+          </div>
+          
+          <!-- Hover indicator for non-editing mode -->
+          <div v-else-if="isOwnProfile" class="absolute inset-0 flex items-center justify-center bg-black/30 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <div class="bg-white/20 text-white p-2 rounded-full">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+            </div>
           </div>
         </div>
 
@@ -373,7 +423,79 @@
           <p>No interactions yet</p>
           <p class="text-sm mt-2">Like, reply, or tip beacons to see them here</p>
         </div>
-        <TweetList v-else :tweets="interactedTweets" :loading="loading" />
+        <div v-else class="space-y-4">
+          <div 
+            v-for="interaction in interactedTweets" 
+            :key="`${interaction.interactionType}-${interaction.id}`"
+            class="bg-dark-800 rounded-lg p-4 border border-dark-700"
+          >
+            <!-- Interaction Header -->
+            <div class="flex items-center space-x-2 mb-3">
+              <div class="flex items-center space-x-2">
+                <div v-if="interaction.interactionType === 'liked'" class="w-6 h-6 bg-red-500/20 rounded-full flex items-center justify-center">
+                  <svg class="w-3 h-3 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+                <div v-else-if="interaction.interactionType === 'replied'" class="w-6 h-6 bg-blue-500/20 rounded-full flex items-center justify-center">
+                  <svg class="w-3 h-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                </div>
+                <div v-else-if="interaction.interactionType === 'tipped'" class="w-6 h-6 bg-yellow-500/20 rounded-full flex items-center justify-center">
+                  <svg class="w-3 h-3 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+              <span class="text-sm font-medium text-white">
+                You {{ interaction.interactionType }} this beacon
+              </span>
+              <span class="text-xs text-dark-400">
+                {{ new Date(interaction.interactionTimestamp).toLocaleDateString() }}
+              </span>
+            </div>
+            
+            <!-- Beacon Content -->
+            <div v-if="interaction.beacon" class="bg-dark-900/50 rounded-lg p-3">
+              <div class="flex items-start space-x-3">
+                <div class="w-8 h-8 bg-gradient-to-r from-primary-500 to-solana-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span class="text-white text-xs font-bold">
+                    {{ interaction.beacon.author_display?.charAt(0) || 'U' }}
+                  </span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center space-x-2 mb-1">
+                    <span class="text-sm font-medium text-white">
+                      {{ interaction.beacon.author_display || 'Unknown User' }}
+                    </span>
+                    <span class="text-xs text-dark-400">•</span>
+                    <span class="text-xs text-dark-400">
+                      {{ new Date(interaction.beacon.created_at).toLocaleDateString() }}
+                    </span>
+                  </div>
+                  <p class="text-sm text-dark-200 mb-2">{{ interaction.beacon.content }}</p>
+                  <div v-if="interaction.beacon.topic" class="text-xs">
+                    <span class="inline-flex items-center px-2 py-1 rounded-full bg-primary-500/20 text-primary-400">
+                      #{{ interaction.beacon.topic }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Interaction Details -->
+            <div v-if="interaction.content || interaction.amount" class="mt-3 text-sm text-dark-300">
+              <div v-if="interaction.content">
+                <span class="font-medium">Your reply:</span> {{ interaction.content }}
+              </div>
+              <div v-if="interaction.amount">
+                <span class="font-medium">Tip amount:</span> {{ interaction.amount }} SOL
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
