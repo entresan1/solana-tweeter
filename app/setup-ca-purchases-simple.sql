@@ -1,4 +1,4 @@
--- Manual database setup for ca_purchases table
+-- Simple setup for ca_purchases table
 -- Run this in your Supabase SQL editor
 
 -- Create ca_purchases table for tracking CA beacon purchases
@@ -24,35 +24,23 @@ CREATE INDEX IF NOT EXISTS idx_ca_purchases_contract_address ON ca_purchases(con
 CREATE INDEX IF NOT EXISTS idx_ca_purchases_status ON ca_purchases(status);
 CREATE INDEX IF NOT EXISTS idx_ca_purchases_created_at ON ca_purchases(created_at);
 
--- Add RLS (Row Level Security) policies
+-- Enable RLS
 ALTER TABLE ca_purchases ENABLE ROW LEVEL SECURITY;
 
--- Policy: Users can view their own purchases
-DO $$ 
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'ca_purchases' AND policyname = 'Users can view own ca_purchases') THEN
-        CREATE POLICY "Users can view own ca_purchases" ON ca_purchases
-          FOR SELECT USING (buyer_wallet = current_setting('request.jwt.claims', true)::json->>'wallet_address');
-    END IF;
-END $$;
+-- Drop existing policies if they exist (ignore errors)
+DROP POLICY IF EXISTS "Users can view own ca_purchases" ON ca_purchases;
+DROP POLICY IF EXISTS "Users can insert own ca_purchases" ON ca_purchases;
+DROP POLICY IF EXISTS "Public read access to ca_purchases" ON ca_purchases;
 
--- Policy: Users can insert their own purchases
-DO $$ 
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'ca_purchases' AND policyname = 'Users can insert own ca_purchases') THEN
-        CREATE POLICY "Users can insert own ca_purchases" ON ca_purchases
-          FOR INSERT WITH CHECK (buyer_wallet = current_setting('request.jwt.claims', true)::json->>'wallet_address');
-    END IF;
-END $$;
+-- Create policies
+CREATE POLICY "Users can view own ca_purchases" ON ca_purchases
+  FOR SELECT USING (buyer_wallet = current_setting('request.jwt.claims', true)::json->>'wallet_address');
 
--- Policy: Public read access (for leaderboards, etc.)
-DO $$ 
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'ca_purchases' AND policyname = 'Public read access to ca_purchases') THEN
-        CREATE POLICY "Public read access to ca_purchases" ON ca_purchases
-          FOR SELECT USING (true);
-    END IF;
-END $$;
+CREATE POLICY "Users can insert own ca_purchases" ON ca_purchases
+  FOR INSERT WITH CHECK (buyer_wallet = current_setting('request.jwt.claims', true)::json->>'wallet_address');
+
+CREATE POLICY "Public read access to ca_purchases" ON ca_purchases
+  FOR SELECT USING (true);
 
 -- Add comments
 COMMENT ON TABLE ca_purchases IS 'Tracks purchases of CA (Contract Address) beacons';
