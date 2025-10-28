@@ -133,16 +133,26 @@ module.exports = async (req, res) => {
       created_at: new Date().toISOString()
     };
 
-    // Save to database
-    const { data: savedPurchase, error: dbError } = await supabase
-      .from('ca_purchases')
-      .insert([purchase])
-      .select()
-      .single();
+    // Save to database (if table exists)
+    let savedPurchase = null;
+    try {
+      const { data, error: dbError } = await supabase
+        .from('ca_purchases')
+        .insert([purchase])
+        .select()
+        .single();
 
-    if (dbError) {
-      console.error('Database save error:', dbError);
-      // Continue anyway, transaction is still valid
+      if (dbError) {
+        console.error('Database save error:', dbError);
+        // If table doesn't exist, just log the purchase
+        console.log('⚠️ ca_purchases table not found, logging purchase locally:', purchase);
+      } else {
+        savedPurchase = data;
+        console.log('✅ Purchase saved to database:', savedPurchase);
+      }
+    } catch (dbError) {
+      console.error('Database error:', dbError);
+      console.log('⚠️ ca_purchases table not found, logging purchase locally:', purchase);
     }
 
     return res.status(200).json({ 
