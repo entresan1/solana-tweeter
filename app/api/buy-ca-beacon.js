@@ -74,8 +74,8 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'Contract address mismatch' });
     }
 
-    // Calculate fees
-    const platformFee = 0.00005; // 0.005 SOL platform fee
+    // Calculate fees - 1% of purchase amount goes to treasury
+    const platformFee = parseFloat(solAmount) * 0.01; // 1% treasury fee
     const totalCost = parseFloat(solAmount) + platformFee;
     
     console.log('CA Purchase Request:', {
@@ -146,6 +146,11 @@ module.exports = async (req, res) => {
         console.error('Database save error:', dbError);
         // If table doesn't exist, just log the purchase
         console.log('⚠️ ca_purchases table not found, logging purchase locally:', purchase);
+        
+        // If it's a column error, provide helpful message
+        if (dbError.message && dbError.message.includes('column') && dbError.message.includes('does not exist')) {
+          console.log('💡 Run the SQL from setup-ca-purchases-simple.sql in your Supabase dashboard');
+        }
       } else {
         savedPurchase = data;
         console.log('✅ Purchase saved to database:', savedPurchase);
@@ -153,6 +158,11 @@ module.exports = async (req, res) => {
     } catch (dbError) {
       console.error('Database error:', dbError);
       console.log('⚠️ ca_purchases table not found, logging purchase locally:', purchase);
+      
+      // If it's a column error, provide helpful message
+      if (dbError.message && dbError.message.includes('column') && dbError.message.includes('does not exist')) {
+        console.log('💡 Run the SQL from setup-ca-purchases-simple.sql in your Supabase dashboard');
+      }
     }
 
     return res.status(200).json({ 
