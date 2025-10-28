@@ -47,7 +47,7 @@ export async function createJupiterSwap(
     const amount = Math.floor(solAmount * 1e9); // Convert SOL to lamports
     const slippageBps = 50; // 0.5% slippage tolerance
 
-    const swapUrl = `${JUPITER_API_URL}/jupiter/v6/swap`;
+    const swapUrl = `${JUPITER_API_URL}jupiter/v6/swap`;
     
     const swapRequest = {
       quoteResponse: {
@@ -116,7 +116,7 @@ export async function getJupiterQuote(
     const slippageBps = 50; // 0.5% slippage tolerance
 
     // Use Metis Jupiter API through QuickNode
-    const url = `${JUPITER_API_URL}/jupiter/v6/quote?inputMint=${inputMint}&outputMint=${tokenMint}&amount=${amount}&slippageBps=${slippageBps}`;
+    const url = `${JUPITER_API_URL}jupiter/v6/quote?inputMint=${inputMint}&outputMint=${tokenMint}&amount=${amount}&slippageBps=${slippageBps}`;
     
     console.log('🔄 Fetching Jupiter quote from:', url);
     
@@ -130,8 +130,13 @@ export async function getJupiterQuote(
     const quote = await response.json();
 
     if (!response.ok) {
-      console.error('❌ Jupiter API error:', quote);
-      throw new Error(quote.error?.message || quote.error || 'Failed to get quote');
+      console.error('❌ Jupiter API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        url: url,
+        error: quote
+      });
+      throw new Error(quote.error?.message || quote.error || `Failed to get quote: ${response.status} ${response.statusText}`);
     }
 
     console.log('✅ Jupiter quote received:', {
@@ -149,6 +154,29 @@ export async function getJupiterQuote(
     };
   } catch (error: any) {
     console.error('❌ Jupiter quote error:', error);
+    
+    // Fallback to standard Jupiter API
+    try {
+      console.log('🔄 Trying standard Jupiter API as fallback...');
+      const fallbackUrl = `https://quote-api.jup.ag/v6/quote?inputMint=${inputMint}&outputMint=${tokenMint}&amount=${amount}&slippageBps=${slippageBps}`;
+      
+      const fallbackResponse = await fetch(fallbackUrl);
+      const fallbackQuote = await fallbackResponse.json();
+      
+      if (fallbackResponse.ok) {
+        console.log('✅ Fallback Jupiter quote received');
+        return {
+          inputAmount: fallbackQuote.inAmount,
+          outputAmount: fallbackQuote.outAmount,
+          priceImpact: fallbackQuote.priceImpactPct,
+          route: fallbackQuote.routePlan?.length || 0,
+          success: true
+        };
+      }
+    } catch (fallbackError) {
+      console.error('❌ Fallback also failed:', fallbackError);
+    }
+    
     return {
       success: false,
       error: error.message
