@@ -8,11 +8,11 @@ const connection = new Connection(
   'confirmed'
 );
 
-// Jupiter API endpoints
-const JUPITER_API_URL = 'https://quote-api.jup.ag/v6';
+// Solana Tracker Swap API endpoints
+const SOLANA_TRACKER_API_URL = 'https://swap-v2.solanatracker.io';
 
 /**
- * Real CA token purchase with actual Jupiter swap
+ * Real CA token purchase with Solana Tracker swap (supports Pump.fun!)
  * @param tokenMint - Target CA token mint address
  * @param solAmount - Amount of SOL to swap
  * @param wallet - User's Solana wallet
@@ -62,21 +62,16 @@ async function realPurchaseWithPlatformWallet(
   try {
     console.log('🏦 Executing real platform wallet CA purchase:', { tokenMint, solAmount });
     
-    // 1. Get Jupiter quote for the swap
-    const quote = await getJupiterQuote(tokenMint, solAmount);
-    if (!quote.success) {
-      throw new Error(`Failed to get Jupiter quote: ${quote.error}`);
+    // 1. Get Solana Tracker swap transaction (supports Pump.fun!)
+    const swapResult = await getSolanaTrackerSwap(tokenMint, solAmount, userAddress);
+    if (!swapResult.success) {
+      throw new Error(`Failed to get Solana Tracker swap: ${swapResult.error}`);
     }
     
-    console.log('📊 Jupiter quote received:', quote.data);
+    console.log('📊 Solana Tracker swap received:', swapResult.data);
     
-    // 2. Create Jupiter swap transaction
-    const swapTx = await createJupiterSwapTransaction(
-      new PublicKey(userAddress), // Platform wallet will sign this
-      tokenMint,
-      solAmount,
-      quote.data
-    );
+    // 2. Deserialize the transaction
+    const swapTx = Transaction.from(Buffer.from(swapResult.data.txn, 'base64'));
     
     // 3. Simulate the transaction
     const simulation = await connection.simulateTransaction(swapTx, undefined, false);
@@ -108,7 +103,7 @@ async function realPurchaseWithPlatformWallet(
       message: `✅ Real CA Purchase: Successfully purchased CA tokens using platform wallet!`,
       purchaseType: 'PLATFORM_WALLET_REAL',
       platformWallet: true,
-      quote: quote.data
+      swapData: swapResult.data
     };
   } catch (error: any) {
     console.error('❌ Platform wallet real CA purchase error:', error);
@@ -127,21 +122,16 @@ async function realPurchaseWithUserWallet(
   try {
     console.log('👤 Executing real user wallet CA purchase:', { tokenMint, solAmount });
     
-    // 1. Get Jupiter quote for the swap
-    const quote = await getJupiterQuote(tokenMint, solAmount);
-    if (!quote.success) {
-      throw new Error(`Failed to get Jupiter quote: ${quote.error}`);
+    // 1. Get Solana Tracker swap transaction (supports Pump.fun!)
+    const swapResult = await getSolanaTrackerSwap(tokenMint, solAmount, wallet.publicKey.toBase58());
+    if (!swapResult.success) {
+      throw new Error(`Failed to get Solana Tracker swap: ${swapResult.error}`);
     }
     
-    console.log('📊 Jupiter quote received:', quote.data);
+    console.log('📊 Solana Tracker swap received:', swapResult.data);
     
-    // 2. Create Jupiter swap transaction
-    const swapTx = await createJupiterSwapTransaction(
-      wallet.publicKey,
-      tokenMint,
-      solAmount,
-      quote.data
-    );
+    // 2. Deserialize the transaction
+    const swapTx = Transaction.from(Buffer.from(swapResult.data.txn, 'base64'));
     
     // 3. Simulate the transaction
     const simulation = await connection.simulateTransaction(swapTx, undefined, false);
@@ -158,11 +148,11 @@ async function realPurchaseWithUserWallet(
       preflightCommitment: 'confirmed',
     });
     
-    console.log('📤 Real Jupiter swap transaction sent:', signature);
+    console.log('📤 Real Solana Tracker swap transaction sent:', signature);
     
     // 5. Wait for confirmation
     await connection.confirmTransaction(signature, 'confirmed');
-    console.log('✅ Real Jupiter swap confirmed - user now has CA tokens!');
+    console.log('✅ Real Solana Tracker swap confirmed - user now has CA tokens!');
     
     return {
       success: true,
@@ -170,7 +160,7 @@ async function realPurchaseWithUserWallet(
       message: `✅ Real CA Purchase: Successfully swapped ${solAmount} SOL for CA tokens!`,
       purchaseType: 'USER_WALLET_REAL',
       platformWallet: false,
-      quote: quote.data
+      swapData: swapResult.data
     };
   } catch (error: any) {
     console.error('❌ User wallet real CA purchase error:', error);
@@ -179,16 +169,15 @@ async function realPurchaseWithUserWallet(
 }
 
 /**
- * Get Jupiter quote for SOL to token swap
+ * Get Solana Tracker swap transaction for SOL to token swap (supports Pump.fun!)
  */
-async function getJupiterQuote(tokenMint: string, solAmount: number): Promise<any> {
+async function getSolanaTrackerSwap(tokenMint: string, solAmount: number, payerAddress: string): Promise<any> {
   try {
     const SOL_MINT = 'So11111111111111111111111111111111111111112'; // Wrapped SOL
-    const amount = Math.floor(solAmount * LAMPORTS_PER_SOL);
     
-    const url = `${JUPITER_API_URL}/quote?inputMint=${SOL_MINT}&outputMint=${tokenMint}&amount=${amount}&slippageBps=300`;
+    const url = `${SOLANA_TRACKER_API_URL}/swap?from=${SOL_MINT}&to=${tokenMint}&fromAmount=${solAmount}&slippage=10&payer=${payerAddress}&priorityFee=auto&priorityFeeLevel=medium&txVersion=v0`;
     
-    console.log('🔍 Getting Jupiter quote:', url);
+    console.log('🔍 Getting Solana Tracker swap:', url);
     
     const response = await fetch(url);
     const data = await response.json();
@@ -196,7 +185,7 @@ async function getJupiterQuote(tokenMint: string, solAmount: number): Promise<an
     if (!response.ok) {
       return {
         success: false,
-        error: data.error || 'Failed to get Jupiter quote'
+        error: data.error || 'Failed to get Solana Tracker swap'
       };
     }
     
@@ -205,7 +194,7 @@ async function getJupiterQuote(tokenMint: string, solAmount: number): Promise<an
       data: data
     };
   } catch (error: any) {
-    console.error('❌ Jupiter quote error:', error);
+    console.error('❌ Solana Tracker swap error:', error);
     return {
       success: false,
       error: error.message
@@ -213,51 +202,3 @@ async function getJupiterQuote(tokenMint: string, solAmount: number): Promise<an
   }
 }
 
-/**
- * Create Jupiter swap transaction
- */
-async function createJupiterSwapTransaction(
-  fromPubkey: PublicKey,
-  tokenMint: string,
-  solAmount: number,
-  quote: any
-): Promise<Transaction> {
-  try {
-    // Get swap transaction from Jupiter
-    const swapResponse = await fetch(`${JUPITER_API_URL}/swap`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        quoteResponse: quote,
-        userPublicKey: fromPubkey.toBase58(),
-        wrapAndUnwrapSol: true,
-        dynamicComputeUnitLimit: true,
-        prioritizationFeeLamports: 'auto'
-      })
-    });
-    
-    const swapData = await swapResponse.json();
-    
-    if (!swapResponse.ok) {
-      throw new Error(`Jupiter swap failed: ${swapData.error || 'Unknown error'}`);
-    }
-    
-    // Deserialize the transaction
-    const swapTransactionBuf = Buffer.from(swapData.swapTransaction, 'base64');
-    const transaction = Transaction.from(swapTransactionBuf);
-    
-    // Add memo for tracking
-    const memoInstruction = createMemoInstruction(
-      `JUPITER_CA_PURCHASE:${tokenMint}:${Date.now()}`,
-      [fromPubkey]
-    );
-    transaction.add(memoInstruction);
-    
-    return transaction;
-  } catch (error: any) {
-    console.error('❌ Create Jupiter swap transaction error:', error);
-    throw error;
-  }
-}
