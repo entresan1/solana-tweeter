@@ -247,7 +247,7 @@
           </svg>
         </div>
         <div class="text-lg font-medium hidden md:block"
-             :class="route.name === 'Leaderboard' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">🏆</div>
+             :class="route.name === 'Leaderboard' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">Leaderboard</div>
       </SafeRouterLink>
 
       <!-- How Button -->

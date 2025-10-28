@@ -46,7 +46,7 @@ import { TweetModel } from '@src/models/tweet.model';
   // CA buying state
   const isBuyingCA = ref(false);
 const showBuyCAModal = ref(false);
-const buyAmount = ref('1000');
+const buyAmount = ref('0.1');
   const caBuyError = ref('');
   const loadingReplies = ref(false);
   const showTipModal = ref(false);
@@ -337,14 +337,18 @@ const buyAmount = ref('1000');
   // CA buying functions
   const openBuyCAModal = () => {
     showBuyCAModal.value = true;
-    buyAmount.value = '1000';
+    buyAmount.value = '0.1';
     caBuyError.value = '';
   };
 
   const closeBuyCAModal = () => {
     showBuyCAModal.value = false;
-    buyAmount.value = '1000';
+    buyAmount.value = '0.1';
     caBuyError.value = '';
+  };
+
+  const setQuickAmount = (amount: string) => {
+    buyAmount.value = amount;
   };
 
   const buyCA = async () => {
@@ -354,10 +358,15 @@ const buyAmount = ref('1000');
     caBuyError.value = '';
     
     try {
-      const amount = parseFloat(buyAmount.value);
+      const solAmount = parseFloat(buyAmount.value);
       
-      if (isNaN(amount) || amount <= 0) {
-        caBuyError.value = 'Please enter a valid amount';
+      if (isNaN(solAmount) || solAmount <= 0) {
+        caBuyError.value = 'Please enter a valid SOL amount';
+        return;
+      }
+      
+      if (solAmount < 0.01) {
+        caBuyError.value = 'Minimum amount is 0.01 SOL';
         return;
       }
       
@@ -370,7 +379,7 @@ const buyAmount = ref('1000');
           beaconId: tweet.value.id,
           userWallet: wallet.value.publicKey.toBase58(),
           contractAddress: caAddress.value,
-          amount
+          solAmount: solAmount
         })
       });
       
@@ -1336,10 +1345,10 @@ Come beacon at @https://trenchbeacon.com/`;
     <!-- Buy CA Modal -->
     <div 
       v-if="showBuyCAModal" 
-      class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
       @click.self="closeBuyCAModal"
     >
-      <div class="bg-gradient-to-br from-dark-900 to-dark-800 rounded-2xl border border-dark-700/50 w-full max-w-md overflow-hidden shadow-2xl backdrop-blur-xl">
+      <div class="bg-gradient-to-br from-dark-900 to-dark-800 rounded-2xl border border-dark-700/50 w-full max-w-md overflow-hidden shadow-2xl backdrop-blur-xl relative">
         <!-- Modal Header -->
         <div class="flex items-center justify-between p-6 border-b border-dark-700/50 bg-gradient-to-r from-green-500/5 to-emerald-500/5">
           <div class="flex items-center space-x-3">
@@ -1378,21 +1387,47 @@ Come beacon at @https://trenchbeacon.com/`;
 
           <!-- Amount Input -->
           <div class="mb-6">
-            <label class="block text-sm font-medium text-white mb-2">Amount (Tokens)</label>
+            <label class="block text-sm font-medium text-white mb-2">Amount (SOL)</label>
+            
+            <!-- Quick Selection Buttons -->
+            <div class="flex space-x-2 mb-3">
+              <button
+                @click="setQuickAmount('0.1')"
+                :class="buyAmount === '0.1' ? 'bg-green-500 text-white' : 'bg-dark-700 text-dark-300 hover:bg-dark-600'"
+                class="px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                0.1 SOL
+              </button>
+              <button
+                @click="setQuickAmount('0.5')"
+                :class="buyAmount === '0.5' ? 'bg-green-500 text-white' : 'bg-dark-700 text-dark-300 hover:bg-dark-600'"
+                class="px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                0.5 SOL
+              </button>
+              <button
+                @click="setQuickAmount('1')"
+                :class="buyAmount === '1' ? 'bg-green-500 text-white' : 'bg-dark-700 text-dark-300 hover:bg-dark-600'"
+                class="px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                1 SOL
+              </button>
+            </div>
+            
             <div class="relative">
               <input
                 v-model="buyAmount"
                 type="number"
-                step="1"
-                min="1"
-                placeholder="1000"
+                step="0.01"
+                min="0.01"
+                placeholder="0.1"
                 class="w-full px-4 py-3 bg-dark-800 border border-dark-600 rounded-xl text-white placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 transition-all duration-300"
               />
               <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-dark-400 text-sm font-medium">
-                Tokens
+                SOL
               </div>
             </div>
-            <p class="text-xs text-dark-400 mt-1">Enter the number of tokens you want to buy</p>
+            <p class="text-xs text-dark-400 mt-1">Enter the amount of SOL you want to spend</p>
           </div>
 
           <!-- Error Message -->

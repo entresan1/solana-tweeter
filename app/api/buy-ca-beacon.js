@@ -31,10 +31,14 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { beaconId, userWallet, contractAddress } = req.body;
+  const { beaconId, userWallet, contractAddress, solAmount } = req.body;
 
-  if (!beaconId || !userWallet || !contractAddress) {
-    return res.status(400).json({ error: 'Missing required fields: beaconId, userWallet, contractAddress' });
+  if (!beaconId || !userWallet || !contractAddress || !solAmount) {
+    return res.status(400).json({ error: 'Missing required fields: beaconId, userWallet, contractAddress, solAmount' });
+  }
+
+  if (isNaN(solAmount) || solAmount <= 0) {
+    return res.status(400).json({ error: 'Invalid SOL amount' });
   }
 
   try {
@@ -66,6 +70,7 @@ module.exports = async (req, res) => {
       beaconId,
       userWallet,
       contractAddress,
+      solAmount,
       timestamp: new Date().toISOString()
     });
 
