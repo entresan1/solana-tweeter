@@ -3,7 +3,7 @@ const { createClient } = require('@supabase/supabase-js');
 const crypto = require('crypto');
 
 // Treasury configuration
-const TREASURY_SOL_ADDRESS = 'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6';
+const TREASURY_SOL_ADDRESS = 'EpPXQsvRBvxZ9LDLDCT3NyhEN8uhfQBqi2jFei8TLT7';
 const X402_CONFIG = {
   network: 'solana',
   priceSOL: 0.001,

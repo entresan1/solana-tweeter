@@ -33,7 +33,7 @@ PORT=3001  # Server port
 ### Treasury Address
 The treasury address is configured in `src/lib/x402.ts`:
 ```typescript
-export const TREASURY_SOL_ADDRESS = 'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6';
+export const TREASURY_SOL_ADDRESS = 'EpPXQsvRBvxZ9LDLDCT3NyhEN8uhfQBqi2jFei8TLT7';
 ```
 
 ## Usage

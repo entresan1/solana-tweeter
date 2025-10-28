@@ -13,7 +13,7 @@ const rpcUrl = process.env.SOLANA_RPC_URL || process.env.VITE_SOLANA_RPC_URL || 
 const connection = new Connection(rpcUrl, 'confirmed');
 
 // Treasury address
-const TREASURY_SOL_ADDRESS = process.env.TREASURY_SOL_ADDRESS || 'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6';
+const TREASURY_SOL_ADDRESS = process.env.TREASURY_SOL_ADDRESS || 'EpPXQsvRBvxZ9LDLDCT3NyhEN8uhfQBqi2jFei8TLT7';
 
 /**
  * Generate platform wallet address (deterministic but secure)

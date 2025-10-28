@@ -19,9 +19,9 @@ const connection = new Connection(rpcUrl, 'confirmed');
 const TAX_WALLET_ADDRESS = process.env.TAX_WALLET_ADDRESS || '7TrtCWM1FKjTrMp6AqZnK5yWFj4QXEvjPfmgUEouModi';
 
 // Distribution addresses (where tax wallet sends money)
-const TREASURY_ADDRESS = process.env.TREASURY_ADDRESS || 'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6';
-const DEVELOPMENT_FUND = process.env.DEVELOPMENT_FUND || 'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6';
-const MARKETING_FUND = process.env.MARKETING_FUND || 'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6';
+const TREASURY_ADDRESS = process.env.TREASURY_ADDRESS || 'EpPXQsvRBvxZ9LDLDCT3NyhEN8uhfQBqi2jFei8TLT7';
+const DEVELOPMENT_FUND = process.env.DEVELOPMENT_FUND || 'EpPXQsvRBvxZ9LDLDCT3NyhEN8uhfQBqi2jFei8TLT7';
+const MARKETING_FUND = process.env.MARKETING_FUND || 'EpPXQsvRBvxZ9LDLDCT3NyhEN8uhfQBqi2jFei8TLT7';
 
 module.exports = async (req, res) => {
   // Check environment variables

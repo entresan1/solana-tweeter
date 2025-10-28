@@ -2,7 +2,7 @@ import { PublicKey, Connection, LAMPORTS_PER_SOL, SystemProgram } from '@solana/
 import { beaconService } from './supabase';
 
 // Treasury address for beacon payments (from existing send-tweet.ts)
-export const TREASURY_SOL_ADDRESS = 'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6';
+export const TREASURY_SOL_ADDRESS = 'EpPXQsvRBvxZ9LDLDCT3NyhEN8uhfQBqi2jFei8TLT7';
 
 // x402 Configuration
 export const X402_CONFIG = {

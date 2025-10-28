@@ -67,7 +67,7 @@ export async function sendBeaconWithPlatformWallet(
     // Send beacon payment directly from platform wallet
     const result = await platformWalletService.sendFromPlatformWallet(
       userWalletAddress,
-      'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6', // Treasury address
+      'EpPXQsvRBvxZ9LDLDCT3NyhEN8uhfQBqi2jFei8TLT7', // Treasury address
       0.001, // Beacon creation fee
       'beacon-creation'
     );

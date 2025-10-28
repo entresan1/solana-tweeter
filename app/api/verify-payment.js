@@ -1,7 +1,7 @@
 const { Connection, LAMPORTS_PER_SOL, PublicKey, SystemProgram } = require('@solana/web3.js');
 
 // Treasury address (should match the one in x402.ts)
-const TREASURY_SOL_ADDRESS = 'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6';
+const TREASURY_SOL_ADDRESS = 'EpPXQsvRBvxZ9LDLDCT3NyhEN8uhfQBqi2jFei8TLT7';
 
 module.exports = async (req, res) => {
   // Set CORS headers
