@@ -95,6 +95,8 @@ async function purchaseWithPlatformWallet(
       platformWallet: true // Flag to indicate platform wallet payment
     };
     
+    console.log('📤 Platform wallet payload:', payload);
+    
     const x402Result = await payForX402CAPurchaseAndRetry(
       '/api/buy-ca-beacon',
       payload,
@@ -181,8 +183,11 @@ async function purchaseWithUserWallet(
       userWallet: wallet.publicKey.toBase58(),
       contractAddress: tokenMint,
       solAmount: solAmount,
-      swapSignature: signature
+      swapSignature: signature,
+      platformWallet: false // Flag to indicate user wallet payment
     };
+    
+    console.log('📤 User wallet payload:', payload);
     
     const result = await payForX402CAPurchaseAndRetry(
       '/api/buy-ca-beacon',
@@ -294,6 +299,7 @@ async function payForX402CAPurchaseAndRetry(
     // 2) Parse payment requirements
     const { payment } = await res.json();
     console.log('💰 Payment required for CA purchase:', payment);
+    console.log('🔍 Payload platform wallet flag:', payload.platformWallet);
 
     // For platform wallet payments, we don't need user interaction
     if (payload.platformWallet) {
@@ -303,7 +309,9 @@ async function payForX402CAPurchaseAndRetry(
       res = await postRequest({ 'x-402-proof': JSON.stringify(proof) });
     } else {
       // Check if wallet is connected (only for user wallet payments)
+      console.log('👤 User wallet payment - checking wallet connection');
       if (!wallet?.publicKey) {
+        console.error('❌ Wallet not connected for user wallet payment');
         throw new Error('Wallet not connected');
       }
 
