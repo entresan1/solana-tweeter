@@ -94,11 +94,20 @@ export async function sendBeaconWithPlatformWallet(
       platform_wallet: true
     };
 
-    // Save to database
+    // Create X402 proof for the platform wallet payment
+    const proof = {
+      transaction: result.signature,
+      amount: 0.001,
+      nonce: crypto.getRandomValues(new Uint8Array(16)).join(''),
+      timestamp: Date.now()
+    };
+
+    // Save to database with X402 proof
     const response = await fetch('/api/save-beacon', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-402-proof': JSON.stringify(proof)
       },
       body: JSON.stringify(beaconData)
     });
