@@ -175,12 +175,31 @@ async function verifyX402Payment(proof, connection, expectedRecipient, expectedA
       const accounts = transaction.transaction.message.accountKeys;
       const treasuryPubkey = new PublicKey(expectedRecipient);
       
+      console.log('🔍 Checking treasury payment:', { 
+        treasuryAddress: expectedRecipient, 
+        accountCount: accounts.length,
+        preBalances: transaction.meta.preBalances.length,
+        postBalances: transaction.meta.postBalances.length
+      });
+      
       // Check treasury payment (where the SOL should go)
-      const treasuryIndex = accounts.findIndex(key => key.equals(treasuryPubkey));
+      const treasuryIndex = accounts.findIndex(key => {
+        try {
+          return key && key.equals(treasuryPubkey);
+        } catch (error) {
+          console.log('⚠️ Error comparing account key:', error);
+          return false;
+        }
+      });
+      
+      console.log('🔍 Treasury index found:', treasuryIndex);
+      
       if (treasuryIndex !== -1) {
         const preBalance = transaction.meta.preBalances[treasuryIndex];
         const postBalance = transaction.meta.postBalances[treasuryIndex];
         actualAmount = postBalance - preBalance;
+        
+        console.log('💰 Balance change:', { preBalance, postBalance, actualAmount, expected: expectedAmountLamports });
         
         if (actualAmount >= expectedAmountLamports) {
           paymentFound = true;
@@ -197,11 +216,22 @@ async function verifyX402Payment(proof, connection, expectedRecipient, expectedA
 
     // Check for X402 memo
     const memoFound = transaction.transaction.message.instructions.some(instruction => {
-      if (instruction.programId.toBase58() === 'MemoSq4gqABAXKb96qnH8TysKcWfC85B2q2') {
-        const memoData = Buffer.from(instruction.data, 'base64').toString();
-        return memoData.startsWith('x402:');
+      try {
+        // Handle both legacy and versioned transactions
+        const programId = instruction.programId || 
+          (instruction.programIdIndex !== undefined ? 
+            transaction.transaction.message.accountKeys[instruction.programIdIndex] : 
+            null);
+            
+        if (programId && programId.toBase58() === 'MemoSq4gqABAXKb96qnH8TysKcWfC85B2q2') {
+          const memoData = Buffer.from(instruction.data, 'base64').toString();
+          return memoData.startsWith('x402:');
+        }
+        return false;
+      } catch (error) {
+        console.log('⚠️ Error checking instruction:', error);
+        return false;
       }
-      return false;
     });
 
     if (!memoFound) {
