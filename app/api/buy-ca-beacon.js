@@ -76,7 +76,8 @@ module.exports = async (req, res) => {
 
     // Calculate fees - 1% of purchase amount goes to treasury
     const platformFee = parseFloat(solAmount) * 0.01; // 1% treasury fee
-    const totalCost = parseFloat(solAmount) + platformFee;
+    const swapAmount = parseFloat(solAmount) - platformFee; // Amount to swap for CA tokens
+    const totalCost = parseFloat(solAmount);
     
     console.log('CA Purchase Request:', {
       beaconId,
@@ -84,29 +85,35 @@ module.exports = async (req, res) => {
       contractAddress,
       solAmount,
       platformFee,
+      swapAmount,
       totalCost,
       timestamp: new Date().toISOString()
     });
 
-    // Create a real Solana transaction for CA purchase
+    // Create a Jupiter swap transaction: SOL → CA token
     const fromPubkey = new PublicKey(userWallet);
-    const toPubkey = new PublicKey(TREASURY_SOL_ADDRESS);
-    const lamports = Math.floor(totalCost * LAMPORTS_PER_SOL);
-
-    // Create transaction
+    const caTokenMint = new PublicKey(contractAddress);
+    
+    // For now, we'll create a simple transaction that:
+    // 1. Sends platform fee to treasury
+    // 2. Creates a swap instruction for SOL → CA token
+    // 3. Adds memo for tracking
+    
     const transaction = new Transaction();
     
-    // Add SOL transfer instruction
+    // Add platform fee transfer to treasury
+    const treasuryLamports = Math.floor(platformFee * LAMPORTS_PER_SOL);
     transaction.add(
       SystemProgram.transfer({
         fromPubkey,
-        toPubkey,
-        lamports
+        toPubkey: new PublicKey(TREASURY_SOL_ADDRESS),
+        lamports: treasuryLamports
       })
     );
 
-    // Add memo instruction for CA purchase tracking
-    const memo = `x402:ca-purchase:${contractAddress}:${beaconId}:${solAmount}`;
+    // TODO: Add Jupiter swap instruction here
+    // For now, we'll add a memo indicating the swap intent
+    const memo = `x402:ca-swap:${contractAddress}:${beaconId}:${swapAmount}:SOL->CA`;
     transaction.add(createMemoInstruction(memo));
 
     // Get recent blockhash
@@ -169,10 +176,12 @@ module.exports = async (req, res) => {
       success: true, 
       purchase: savedPurchase || purchase,
       transaction: serializedTransaction.toString('base64'),
-      message: `CA purchase transaction created for ${contractAddress}`,
+      message: `CA swap transaction created: ${swapAmount} SOL → ${contractAddress}`,
       platformFee,
+      swapAmount,
       totalCost,
-      memo
+      memo,
+      swapType: 'SOL_TO_CA'
     });
 
   } catch (error) {

@@ -145,67 +145,7 @@ const handleDeposit = async () => {
   }
 };
 
-// Sell token
-const sellToken = async (token: Token) => {
-  if (!wallet.value?.publicKey) return;
-  
-  try {
-    const response = await fetch('/api/sell-token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        userWallet: wallet.value.publicKey.toBase58(),
-        tokenMint: token.mint,
-        amount: token.balance
-      })
-    });
-    
-    const data = await response.json();
-    
-    if (data.success) {
-      // Refresh portfolio
-      await loadPortfolio();
-    } else {
-      throw new Error(data.error || 'Failed to sell token');
-    }
-  } catch (err: any) {
-    console.error('Sell token error:', err);
-    error.value = err.message || 'Failed to sell token';
-  }
-};
-
-// Buy token
-const buyToken = async (tokenMint: string, amount: number) => {
-  if (!wallet.value?.publicKey) return;
-  
-  try {
-    const response = await fetch('/api/buy-token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        userWallet: wallet.value.publicKey.toBase58(),
-        tokenMint,
-        amount
-      })
-    });
-    
-    const data = await response.json();
-    
-    if (data.success) {
-      // Refresh portfolio
-      await loadPortfolio();
-    } else {
-      throw new Error(data.error || 'Failed to buy token');
-    }
-  } catch (err: any) {
-    console.error('Buy token error:', err);
-    error.value = err.message || 'Failed to buy token';
-  }
-};
+// Portfolio is now read-only - no buy/sell functions needed
 
 // Watch for wallet changes
 watch(wallet, (newWallet) => {
@@ -379,29 +319,15 @@ defineExpose({
                   </div>
                 </div>
                 
-                <div class="flex space-x-3 mb-4">
-                  <button 
-                    @click="buyToken(token.mint, 1000)"
-                    class="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-6 py-3 rounded-xl transition-all duration-300 hover:scale-105 font-semibold shadow-lg hover:shadow-green-500/25"
-                  >
-                    <div class="flex items-center justify-center space-x-2">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                      </svg>
-                      <span>Buy</span>
+                <!-- Token balance display only - no buy/sell buttons -->
+                <div class="mb-4 p-3 bg-dark-800/50 rounded-lg border border-dark-700">
+                  <div class="text-center">
+                    <div class="text-2xl font-bold text-white">{{ token.balance.toFixed(6) }}</div>
+                    <div class="text-sm text-dark-400">{{ token.symbol }}</div>
+                    <div v-if="token.usdValue > 0" class="text-xs text-green-400 mt-1">
+                      ≈ ${{ token.usdValue.toFixed(2) }}
                     </div>
-                  </button>
-                  <button 
-                    @click="sellToken(token)"
-                    class="flex-1 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-6 py-3 rounded-xl transition-all duration-300 hover:scale-105 font-semibold shadow-lg hover:shadow-red-500/25"
-                  >
-                    <div class="flex items-center justify-center space-x-2">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
-                      </svg>
-                      <span>Sell</span>
-                    </div>
-                  </button>
+                  </div>
                 </div>
                 
                 <!-- Enhanced Token Details -->

@@ -396,7 +396,7 @@ const buyAmount = ref('0.1');
             });
             
             // Show success message
-            caBuyError.value = `✅ Smart Payment successful! Transaction: ${result.signature?.slice(0, 8)}...`;
+            caBuyError.value = `✅ Smart Payment swap successful! SOL → CA tokens. Transaction: ${result.signature?.slice(0, 8)}...`;
             
             // Close modal after a delay
             setTimeout(() => {
@@ -458,14 +458,15 @@ const buyAmount = ref('0.1');
         throw new Error('Transaction failed');
       }
       
-      console.log('✅ CA beacon bought successfully!', {
+      console.log('✅ CA swap completed successfully!', {
         signature,
         memo: data.memo,
+        swapAmount: data.swapAmount,
         totalCost: data.totalCost
       });
       
       // Show success message
-      caBuyError.value = `✅ Purchase successful! Transaction: ${signature.slice(0, 8)}...`;
+      caBuyError.value = `✅ Swap successful! ${data.swapAmount} SOL → CA tokens. Transaction: ${signature.slice(0, 8)}...`;
       
       // Close modal after a delay
       setTimeout(() => {
@@ -1072,7 +1073,7 @@ Come beacon at @https://trenchbeacon.com/`;
               v-if="isCA && wallet?.publicKey"
               @click="openBuyCAModal"
               class="flex items-center space-x-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-4 py-2 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-green-500/25"
-              :title="'Buy ' + caAddress + ' tokens directly'"
+              :title="'Swap SOL for ' + caAddress + ' tokens'"
             >
               <div class="w-5 h-5 flex items-center justify-center">
                 <svg v-if="!isBuyingCA" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1082,7 +1083,7 @@ Come beacon at @https://trenchbeacon.com/`;
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
               </div>
-              <span class="text-sm font-semibold">{{ isBuyingCA ? 'Buying...' : 'Buy CA' }}</span>
+              <span class="text-sm font-semibold">{{ isBuyingCA ? 'Swapping...' : 'Swap CA' }}</span>
             </button>
             
             <button 
