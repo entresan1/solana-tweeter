@@ -15,7 +15,25 @@
   const bio = ref('');
   const profilePictureUrl = ref('');
   const userTweets = ref<TweetModel[]>([]);
-  const interactedTweets = ref<TweetModel[]>([]);
+  // Define interaction type
+  interface InteractionData {
+    id: number;
+    interactionType: 'liked' | 'replied' | 'tipped';
+    interactionTimestamp: string;
+    content?: string;
+    amount?: number;
+    message?: string;
+    beacon?: {
+      id: number;
+      author: string;
+      author_display: string;
+      content: string;
+      topic: string;
+      created_at: string;
+    };
+  }
+
+  const interactedTweets = ref<InteractionData[]>([]);
   const activeTab = ref('posts'); // 'posts' or 'interactions'
 
   const isOwnProfile = computed(() => {
