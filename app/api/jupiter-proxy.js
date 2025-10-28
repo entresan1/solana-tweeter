@@ -1,4 +1,4 @@
-const fetch = require('node-fetch');
+// Using built-in fetch (Node.js 18+)
 
 module.exports = async (req, res) => {
   // Enable CORS
@@ -25,6 +25,7 @@ module.exports = async (req, res) => {
 
   try {
     console.log('🔄 Jupiter proxy: Getting quote from Jupiter API');
+    console.log('🔄 Request params:', { inputMint, outputMint, amount, slippageBps });
     
     // Build Jupiter API URL
     const jupiterUrl = `https://quote-api.jup.ag/v6/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amount}&slippageBps=${slippageBps || 50}`;
@@ -36,9 +37,10 @@ module.exports = async (req, res) => {
       headers: {
         'Accept': 'application/json',
         'User-Agent': 'SolanaTweeter/1.0'
-      },
-      timeout: 10000 // 10 second timeout
+      }
     });
+
+    console.log('🔄 Jupiter API response status:', response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -52,14 +54,25 @@ module.exports = async (req, res) => {
 
     const data = await response.json();
     console.log('✅ Jupiter proxy: Quote received successfully');
+    console.log('✅ Quote data:', { 
+      inAmount: data.inAmount, 
+      outAmount: data.outAmount, 
+      priceImpact: data.priceImpactPct 
+    });
     
     return res.status(200).json(data);
 
   } catch (error) {
     console.error('❌ Jupiter proxy error:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
     return res.status(500).json({
       error: 'Proxy error',
-      message: error.message
+      message: error.message,
+      details: error.stack
     });
   }
 };
