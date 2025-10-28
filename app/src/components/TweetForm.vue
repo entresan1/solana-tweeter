@@ -287,7 +287,7 @@
           </div>
         </div>
         
-        <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-6">
           <!-- Enhanced Character limit -->
           <div class="text-sm font-medium transition-all duration-300" :class="characterLimitColour">
             <span class="inline-flex items-center space-x-1">
@@ -295,7 +295,6 @@
               <span v-else>{{ characterLimit }} left</span>
             </span>
           </div>
-
 
           <!-- Automatic Wallet Selection Info (only when connected) -->
           <div v-if="connected && platformWalletAddress" class="flex items-center space-x-3 text-sm">

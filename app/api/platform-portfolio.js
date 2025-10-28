@@ -8,7 +8,11 @@ if (!supabaseUrl || !supabaseAnonKey) {
   // Don't throw error on startup, handle it in the request handler
 }
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Only create client if we have valid credentials
+let supabase = null;
+if (supabaseUrl && supabaseAnonKey) {
+  supabase = createClient(supabaseUrl, supabaseAnonKey);
+}
 
 module.exports = async (req, res) => {
   // Check environment variables
@@ -41,27 +45,32 @@ module.exports = async (req, res) => {
     console.log('Platform portfolio request for wallet:', walletAddress);
     console.log('Supabase URL:', supabaseUrl ? 'Set' : 'Missing');
     console.log('Supabase Key:', supabaseAnonKey ? 'Set' : 'Missing');
+    console.log('Supabase Client:', supabase ? 'Created' : 'Not created');
     
     // Get platform wallet address for the user
     const platformWalletAddress = `platform_${walletAddress}`;
     
     // Get CA purchases for this user (optional, don't fail if table doesn't exist)
     let purchases = [];
-    try {
-      const { data: purchasesData, error: purchasesError } = await supabase
-        .from('ca_purchases')
-        .select('*')
-        .eq('buyer_wallet', walletAddress)
-        .order('created_at', { ascending: false });
+    if (supabase) {
+      try {
+        const { data: purchasesData, error: purchasesError } = await supabase
+          .from('ca_purchases')
+          .select('*')
+          .eq('buyer_wallet', walletAddress)
+          .order('created_at', { ascending: false });
 
-      if (purchasesError) {
-        console.error('Failed to fetch CA purchases:', purchasesError);
-      } else {
-        purchases = purchasesData || [];
+        if (purchasesError) {
+          console.error('Failed to fetch CA purchases:', purchasesError);
+        } else {
+          purchases = purchasesData || [];
+        }
+      } catch (purchaseError) {
+        console.error('CA purchases table error:', purchaseError);
+        // Continue without purchases data
       }
-    } catch (purchaseError) {
-      console.error('CA purchases table error:', purchaseError);
-      // Continue without purchases data
+    } else {
+      console.log('Supabase client not available, skipping purchases fetch');
     }
 
     // Mock portfolio data for now (you can integrate with actual token data later)
