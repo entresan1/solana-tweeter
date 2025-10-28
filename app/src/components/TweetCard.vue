@@ -987,6 +987,24 @@ Come beacon at @https://trenchbeacon.com/`;
               <span class="text-sm">Tip</span>
             </button>
             
+            <!-- Enhanced CA Buy Button (only for CA beacons) -->
+            <button 
+              v-if="isCA && wallet?.publicKey"
+              @click="openBuyCAModal"
+              class="flex items-center space-x-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-4 py-2 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-green-500/25"
+              :title="'Buy ' + caAddress + ' tokens directly'"
+            >
+              <div class="w-5 h-5 flex items-center justify-center">
+                <svg v-if="!isBuyingCA" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                </svg>
+                <svg v-else class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </div>
+              <span class="text-sm font-semibold">{{ isBuyingCA ? 'Buying...' : 'Buy CA' }}</span>
+            </button>
+            
             <button 
               @click="handleShareLink"
               class="flex items-center space-x-2 text-dark-400 hover:text-green-400 transition-colors duration-300 hover:scale-110"
@@ -1316,26 +1334,6 @@ Come beacon at @https://trenchbeacon.com/`;
           </button>
         </div>
       </div>
-    </div>
-
-    <!-- Buy CA Button (outside card, only for CA beacons) -->
-    <div v-if="isCA && wallet?.publicKey" class="mt-3 flex justify-center">
-      <button 
-        @click="openBuyCAModal"
-        class="flex items-center space-x-3 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-6 py-3 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-green-500/25 font-semibold"
-        :title="'Buy ' + caAddress + ' tokens directly'"
-      >
-        <div class="w-6 h-6 flex items-center justify-center">
-          <svg v-if="!isBuyingCA" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-          </svg>
-          <svg v-else class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-        </div>
-        <span class="text-lg">{{ isBuyingCA ? 'Buying...' : 'Buy CA Tokens' }}</span>
-        <div class="text-sm opacity-80">{{ caAddress.slice(0, 8) }}...</div>
-      </button>
     </div>
 
     <!-- Platform Wallet Modal -->
