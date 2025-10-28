@@ -110,7 +110,7 @@ export async function getJupiterQuote(
   tokenMint: string,
   solAmount: number
 ): Promise<any> {
-  // Define variables outside try block so they're available in catch
+  // Define variables outside try block so they're available in catch (deployment fix)
   const inputMint = 'So11111111111111111111111111111111111111112'; // SOL mint
   const amount = Math.floor(solAmount * 1e9); // Convert SOL to lamports
   const slippageBps = 50; // 0.5% slippage tolerance
