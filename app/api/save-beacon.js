@@ -66,7 +66,10 @@ module.exports = async (req, res) => {
     }
 
     // Verify payment transaction
+    console.log('🔍 Verifying X402 payment for beacon creation:', { proof, treasury: TREASURY_ADDRESS, amount: BEACON_PRICE_SOL });
     const paymentVerification = await verifyX402Payment(proof, connection, TREASURY_ADDRESS, BEACON_PRICE_SOL);
+    console.log('🔍 Payment verification result:', paymentVerification);
+    
     if (!paymentVerification.valid) {
       return res.status(402).json({
         error: 'Payment Verification Failed',
@@ -149,13 +152,17 @@ async function verifyX402Payment(proof, connection, expectedRecipient, expectedA
   try {
     // Verify transaction exists and is confirmed
     const signature = proof.transaction;
+    console.log('🔍 Looking up transaction:', signature);
     const transaction = await connection.getTransaction(signature, {
       commitment: 'confirmed',
     });
 
     if (!transaction) {
+      console.log('❌ Transaction not found:', signature);
       return { valid: false, error: 'Transaction not found or not confirmed' };
     }
+    
+    console.log('✅ Transaction found, checking payment...');
 
     // Calculate expected amount
     const expectedAmountLamports = Math.floor(expectedAmount * LAMPORTS_PER_SOL);
