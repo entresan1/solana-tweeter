@@ -6,11 +6,12 @@ const {
   logAuditEvent 
 } = require('./secure-auth-middleware');
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing required environment variables: SUPABASE_URL and SUPABASE_ANON_KEY');
+  console.error('Missing required environment variables: SUPABASE_URL and SUPABASE_ANON_KEY');
+  // Don't throw error on startup, handle it in the request handler
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -257,6 +258,14 @@ module.exports = async (req, res) => {
 };
 
 async function handleRequest(req, res) {
+  // Check environment variables
+  if (!supabaseUrl || !supabaseKey) {
+    return res.status(500).json({ 
+      error: 'Server configuration error', 
+      message: 'Missing required environment variables' 
+    });
+  }
+
   try {
     const { method } = req;
     const { page, limit, userWallet } = req.query;
