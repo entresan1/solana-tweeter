@@ -1,4 +1,4 @@
-import { Keypair, PublicKey, Connection, SystemProgram, LAMPORTS_PER_SOL, Transaction } from '@solana/web3.js';
+import { Keypair, PublicKey, Connection, SystemProgram, LAMPORTS_PER_SOL, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { createMemoInstruction } from '@solana/spl-memo';
 
 // Solana connection
@@ -159,7 +159,7 @@ export const platformWalletService = {
   // Execute swap transaction using platform wallet
   async executeSwapTransaction(
     userWalletAddress: string,
-    swapTransaction: Transaction | any,
+    swapTransaction: Transaction | VersionedTransaction,
     memo: string
   ): Promise<{ success: boolean; signature?: string; error?: string }> {
     try {
@@ -169,23 +169,34 @@ export const platformWalletService = {
       const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
 
       // Update transaction with latest blockhash
-      swapTransaction.recentBlockhash = blockhash;
-      swapTransaction.feePayer = keypair.publicKey;
+      if (swapTransaction instanceof Transaction) {
+        swapTransaction.recentBlockhash = blockhash;
+        swapTransaction.feePayer = keypair.publicKey;
+      } else {
+        // For versioned transactions, we need to update the message
+        swapTransaction.message.recentBlockhash = blockhash;
+        // Versioned transactions handle account keys differently
+        // We'll let the transaction handle its own account structure
+      }
 
-      // 1. Simulate transaction first
+      // 1. Simulate transaction first (only for legacy transactions)
       console.log('🔄 Simulating swap transaction...');
       try {
-        const simulation = await connection.simulateTransaction(swapTransaction, undefined, false);
-        
-        if (simulation.value.err) {
-          console.error('❌ Swap simulation failed:', simulation.value.err);
-          return {
-            success: false,
-            error: `Swap simulation failed: ${JSON.stringify(simulation.value.err)}`
-          };
+        if (swapTransaction instanceof Transaction) {
+          const simulation = await connection.simulateTransaction(swapTransaction, undefined, false);
+          
+          if (simulation.value.err) {
+            console.error('❌ Swap simulation failed:', simulation.value.err);
+            return {
+              success: false,
+              error: `Swap simulation failed: ${JSON.stringify(simulation.value.err)}`
+            };
+          }
+          
+          console.log('✅ Swap simulation successful');
+        } else {
+          console.log('⚠️ Skipping simulation for versioned transaction');
         }
-        
-        console.log('✅ Swap simulation successful');
       } catch (simError: any) {
         console.error('❌ Swap simulation error:', simError);
         return {
@@ -196,7 +207,12 @@ export const platformWalletService = {
 
       // 2. Sign transaction with platform wallet
       console.log('🔐 Signing swap transaction with platform wallet...');
-      swapTransaction.sign(keypair);
+      if (swapTransaction instanceof Transaction) {
+        swapTransaction.sign(keypair);
+      } else {
+        // For versioned transactions, we need to sign differently
+        swapTransaction.sign([keypair]);
+      }
 
       // 3. Send transaction
       console.log('📤 Sending swap transaction...');
