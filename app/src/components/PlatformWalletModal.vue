@@ -27,6 +27,12 @@ const portfolio = ref<PortfolioData | null>(null);
 const loading = ref(false);
 const error = ref('');
 
+// Deposit functionality
+const showDeposit = ref(false);
+const depositAmount = ref('');
+const isDepositing = ref(false);
+const depositError = ref('');
+
 // Computed properties
 const hasTokens = computed(() => portfolio.value?.tokens && portfolio.value.tokens.length > 0);
 const totalValueFormatted = computed(() => 
@@ -69,6 +75,56 @@ const copyToClipboard = async (text: string, type: string) => {
     console.log(`${type} copied to clipboard`);
   } catch (err) {
     console.error('Failed to copy:', err);
+  }
+};
+
+// Deposit functions
+const openDeposit = () => {
+  showDeposit.value = true;
+  depositAmount.value = '';
+  depositError.value = '';
+};
+
+const closeDeposit = () => {
+  showDeposit.value = false;
+  depositAmount.value = '';
+  depositError.value = '';
+};
+
+const handleDeposit = async () => {
+  if (!wallet.value?.publicKey || !depositAmount.value) return;
+  
+  const amount = parseFloat(depositAmount.value);
+  if (isNaN(amount) || amount <= 0) {
+    depositError.value = 'Please enter a valid amount';
+    return;
+  }
+  
+  isDepositing.value = true;
+  depositError.value = '';
+  
+  try {
+    const userAddress = wallet.value.publicKey.toBase58();
+    const platformAddress = platformWalletService.getPlatformWalletAddress(userAddress);
+    
+    // Use the existing platform deposit service
+    const { depositToPlatformWallet } = await import('@src/lib/x402-platform-client');
+    
+    const result = await depositToPlatformWallet(wallet.value, platformAddress, amount);
+    
+    if (result.success) {
+      console.log('Deposit successful:', result);
+      closeDeposit();
+      // Reload portfolio to show updated balance
+      await loadPortfolio();
+    } else {
+      depositError.value = result.error || 'Deposit failed';
+    }
+  } catch (err) {
+    console.error('Deposit error:', err);
+    depositError.value = 'Deposit failed. Please try again.';
+  } finally {
+    isDepositing.value = false;
   }
 };
 
@@ -208,19 +264,32 @@ defineExpose({
 
         <!-- Portfolio Content -->
         <div v-else-if="portfolio">
-          <!-- Wallet Info -->
-          <div class="bg-dark-800 rounded-lg p-4 mb-6">
+          <!-- Enhanced Wallet Info -->
+          <div class="bg-gradient-to-r from-dark-800/50 to-dark-700/50 rounded-xl p-6 mb-6 border border-dark-600/50">
             <div class="flex items-center justify-between mb-4">
               <div>
-                <h3 class="text-lg font-semibold text-white">Wallet Address</h3>
+                <h3 class="text-lg font-semibold text-white">Platform Wallet Address</h3>
                 <p class="text-dark-400 font-mono text-sm">{{ portfolio.walletAddress }}</p>
               </div>
-              <button 
-                @click="copyToClipboard(portfolio.walletAddress, 'Address')"
-                class="px-3 py-1 bg-primary-500 hover:bg-primary-600 text-white text-sm rounded-lg transition-colors"
-              >
-                Copy
-              </button>
+              <div class="flex items-center space-x-2">
+                <button 
+                  @click="openDeposit"
+                  class="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white text-sm rounded-lg transition-all duration-300 hover:scale-105 font-semibold shadow-lg hover:shadow-green-500/25"
+                >
+                  <div class="flex items-center space-x-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    <span>Deposit SOL</span>
+                  </div>
+                </button>
+                <button 
+                  @click="copyToClipboard(portfolio.walletAddress, 'Address')"
+                  class="px-3 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm rounded-lg transition-colors"
+                >
+                  Copy
+                </button>
+              </div>
             </div>
             
             <!-- Private Key Section -->
@@ -349,6 +418,110 @@ defineExpose({
               Start Trading
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Deposit Modal -->
+  <div 
+    v-if="showDeposit" 
+    class="fixed inset-0 bg-black/50 backdrop-blur-sm z-60 flex items-center justify-center p-4"
+    @click.self="closeDeposit"
+  >
+    <div class="bg-gradient-to-br from-dark-900 to-dark-800 rounded-2xl border border-dark-700/50 w-full max-w-md overflow-hidden shadow-2xl backdrop-blur-xl">
+      <!-- Deposit Header -->
+      <div class="flex items-center justify-between p-6 border-b border-dark-700/50 bg-gradient-to-r from-green-500/5 to-emerald-500/5">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-xl font-bold text-white">Deposit SOL</h3>
+            <p class="text-dark-400 text-sm">Add SOL to your platform wallet</p>
+          </div>
+        </div>
+        <button 
+          @click="closeDeposit"
+          class="text-dark-400 hover:text-white transition-colors p-2 hover:bg-dark-700 rounded-lg"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Deposit Content -->
+      <div class="p-6">
+        <!-- Amount Input -->
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-white mb-2">Amount (SOL)</label>
+          <div class="relative">
+            <input
+              v-model="depositAmount"
+              type="number"
+              step="0.001"
+              min="0.001"
+              placeholder="0.001"
+              class="w-full px-4 py-3 bg-dark-800 border border-dark-600 rounded-xl text-white placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 transition-all duration-300"
+            />
+            <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-dark-400 text-sm font-medium">
+              SOL
+            </div>
+          </div>
+          <p class="text-xs text-dark-400 mt-1">Minimum deposit: 0.001 SOL</p>
+        </div>
+
+        <!-- Error Message -->
+        <div v-if="depositError" class="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+          <div class="flex items-center space-x-2">
+            <svg class="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+            <span class="text-red-400 text-sm">{{ depositError }}</span>
+          </div>
+        </div>
+
+        <!-- Deposit Info -->
+        <div class="mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+          <div class="flex items-start space-x-3">
+            <svg class="w-5 h-5 text-blue-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+            </svg>
+            <div>
+              <h4 class="text-blue-400 font-medium text-sm">Deposit Process</h4>
+              <p class="text-blue-300/80 text-xs mt-1">
+                You'll be prompted to sign a transaction to transfer SOL from your connected wallet to your platform wallet. This enables you to buy CA beacons and trade tokens.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex space-x-3">
+          <button 
+            @click="closeDeposit"
+            class="flex-1 px-4 py-3 bg-dark-700 hover:bg-dark-600 text-white rounded-xl transition-colors font-medium"
+          >
+            Cancel
+          </button>
+          <button 
+            @click="handleDeposit"
+            :disabled="isDepositing || !depositAmount"
+            class="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-xl transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-lg hover:shadow-green-500/25"
+          >
+            <div class="flex items-center justify-center space-x-2">
+              <svg v-if="isDepositing" class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              <span>{{ isDepositing ? 'Depositing...' : 'Deposit SOL' }}</span>
+            </div>
+          </button>
         </div>
       </div>
     </div>
