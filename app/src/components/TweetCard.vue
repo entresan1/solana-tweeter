@@ -370,6 +370,7 @@ const buyAmount = ref('0.1');
         return;
       }
       
+      // Step 1: Get transaction from server
       const response = await fetch('/api/buy-ca-beacon', {
         method: 'POST',
         headers: {
@@ -386,12 +387,47 @@ const buyAmount = ref('0.1');
       const data = await response.json();
       
       if (!data.success) {
-        throw new Error(data.error || 'Failed to buy CA beacon');
+        throw new Error(data.error || 'Failed to create CA purchase transaction');
       }
       
-      console.log('✅ CA beacon bought successfully:', data);
-      closeBuyCAModal();
-      // You could emit an event here to refresh the UI
+      console.log('✅ Transaction created:', data);
+      
+      // Step 2: Sign and send transaction
+      const { Transaction } = await import('@solana/web3.js');
+      const transaction = Transaction.from(Buffer.from(data.transaction, 'base64'));
+      
+      // Sign the transaction
+      const signedTransaction = await wallet.value.signTransaction(transaction);
+      
+      // Send the transaction
+      const { Connection, PublicKey } = await import('@solana/web3.js');
+      const rpcUrl = 'https://api.mainnet-beta.solana.com'; // Use public RPC for sending
+      const connection = new Connection(rpcUrl, 'confirmed');
+      
+      const signature = await connection.sendRawTransaction(signedTransaction.serialize());
+      console.log('✅ Transaction sent:', signature);
+      
+      // Wait for confirmation
+      const confirmation = await connection.confirmTransaction(signature, 'confirmed');
+      
+      if (confirmation.value.err) {
+        throw new Error('Transaction failed');
+      }
+      
+      console.log('✅ CA beacon bought successfully!', {
+        signature,
+        memo: data.memo,
+        totalCost: data.totalCost
+      });
+      
+      // Show success message
+      caBuyError.value = `✅ Purchase successful! Transaction: ${signature.slice(0, 8)}...`;
+      
+      // Close modal after a delay
+      setTimeout(() => {
+        closeBuyCAModal();
+        caBuyError.value = '';
+      }, 3000);
       
     } catch (error: any) {
       console.error('❌ CA buy error:', error);

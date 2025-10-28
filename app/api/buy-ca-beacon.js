@@ -1,4 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
+const { Connection, PublicKey, SystemProgram, LAMPORTS_PER_SOL, Transaction } = require('@solana/web3.js');
+const { createMemoInstruction } = require('@solana/spl-memo');
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
@@ -9,6 +11,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Initialize Solana connection
+const rpcUrl = process.env.SOLANA_RPC_URL || process.env.VITE_SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+const connection = new Connection(rpcUrl, 'confirmed');
+
+// Treasury address
+const TREASURY_SOL_ADDRESS = process.env.TREASURY_SOL_ADDRESS || 'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6';
 
 module.exports = async (req, res) => {
   // Check environment variables
@@ -65,32 +74,85 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'Contract address mismatch' });
     }
 
-    // For now, just log the purchase (we'll add database tracking later)
-    console.log('CA Purchase:', {
+    // Calculate fees
+    const platformFee = 0.00005; // 0.005 SOL platform fee
+    const totalCost = parseFloat(solAmount) + platformFee;
+    
+    console.log('CA Purchase Request:', {
       beaconId,
       userWallet,
       contractAddress,
       solAmount,
+      platformFee,
+      totalCost,
       timestamp: new Date().toISOString()
     });
 
-    // Create a mock purchase object
+    // Create a real Solana transaction for CA purchase
+    const fromPubkey = new PublicKey(userWallet);
+    const toPubkey = new PublicKey(TREASURY_SOL_ADDRESS);
+    const lamports = Math.floor(totalCost * LAMPORTS_PER_SOL);
+
+    // Create transaction
+    const transaction = new Transaction();
+    
+    // Add SOL transfer instruction
+    transaction.add(
+      SystemProgram.transfer({
+        fromPubkey,
+        toPubkey,
+        lamports
+      })
+    );
+
+    // Add memo instruction for CA purchase tracking
+    const memo = `x402:ca-purchase:${contractAddress}:${beaconId}:${solAmount}`;
+    transaction.add(createMemoInstruction(memo));
+
+    // Get recent blockhash
+    const { blockhash } = await connection.getRecentBlockhash();
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = fromPubkey;
+
+    // Serialize transaction for client to sign
+    const serializedTransaction = transaction.serialize({
+      requireAllSignatures: false,
+      verifySignatures: false
+    });
+
+    // Create purchase record for database
     const purchase = {
-      id: Date.now(), // Temporary ID
       beacon_id: beaconId,
       buyer_wallet: userWallet,
       contract_address: contractAddress,
-      purchase_amount: 0.001,
-      platform_fee: 0.00005,
+      purchase_amount: parseFloat(solAmount),
+      platform_fee: platformFee,
+      total_cost: totalCost,
+      transaction_data: serializedTransaction.toString('base64'),
+      status: 'pending',
       created_at: new Date().toISOString()
     };
 
+    // Save to database
+    const { data: savedPurchase, error: dbError } = await supabase
+      .from('ca_purchases')
+      .insert([purchase])
+      .select()
+      .single();
+
+    if (dbError) {
+      console.error('Database save error:', dbError);
+      // Continue anyway, transaction is still valid
+    }
+
     return res.status(200).json({ 
       success: true, 
-      purchase,
-      message: `Successfully purchased CA beacon for ${contractAddress}`,
-      platformFee: 0.00005,
-      totalCost: 0.001
+      purchase: savedPurchase || purchase,
+      transaction: serializedTransaction.toString('base64'),
+      message: `CA purchase transaction created for ${contractAddress}`,
+      platformFee,
+      totalCost,
+      memo
     });
 
   } catch (error) {

@@ -8,13 +8,11 @@ const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_A
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Initialize Solana connection
-const connection = new Connection(
-  'https://small-twilight-sponge.solana-mainnet.quiknode.pro/71bdb31dd3e965467b1393cebaaebe69d481dbeb/',
-  'confirmed'
-);
+const rpcUrl = process.env.SOLANA_RPC_URL || process.env.VITE_SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+const connection = new Connection(rpcUrl, 'confirmed');
 
 // Treasury address
-const TREASURY_SOL_ADDRESS = 'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6';
+const TREASURY_SOL_ADDRESS = process.env.TREASURY_SOL_ADDRESS || 'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6';
 
 /**
  * Generate platform wallet address (deterministic but secure)
