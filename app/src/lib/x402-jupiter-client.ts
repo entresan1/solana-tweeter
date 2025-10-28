@@ -50,7 +50,7 @@ export async function sendJupiterSwapWithPayment(
       await connection.confirmTransaction(swapSignature, 'confirmed');
       console.log('✅ Jupiter swap confirmed - user now has CA tokens!');
       
-    } catch (jupiterError) {
+    } catch (jupiterError: any) {
       console.error('❌ Jupiter swap failed:', jupiterError);
       
       // If Jupiter fails, show a helpful error message
