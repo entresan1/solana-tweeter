@@ -9,8 +9,9 @@ const connection = new Connection(
 );
 
 // Jupiter API configuration - Using standard Jupiter API
-const JUPITER_QUOTE_URL = 'https://quote-api.jup.ag/v6/quote';
-const JUPITER_SWAP_URL = 'https://quote-api.jup.ag/v6/swap';
+// Use our proxy endpoints to avoid CORS issues
+const JUPITER_QUOTE_URL = '/api/jupiter-proxy';
+const JUPITER_SWAP_URL = '/api/jupiter-swap-proxy';
 
 /**
  * Send Jupiter swap with automatic X402 payment
@@ -227,10 +228,10 @@ export async function getJupiterQuote(
   const slippageBps = 50; // 0.5% slippage tolerance
 
   try {
-    // Use standard Jupiter API
+    // Use our proxy endpoint to avoid CORS issues
     const url = `${JUPITER_QUOTE_URL}?inputMint=${inputMint}&outputMint=${tokenMint}&amount=${amount}&slippageBps=${slippageBps}`;
     
-    console.log('🔄 Fetching Jupiter quote from Jupiter API:', url);
+    console.log('🔄 Fetching Jupiter quote from proxy:', url);
     
     const response = await fetch(url, {
       method: 'GET',
@@ -242,7 +243,7 @@ export async function getJupiterQuote(
     const quote = await response.json();
 
     if (!response.ok) {
-      console.error('❌ Jupiter API error:', {
+      console.error('❌ Jupiter proxy error:', {
         status: response.status,
         statusText: response.statusText,
         url: url,
@@ -251,7 +252,7 @@ export async function getJupiterQuote(
       throw new Error(quote.error?.message || quote.error || `Failed to get quote: ${response.status} ${response.statusText}`);
     }
 
-    console.log('✅ Jupiter quote received from Jupiter API:', {
+    console.log('✅ Jupiter quote received via proxy:', {
       inputAmount: quote.inAmount,
       outputAmount: quote.outAmount,
       priceImpact: quote.priceImpactPct
@@ -265,7 +266,7 @@ export async function getJupiterQuote(
       success: true
     };
   } catch (error: any) {
-    console.error('❌ Jupiter API error:', error);
+    console.error('❌ Jupiter proxy error:', error);
     
     // Handle network errors specifically
     if (error.message.includes('Failed to fetch') || error.message.includes('ERR_NAME_NOT_RESOLVED')) {
@@ -315,7 +316,7 @@ async function createJupiterSwapTransaction(
       route: quote.route
     });
 
-    // Get swap transaction from Jupiter API
+    // Get swap transaction from Jupiter API via proxy
     const inputMint = 'So11111111111111111111111111111111111111112'; // SOL mint
     const amount = Math.floor(solAmount * 1e9); // Convert SOL to lamports
     const slippageBps = 50; // 0.5% slippage tolerance
@@ -343,7 +344,7 @@ async function createJupiterSwapTransaction(
       asLegacyTransaction: false
     };
 
-    console.log('🔄 Requesting swap transaction from Jupiter API...');
+    console.log('🔄 Requesting swap transaction from Jupiter proxy...');
     
     const swapResponse = await fetch(swapUrl, {
       method: 'POST',
@@ -359,7 +360,7 @@ async function createJupiterSwapTransaction(
       throw new Error(swapData.error?.message || swapData.error || 'Failed to create swap transaction');
     }
 
-    console.log('✅ Jupiter swap transaction received from Jupiter API');
+    console.log('✅ Jupiter swap transaction received via proxy');
 
     // Deserialize the transaction
     const { Transaction } = await import('@solana/web3.js');
