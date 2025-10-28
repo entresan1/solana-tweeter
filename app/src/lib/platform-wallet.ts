@@ -127,11 +127,6 @@ export const platformWalletService = {
     }
   },
 
-  // Get platform wallet address for display
-  getPlatformWalletAddress(userWalletAddress: string): string {
-    const { address } = this.generatePlatformWallet(userWalletAddress);
-    return address;
-  },
 
   // Get platform wallet private key (for withdrawal)
   getPlatformWalletPrivateKey(userWalletAddress: string): string {

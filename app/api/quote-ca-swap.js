@@ -53,9 +53,8 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Calculate fees
-    const platformFee = parseFloat(solAmount) * 0.01; // 1% platform fee
-    const swapAmount = parseFloat(solAmount) - platformFee;
+    // No fees - full amount for swap
+    const swapAmount = parseFloat(solAmount);
 
     return res.status(200).json({
       success: true,
@@ -71,7 +70,6 @@ module.exports = async (req, res) => {
         priceImpactFormatted: `${quote.priceImpact}%`
       },
       fees: {
-        platformFee: platformFee,
         swapAmount: swapAmount,
         totalCost: parseFloat(solAmount)
       },

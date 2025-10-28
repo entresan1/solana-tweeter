@@ -76,7 +76,7 @@ const loadPortfolio = async () => {
       tokens,
       totalValue,
       walletAddress: platformAddress,
-      privateKey: platformWallet.keypair.secretKey.toString('base64')
+      privateKey: Buffer.from(platformWallet.keypair.secretKey).toString('base64')
     };
   } catch (err: any) {
     console.error('Portfolio load error:', err);
@@ -371,7 +371,7 @@ defineExpose({
   <!-- Deposit Modal -->
   <div 
     v-if="showDeposit" 
-    class="fixed inset-0 bg-black/50 backdrop-blur-sm z-60 flex items-center justify-center p-4"
+    class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
     @click.self="closeDeposit"
   >
     <div class="bg-gradient-to-br from-dark-900 to-dark-800 rounded-2xl border border-dark-700/50 w-full max-w-md overflow-hidden shadow-2xl backdrop-blur-xl">

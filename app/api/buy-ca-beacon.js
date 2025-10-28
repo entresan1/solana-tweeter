@@ -74,17 +74,15 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'Contract address mismatch' });
     }
 
-    // Calculate fees - 1% of purchase amount goes to treasury
-    const platformFee = parseFloat(solAmount) * 0.01; // 1% treasury fee
-    const swapAmount = parseFloat(solAmount) - platformFee; // Amount to swap for CA tokens
-    const totalCost = parseFloat(solAmount);
+    // No fees - full amount goes to swap
+    const swapAmount = parseFloat(solAmount); // Full amount for swap
+    const totalCost = parseFloat(solAmount); // Total SOL user pays
     
     console.log('CA Purchase Request:', {
       beaconId,
       userWallet,
       contractAddress,
       solAmount,
-      platformFee,
       swapAmount,
       totalCost,
       timestamp: new Date().toISOString()
@@ -96,17 +94,7 @@ module.exports = async (req, res) => {
     
     const transaction = new Transaction();
     
-    // Step 1: Send platform fee to tax wallet
-    const taxLamports = Math.floor(platformFee * LAMPORTS_PER_SOL);
-    transaction.add(
-      SystemProgram.transfer({
-        fromPubkey,
-        toPubkey: new PublicKey(TAX_WALLET_ADDRESS),
-        lamports: taxLamports
-      })
-    );
-
-    // Step 2: Create Jupiter swap for SOL → CA token
+    // Create Jupiter swap for SOL → CA token (no fees)
     try {
       // Import Jupiter swap function
       const { createJupiterSwap } = require('../src/lib/jupiter-swap');
@@ -205,7 +193,6 @@ module.exports = async (req, res) => {
       purchase: savedPurchase || purchase,
       transaction: serializedTransaction.toString('base64'),
       message: `CA swap transaction created: ${swapAmount} SOL → ${contractAddress}`,
-      platformFee,
       swapAmount,
       totalCost,
       memo,

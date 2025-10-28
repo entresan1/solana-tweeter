@@ -1538,10 +1538,6 @@ Come beacon at @https://trenchbeacon.com/`;
               <span class="text-blue-300">Price impact:</span>
               <span class="text-white font-mono">{{ swapQuote.quote.priceImpactFormatted }}</span>
             </div>
-            <div class="flex justify-between">
-              <span class="text-blue-300">Platform fee:</span>
-              <span class="text-white font-mono">{{ swapQuote.fees.platformFee.toFixed(4) }} SOL</span>
-            </div>
           </div>
         </div>
 
