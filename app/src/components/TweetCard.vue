@@ -370,6 +370,50 @@ const buyAmount = ref('0.1');
         return;
       }
       
+      // Try Smart Payment first (Platform wallet)
+      try {
+        const { platformWalletService } = await import('@/lib/platform-wallet');
+        const userWalletAddress = wallet.value.publicKey.toBase58();
+        
+        // Check if platform wallet has sufficient balance
+        const hasBalance = await platformWalletService.hasSufficientBalance(userWalletAddress, solAmount);
+        
+        if (hasBalance) {
+          console.log('💰 Using Smart Payment (Platform wallet)');
+          
+          // Send from platform wallet
+          const result = await platformWalletService.sendFromPlatformWallet(
+            userWalletAddress,
+            'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6', // Treasury address
+            solAmount,
+            'ca-purchase'
+          );
+          
+          if (result.success) {
+            console.log('✅ CA beacon bought with Smart Payment!', {
+              signature: result.signature,
+              amount: solAmount
+            });
+            
+            // Show success message
+            caBuyError.value = `✅ Smart Payment successful! Transaction: ${result.signature?.slice(0, 8)}...`;
+            
+            // Close modal after a delay
+            setTimeout(() => {
+              closeBuyCAModal();
+              caBuyError.value = '';
+            }, 3000);
+            
+            return; // Success, exit early
+          }
+        }
+      } catch (platformError) {
+        console.log('⚠️ Smart Payment failed, falling back to Phantom:', platformError);
+      }
+      
+      // Fallback to Phantom wallet
+      console.log('💰 Using Phantom wallet (fallback)');
+      
       // Step 1: Get transaction from server
       const response = await fetch('/api/buy-ca-beacon', {
         method: 'POST',
@@ -399,9 +443,9 @@ const buyAmount = ref('0.1');
       // Sign the transaction
       const signedTransaction = await wallet.value.signTransaction(transaction);
       
-      // Send the transaction
+      // Send the transaction using QuickNode
       const { Connection, PublicKey } = await import('@solana/web3.js');
-      const rpcUrl = 'https://api.mainnet-beta.solana.com'; // Use public RPC for sending
+      const rpcUrl = 'https://small-twilight-sponge.solana-mainnet.quiknode.pro/71bdb31dd3e965467b1393cebaaebe69d481dbeb/';
       const connection = new Connection(rpcUrl, 'confirmed');
       
       const signature = await connection.sendRawTransaction(signedTransaction.serialize());
