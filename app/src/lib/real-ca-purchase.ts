@@ -1,4 +1,4 @@
-import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL, VersionedTransaction } from '@solana/web3.js';
 import { createMemoInstruction } from '@solana/spl-memo';
 import { platformWalletService } from './platform-wallet';
 
@@ -70,16 +70,28 @@ async function realPurchaseWithPlatformWallet(
     
     console.log('📊 Solana Tracker swap received:', swapResult.data);
     
-    // 2. Deserialize the transaction
-    const swapTx = Transaction.from(Buffer.from(swapResult.data.txn, 'base64'));
-    
-    // 3. Simulate the transaction
-    const simulation = await connection.simulateTransaction(swapTx, undefined, false);
-    if (simulation.value.err) {
-      throw new Error(`Transaction simulation failed: ${JSON.stringify(simulation.value.err)}`);
+    // 2. Deserialize the transaction (handle both legacy and versioned)
+    let swapTx: Transaction | VersionedTransaction;
+    try {
+      // Try legacy transaction first
+      swapTx = Transaction.from(Buffer.from(swapResult.data.txn, 'base64'));
+    } catch (error) {
+      // If legacy fails, try versioned transaction
+      swapTx = VersionedTransaction.deserialize(Buffer.from(swapResult.data.txn, 'base64'));
     }
     
-    console.log('✅ Jupiter swap simulation successful');
+    // 3. Simulate the transaction
+    if (swapTx instanceof VersionedTransaction) {
+      // For versioned transactions, we'll skip simulation for now
+      console.log('⚠️ Skipping simulation for versioned transaction');
+    } else {
+      // For legacy transactions, simulate normally
+      const simulation = await connection.simulateTransaction(swapTx, undefined, false);
+      if (simulation.value.err) {
+        throw new Error(`Transaction simulation failed: ${JSON.stringify(simulation.value.err)}`);
+      }
+      console.log('✅ Solana Tracker swap simulation successful');
+    }
     
     // 4. For platform wallet, we need to create a different approach
     // Since platform wallet can't directly sign Jupiter transactions,
@@ -130,19 +142,39 @@ async function realPurchaseWithUserWallet(
     
     console.log('📊 Solana Tracker swap received:', swapResult.data);
     
-    // 2. Deserialize the transaction
-    const swapTx = Transaction.from(Buffer.from(swapResult.data.txn, 'base64'));
-    
-    // 3. Simulate the transaction
-    const simulation = await connection.simulateTransaction(swapTx, undefined, false);
-    if (simulation.value.err) {
-      throw new Error(`Transaction simulation failed: ${JSON.stringify(simulation.value.err)}`);
+    // 2. Deserialize the transaction (handle both legacy and versioned)
+    let swapTx: Transaction | VersionedTransaction;
+    try {
+      // Try legacy transaction first
+      swapTx = Transaction.from(Buffer.from(swapResult.data.txn, 'base64'));
+    } catch (error) {
+      // If legacy fails, try versioned transaction
+      swapTx = VersionedTransaction.deserialize(Buffer.from(swapResult.data.txn, 'base64'));
     }
     
-    console.log('✅ Jupiter swap simulation successful');
+    // 3. Simulate the transaction
+    if (swapTx instanceof VersionedTransaction) {
+      // For versioned transactions, we'll skip simulation for now
+      console.log('⚠️ Skipping simulation for versioned transaction');
+    } else {
+      // For legacy transactions, simulate normally
+      const simulation = await connection.simulateTransaction(swapTx, undefined, false);
+      if (simulation.value.err) {
+        throw new Error(`Transaction simulation failed: ${JSON.stringify(simulation.value.err)}`);
+      }
+      console.log('✅ Solana Tracker swap simulation successful');
+    }
     
     // 4. Sign and send the transaction
-    const signedTx = await wallet.signTransaction(swapTx);
+    let signedTx: Transaction | VersionedTransaction;
+    if (swapTx instanceof VersionedTransaction) {
+      // For versioned transactions, use signTransaction
+      signedTx = await wallet.signTransaction(swapTx);
+    } else {
+      // For legacy transactions, use signTransaction
+      signedTx = await wallet.signTransaction(swapTx);
+    }
+    
     const signature = await connection.sendRawTransaction(signedTx.serialize(), {
       skipPreflight: false,
       preflightCommitment: 'confirmed',

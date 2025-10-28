@@ -71,9 +71,9 @@ export const profileState = {
   // Get display name
   getDisplayName(): string {
     if (!currentUserProfile.value) {
-      return '';
+      return 'User';
     }
-    return currentUserProfile.value.nickname || currentUserProfile.value.wallet_address?.slice(0, 8) + '...' || 'User';
+    return currentUserProfile.value.nickname || (currentUserProfile.value.wallet_address?.slice(0, 8) + '...') || 'User';
   },
   
   // Check if profile picture should be displayed
