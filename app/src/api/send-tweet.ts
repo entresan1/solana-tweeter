@@ -3,6 +3,7 @@ import { useWorkspace } from '@src/hooks';
 import { PublicKey } from '@solana/web3.js';
 import { sendBeaconWithPayment } from '@src/lib/x402-client';
 import { platformWalletService } from '@src/lib/platform-wallet';
+import { generateUniqueBeaconKey, generateUniqueBeaconId, generateUniqueTransactionId } from '@src/lib/beacon-utils';
 
 export const sendTweet = async (topic: string, content: string, usePlatformWallet: boolean = false) => {
   const { wallet } = useWorkspace();
@@ -40,21 +41,21 @@ export const sendTweet = async (topic: string, content: string, usePlatformWalle
       
       console.log('✅ Beacon sent successfully with platform wallet:', response);
       
-      // Create a mock PublicKey for compatibility
-      const mockKeyBytes = new Uint8Array(32);
-      mockKeyBytes.fill(0);
-      mockKeyBytes[0] = 1; // Mark as beacon
-      mockKeyBytes[31] = 0x42; // Mark as beacon
+      // Generate unique identifiers for this beacon
+      const uniqueBeaconId = response.beacon?.id || generateUniqueBeaconId();
+      const uniqueTransactionId = response.payment?.transaction || generateUniqueTransactionId();
+      
+      // Create a unique mock PublicKey for this beacon
+      const mockKey = generateUniqueBeaconKey(uniqueBeaconId);
       
       // Create a proper TweetModel instance
-      const mockKey = new PublicKey(mockKeyBytes);
       const tweetModel = new TweetModel(mockKey, {
         author: wallet.value.publicKey!,
         timestamp: { toNumber: () => Date.now() / 1000 },
         topic: topic,
         content: content,
-        id: response.beacon?.id || Date.now(),
-        treasuryTransaction: response.payment?.transaction || 'platform-wallet-tx',
+        id: uniqueBeaconId,
+        treasuryTransaction: uniqueTransactionId,
         author_display: wallet.value.publicKey!.toBase58().slice(0, 8) + '...'
       });
       
@@ -106,23 +107,25 @@ export const sendTweet = async (topic: string, content: string, usePlatformWalle
 
         console.log('✅ Beacon sent successfully with Phantom wallet (fallback):', response);
 
-        // Create a mock PublicKey for compatibility
-        const mockKeyBytes = new Uint8Array(32);
-        mockKeyBytes.fill(0);
-        mockKeyBytes[0] = 1; // Mark as beacon
-        mockKeyBytes[31] = 0x42; // Mark as beacon
+        // Generate unique identifiers for this beacon
+        const uniqueBeaconId = generateUniqueBeaconId();
+        const uniqueTransactionId = response.payment?.transaction || generateUniqueTransactionId();
         
         // Return a proper TweetModel instance
         if (!wallet.value?.publicKey) {
           throw new Error('Wallet not connected during fallback');
         }
         
-        const tweetModel = new TweetModel(new PublicKey(mockKeyBytes), {
+        // Create a unique mock PublicKey for this beacon
+        const mockKey = generateUniqueBeaconKey(uniqueBeaconId);
+        
+        const tweetModel = new TweetModel(mockKey, {
           author: wallet.value.publicKey,
           timestamp: { toNumber: () => Date.now() / 1000 },
           topic,
           content,
-          treasuryTransaction: response.payment?.transaction || 'unknown',
+          id: uniqueBeaconId,
+          treasuryTransaction: uniqueTransactionId,
           author_display: wallet.value.publicKey.toBase58().slice(0, 8) + '...'
         });
         

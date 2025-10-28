@@ -79,8 +79,12 @@ export async function sendBeaconWithPlatformWallet(
       };
     }
 
+    // Generate unique beacon ID
+    const uniqueBeaconId = `platform_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
     // Save beacon to database
     const beaconData = {
+      id: uniqueBeaconId,
       topic: topic || 'general',
       content,
       author: userWalletAddress,
@@ -105,7 +109,10 @@ export async function sendBeaconWithPlatformWallet(
       return {
         success: true,
         message: 'Beacon created successfully from platform wallet!',
-        beacon: saveResult.beacon,
+        beacon: {
+          id: uniqueBeaconId,
+          ...saveResult.beacon
+        },
         payment: {
           transaction: result.signature,
           amount: 0.001,

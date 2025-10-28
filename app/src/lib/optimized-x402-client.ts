@@ -34,15 +34,10 @@ class OptimizedX402Client {
       throw new Error('Wallet not connected');
     }
 
-    // Check if we have a recent payment for this user
+    // Always create new payment for beacons to ensure uniqueness
+    // (No caching for beacon creation to prevent similar attributes)
     const userAddress = wallet.value.publicKey.toString();
-    const cachedPayment = this.getCachedPayment(userAddress, 'beacon');
     
-    if (cachedPayment) {
-      console.log('🚀 Using cached payment for beacon');
-      return this.sendBeaconWithProof(content, topic, authorDisplay, cachedPayment);
-    }
-
     // Create new payment
     const paymentTx = await this.createPaymentTransaction(0.001);
     const signature = await this.sendTransaction(paymentTx);
@@ -54,9 +49,7 @@ class OptimizedX402Client {
       timestamp: Date.now()
     };
 
-    // Cache the payment
-    this.cachePayment(userAddress, 'beacon', proof);
-
+    // Don't cache beacon payments to ensure each beacon is unique
     return this.sendBeaconWithProof(content, topic, authorDisplay, proof);
   }
 
