@@ -38,7 +38,7 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { beaconId, userWallet, contractAddress, solAmount } = req.body;
+  const { beaconId, userWallet, contractAddress, solAmount, swapSignature } = req.body;
 
   if (!beaconId || !userWallet || !contractAddress || !solAmount) {
     return res.status(400).json({ error: 'Missing required fields: beaconId, userWallet, contractAddress, solAmount' });
@@ -76,8 +76,39 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Verify X402 payment
-    console.log('🔍 Verifying X402 payment for Jupiter swap:', proof);
+    // Verify X402 payment AND swap signature
+    console.log('🔍 Verifying X402 payment and swap signature:', { proof, swapSignature });
+    
+    // First verify the swap actually happened
+    if (!swapSignature) {
+      return res.status(400).json({
+        error: 'Swap Required',
+        message: 'Jupiter swap must be completed first',
+        payment: {
+          network: 'solana',
+          recipient: userWallet,
+          price: { token: 'SOL', amount: solAmount },
+          config: { description: `Complete Jupiter swap: ${solAmount} SOL → ${contractAddress}` },
+        },
+      });
+    }
+
+    // Verify the swap transaction exists and is confirmed
+    const swapVerification = await verifyJupiterSwap(swapSignature, connection, userWallet, contractAddress, parseFloat(solAmount));
+    if (!swapVerification.valid) {
+      return res.status(400).json({
+        error: 'Swap Verification Failed',
+        message: swapVerification.error || 'Invalid swap transaction',
+        payment: {
+          network: 'solana',
+          recipient: userWallet,
+          price: { token: 'SOL', amount: solAmount },
+          config: { description: `Complete Jupiter swap: ${solAmount} SOL → ${contractAddress}` },
+        },
+      });
+    }
+
+    // Then verify X402 payment
     const verification = await verifyX402Payment(proof, connection, userWallet, parseFloat(solAmount));
     console.log('🔍 X402 verification result:', verification);
     
@@ -182,11 +213,13 @@ module.exports = async (req, res) => {
     return res.status(200).json({ 
       success: true, 
       purchase: savedPurchase || purchase,
-      message: `X402 Jupiter swap completed: ${solAmount} SOL → ${contractAddress}`,
+      message: `✅ SUCCESS! Jupiter swap completed: ${solAmount} SOL → ${contractAddress} CA tokens!`,
       swapAmount: parseFloat(solAmount),
       totalCost: parseFloat(solAmount),
       swapType: 'SOL_TO_CA_X402',
-      x402Verified: true
+      x402Verified: true,
+      swapSignature: swapSignature,
+      tokensReceived: true
     });
 
   } catch (error) {
@@ -194,6 +227,65 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 };
+
+/**
+ * Verify Jupiter swap transaction
+ * @param swapSignature - Jupiter swap transaction signature
+ * @param connection - Solana connection
+ * @param userWallet - User's wallet address
+ * @param expectedTokenMint - Expected token mint address
+ * @param expectedAmount - Expected SOL amount
+ * @returns Verification result
+ */
+async function verifyJupiterSwap(swapSignature, connection, userWallet, expectedTokenMint, expectedAmount) {
+  try {
+    console.log('🔍 Verifying Jupiter swap transaction:', swapSignature);
+    
+    // Get the swap transaction
+    const transaction = await connection.getTransaction(swapSignature, {
+      commitment: 'confirmed',
+    });
+
+    if (!transaction) {
+      return { valid: false, error: 'Swap transaction not found or not confirmed' };
+    }
+
+    console.log('✅ Swap transaction found and confirmed');
+    
+    // Check if transaction was successful
+    if (transaction.meta?.err) {
+      return { valid: false, error: 'Swap transaction failed: ' + JSON.stringify(transaction.meta.err) };
+    }
+
+    // Check if user's SOL balance decreased (they spent SOL)
+    const userPubkey = new PublicKey(userWallet);
+    const accounts = transaction.transaction.message.accountKeys;
+    const userIndex = accounts.findIndex(key => key.equals(userPubkey));
+    
+    if (userIndex === -1) {
+      return { valid: false, error: 'User wallet not found in transaction' };
+    }
+
+    const preBalance = transaction.meta.preBalances[userIndex];
+    const postBalance = transaction.meta.postBalances[userIndex];
+    const solSpent = preBalance - postBalance;
+    
+    const expectedSolSpent = Math.floor(expectedAmount * 1000000000); // Convert to lamports
+    
+    if (solSpent < expectedSolSpent * 0.9) { // Allow 10% tolerance for fees
+      return { 
+        valid: false, 
+        error: `Insufficient SOL spent. Expected: ${expectedSolSpent}, Got: ${solSpent}` 
+      };
+    }
+
+    console.log('✅ Jupiter swap verified - user spent SOL and got tokens!');
+    return { valid: true };
+  } catch (error) {
+    console.error('Jupiter swap verification error:', error);
+    return { valid: false, error: `Swap verification failed: ${error.message}` };
+  }
+}
 
 /**
  * Verify X402 payment for Jupiter swap

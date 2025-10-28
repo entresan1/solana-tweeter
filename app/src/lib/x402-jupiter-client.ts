@@ -24,10 +24,33 @@ export async function sendJupiterSwapWithPayment(
   wallet: any
 ): Promise<any> {
   try {
+    console.log('🚀 Starting REAL Jupiter swap for CA token:', { tokenMint, solAmount });
+    
+    // 1. First, create the actual Jupiter swap transaction
+    const swapTransaction = await createJupiterSwapTransaction(
+      wallet.publicKey,
+      tokenMint,
+      solAmount
+    );
+    
+    console.log('✅ Jupiter swap transaction created');
+    
+    // 2. Sign and send the swap transaction
+    const signedSwapTx = await wallet.signTransaction(swapTransaction);
+    const swapSignature = await connection.sendRawTransaction(signedSwapTx.serialize());
+    
+    console.log('🔄 Jupiter swap transaction sent:', swapSignature);
+    
+    // 3. Wait for swap confirmation
+    await connection.confirmTransaction(swapSignature, 'confirmed');
+    console.log('✅ Jupiter swap confirmed - user now has CA tokens!');
+    
+    // 4. Now send X402 payment for the service
     const payload = {
       tokenMint,
       solAmount,
-      userWallet: wallet.publicKey.toBase58()
+      userWallet: wallet.publicKey.toBase58(),
+      swapSignature // Include swap signature as proof
     };
 
     const result = await payForX402JupiterSwapAndRetry(
@@ -37,10 +60,14 @@ export async function sendJupiterSwapWithPayment(
       solAmount
     );
 
-    return result;
+    return {
+      ...result,
+      swapSignature,
+      message: `Successfully swapped ${solAmount} SOL for ${tokenMint} CA token!`
+    };
   } catch (error: any) {
-    console.error('❌ X402 Jupiter swap error:', error);
-    throw new Error(`Failed to send Jupiter swap: ${error.message}`);
+    console.error('❌ Jupiter swap error:', error);
+    throw new Error(`Failed to swap SOL for CA token: ${error.message}`);
   }
 }
 
@@ -232,5 +259,96 @@ export async function getJupiterQuote(
       success: false,
       error: `QuickNode Jupiter API failed: ${error.message}`
     };
+  }
+}
+
+/**
+ * Create actual Jupiter swap transaction for SOL → Token
+ * @param fromPubkey - User's wallet public key
+ * @param tokenMint - Target token mint address
+ * @param solAmount - Amount of SOL to swap
+ * @returns Promise with swap transaction
+ */
+async function createJupiterSwapTransaction(
+  fromPubkey: PublicKey,
+  tokenMint: string,
+  solAmount: number
+): Promise<Transaction> {
+  try {
+    console.log('🔄 Creating REAL Jupiter swap transaction:', {
+      from: fromPubkey.toBase58(),
+      tokenMint,
+      solAmount
+    });
+
+    // Get quote for SOL → Token swap
+    const quote = await getJupiterQuote(tokenMint, solAmount);
+    
+    if (!quote.success) {
+      throw new Error(quote.error || 'Failed to get quote');
+    }
+
+    console.log('📊 Jupiter quote received:', {
+      inputAmount: quote.inputAmount,
+      outputAmount: quote.outputAmount,
+      priceImpact: quote.priceImpact,
+      route: quote.route
+    });
+
+    // Get swap transaction from Jupiter API
+    const inputMint = 'So11111111111111111111111111111111111111112'; // SOL mint
+    const amount = Math.floor(solAmount * 1e9); // Convert SOL to lamports
+    const slippageBps = 50; // 0.5% slippage tolerance
+
+    const swapUrl = `${JUPITER_API_URL}jupiter/v6/swap`;
+    
+    const swapRequest = {
+      quoteResponse: {
+        inputMint,
+        inAmount: quote.inputAmount.toString(),
+        outputMint: tokenMint,
+        outAmount: quote.outputAmount.toString(),
+        otherAmountThreshold: quote.outputAmount.toString(),
+        swapMode: 'ExactIn',
+        slippageBps,
+        platformFee: null,
+        priceImpactPct: quote.priceImpact.toString()
+      },
+      userPublicKey: fromPubkey.toBase58(),
+      wrapAndUnwrapSol: true,
+      useSharedAccounts: true,
+      feeAccount: null,
+      trackingAccount: null,
+      computeUnitPriceMicroLamports: null,
+      asLegacyTransaction: false
+    };
+
+    console.log('🔄 Requesting swap transaction from QuickNode Jupiter...');
+    
+    const swapResponse = await fetch(swapUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(swapRequest)
+    });
+
+    const swapData = await swapResponse.json();
+
+    if (!swapResponse.ok) {
+      throw new Error(swapData.error?.message || swapData.error || 'Failed to create swap transaction');
+    }
+
+    console.log('✅ Jupiter swap transaction received from QuickNode');
+
+    // Deserialize the transaction
+    const { Transaction } = await import('@solana/web3.js');
+    const transaction = Transaction.from(Buffer.from(swapData.swapTransaction, 'base64'));
+
+    console.log('✅ REAL Jupiter swap transaction created - user will get CA tokens!');
+    return transaction;
+  } catch (error: any) {
+    console.error('❌ Jupiter swap transaction creation error:', error);
+    throw new Error(`Failed to create Jupiter swap transaction: ${error.message}`);
   }
 }
