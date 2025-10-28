@@ -99,7 +99,7 @@
               <!-- How Button -->
               <button 
                 @click="showHowModal = true"
-                class="ml-2 px-3 py-1.5 text-xs sm:text-sm font-medium text-dark-300 hover:text-primary-400 bg-dark-800/50 hover:bg-dark-700/50 border border-dark-600 hover:border-primary-500/50 rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-primary-500/10"
+                class="ml-2 px-3 py-1.5 text-xs sm:text-sm font-medium text-primary-300 hover:text-primary-200 bg-primary-500/20 hover:bg-primary-500/30 border border-primary-500/40 hover:border-primary-400/60 rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-primary-500/20"
                 title="How to use Trench Beacon"
               >
                 How
@@ -152,43 +152,124 @@
         </div>
         
         <div class="space-y-6 text-dark-300">
-          <div>
-            <h3 class="text-lg font-semibold text-white mb-3">🚀 Creating Beacons</h3>
-            <ul class="space-y-2 text-sm">
-              <li>• Write your message in the main input field</li>
-              <li>• Add a topic with # (optional)</li>
-              <li>• Click "Beacon" to post to Solana blockchain</li>
-              <li>• Each beacon costs 0.001 SOL</li>
-            </ul>
+          <!-- Core Features -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-dark-800/50 rounded-xl p-4 border border-dark-700/50">
+              <h3 class="text-lg font-semibold text-white mb-3 flex items-center">
+                <span class="text-2xl mr-2">📡</span>
+                Beacons
+              </h3>
+              <ul class="space-y-2 text-sm">
+                <li>• Post messages to Solana blockchain</li>
+                <li>• Add topics with # (optional)</li>
+                <li>• 200 character limit</li>
+                <li>• Costs 0.001 SOL per beacon</li>
+                <li>• Transaction signature = Beacon ID</li>
+              </ul>
+            </div>
+            
+            <div class="bg-dark-800/50 rounded-xl p-4 border border-dark-700/50">
+              <h3 class="text-lg font-semibold text-white mb-3 flex items-center">
+                <span class="text-2xl mr-2">💰</span>
+                Smart Payment
+              </h3>
+              <ul class="space-y-2 text-sm">
+                <li>• Platform wallet pays when available</li>
+                <li>• Falls back to your wallet</li>
+                <li>• No extra fees</li>
+                <li>• Seamless experience</li>
+                <li>• Balance shown in sidebar</li>
+              </ul>
+            </div>
           </div>
-          
-          <div>
-            <h3 class="text-lg font-semibold text-white mb-3">💰 Smart Payment</h3>
-            <ul class="space-y-2 text-sm">
-              <li>• Platform wallet pays when available</li>
-              <li>• Falls back to your wallet if needed</li>
-              <li>• No extra fees for smart payments</li>
-            </ul>
+
+          <!-- Trading Features -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-dark-800/50 rounded-xl p-4 border border-dark-700/50">
+              <h3 class="text-lg font-semibold text-white mb-3 flex items-center">
+                <span class="text-2xl mr-2">🪙</span>
+                CA Token Trading
+              </h3>
+              <ul class="space-y-2 text-sm">
+                <li>• Click "Buy CA" on any beacon</li>
+                <li>• Enter 44-character contract address</li>
+                <li>• Choose SOL amount to swap</li>
+                <li>• Real tokens in your wallet</li>
+                <li>• Supports Pump.fun tokens</li>
+                <li>• Uses Solana Tracker API</li>
+              </ul>
+            </div>
+            
+            <div class="bg-dark-800/50 rounded-xl p-4 border border-dark-700/50">
+              <h3 class="text-lg font-semibold text-white mb-3 flex items-center">
+                <span class="text-2xl mr-2">💼</span>
+                Portfolio Management
+              </h3>
+              <ul class="space-y-2 text-sm">
+                <li>• View all your tokens</li>
+                <li>• Track token performance</li>
+                <li>• Buy/sell directly</li>
+                <li>• Real-time prices</li>
+                <li>• Access via sidebar</li>
+              </ul>
+            </div>
           </div>
-          
-          <div>
-            <h3 class="text-lg font-semibold text-white mb-3">🪙 Buying CA Tokens</h3>
-            <ul class="space-y-2 text-sm">
-              <li>• Click "Buy CA" on any beacon</li>
-              <li>• Enter contract address (44 characters)</li>
-              <li>• Choose SOL amount to swap</li>
-              <li>• Get real CA tokens in your wallet!</li>
-            </ul>
+
+          <!-- Social Features -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-dark-800/50 rounded-xl p-4 border border-dark-700/50">
+              <h3 class="text-lg font-semibold text-white mb-3 flex items-center">
+                <span class="text-2xl mr-2">💬</span>
+                Replies & Interaction
+              </h3>
+              <ul class="space-y-2 text-sm">
+                <li>• Reply to any beacon</li>
+                <li>• Replies appear automatically</li>
+                <li>• Hide/Show replies toggle</li>
+                <li>• Click usernames for profiles</li>
+                <li>• Real-time updates</li>
+              </ul>
+            </div>
+            
+            <div class="bg-dark-800/50 rounded-xl p-4 border border-dark-700/50">
+              <h3 class="text-lg font-semibold text-white mb-3 flex items-center">
+                <span class="text-2xl mr-2">🏆</span>
+                Tips & Leaderboard
+              </h3>
+              <ul class="space-y-2 text-sm">
+                <li>• Tip beacons you like</li>
+                <li>• Support content creators</li>
+                <li>• View top users</li>
+                <li>• Track your ranking</li>
+                <li>• Community recognition</li>
+              </ul>
+            </div>
           </div>
-          
-          <div>
-            <h3 class="text-lg font-semibold text-white mb-3">💬 Replying</h3>
-            <ul class="space-y-2 text-sm">
-              <li>• Click "Reply" on any beacon</li>
-              <li>• Write your response</li>
-              <li>• Replies appear automatically</li>
-              <li>• Click "Hide/Show" to toggle replies</li>
-            </ul>
+
+          <!-- Technical Features -->
+          <div class="bg-gradient-to-r from-primary-500/10 to-solana-500/10 rounded-xl p-4 border border-primary-500/20">
+            <h3 class="text-lg font-semibold text-white mb-3 flex items-center">
+              <span class="text-2xl mr-2">⚡</span>
+              Technical Features
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <h4 class="font-semibold text-primary-300 mb-2">x402 Protocol</h4>
+                <ul class="space-y-1">
+                  <li>• Secure payment verification</li>
+                  <li>• On-chain transaction proof</li>
+                  <li>• No third-party dependencies</li>
+                </ul>
+              </div>
+              <div>
+                <h4 class="font-semibold text-solana-300 mb-2">Solana Integration</h4>
+                <ul class="space-y-1">
+                  <li>• Fast, low-cost transactions</li>
+                  <li>• Real-time blockchain data</li>
+                  <li>• Wallet adapter support</li>
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -77,13 +77,6 @@
     isPlatformWalletDropdownOpen.value = false;
   };
 
-  // Help modal state
-  const showHelpModal = ref(false);
-
-  // Toggle help modal
-  const toggleHelpModal = () => {
-    showHelpModal.value = !showHelpModal.value;
-  };
 
 </script>
 
@@ -253,18 +246,6 @@
              :class="route.name === 'Leaderboard' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">Leaderboard</div>
       </SafeRouterLink>
 
-      <!-- How Button -->
-      <button
-        @click="toggleHelpModal"
-        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-300 group"
-      >
-        <div class="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 group-hover:from-blue-500/30 group-hover:to-purple-500/30 transition-all duration-300">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400 group-hover:text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-        <div class="text-lg font-medium hidden md:block text-dark-400 group-hover:text-blue-300">How</div>
-      </button>
       
       
       <!-- Platform Wallet Dropdown (only when connected) -->
@@ -343,52 +324,6 @@
     
   </aside>
 
-  <!-- Help Modal -->
-  <div v-if="showHelpModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-    <div class="bg-dark-800 rounded-2xl p-6 max-w-md w-full border border-dark-700">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-xl font-bold text-white">How Trench Beacon Works</h3>
-        <button @click="toggleHelpModal" class="text-dark-400 hover:text-white">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-      
-      <div class="space-y-3 text-dark-300">
-        <div>
-          <h4 class="font-semibold text-white mb-1">📡 Beacons</h4>
-          <p class="text-sm">Post messages, share thoughts, or announcements. Click usernames to see their beacons!</p>
-        </div>
-        
-        <div>
-          <h4 class="font-semibold text-white mb-1">🪙 CA Tokens</h4>
-          <p class="text-sm">Buy tokens directly when beacons contain contract addresses!</p>
-        </div>
-        
-        <div>
-          <h4 class="font-semibold text-white mb-1">💼 Portfolio</h4>
-          <p class="text-sm">Click "Manage" to buy, sell, and manage your tokens.</p>
-        </div>
-        
-        <div>
-          <h4 class="font-semibold text-white mb-1">💰 Tips & Leaderboard</h4>
-          <p class="text-sm">Tip beacons you like! Check leaderboard for top users.</p>
-        </div>
-        
-        <div>
-          <h4 class="font-semibold text-white mb-1">⚡ x402 Protocol</h4>
-          <p class="text-sm">Secure, verifiable payments for all transactions.</p>
-        </div>
-      </div>
-      
-      <div class="mt-6 flex justify-end">
-        <button @click="toggleHelpModal" class="btn-primary px-4 py-2 rounded-lg text-sm">
-          Got it!
-        </button>
-      </div>
-    </div>
-  </div>
   
   <!-- Platform Wallet Portfolio Modal -->
   <PlatformWalletModal ref="platformWalletModal" />
