@@ -4,6 +4,7 @@
   import { ref, onMounted, watch } from 'vue';
   import { platformWalletService } from '@src/lib/platform-wallet';
   import { notificationService } from '@src/lib/notification-service';
+  import { profileState } from '@src/lib/profile-state';
   import SafeRouterLink from './SafeRouterLink.vue';
   import PlatformWalletModal from './PlatformWalletModal.vue';
   
@@ -30,19 +31,24 @@
   };
   
   // Watch for wallet connection changes
-  watch(connected, (isConnected) => {
+  watch(connected, async (isConnected) => {
     if (isConnected) {
       loadPlatformWalletData();
+      // Load current user profile
+      await profileState.loadCurrentUserProfile();
     } else {
       platformWalletAddress.value = '';
       platformBalance.value = 0;
+      profileState.clearProfile();
     }
   });
   
   // Load data on mount if already connected
-  onMounted(() => {
+  onMounted(async () => {
     if (connected) {
       loadPlatformWalletData();
+      // Load current user profile
+      await profileState.loadCurrentUserProfile();
     }
   });
   
@@ -152,39 +158,26 @@
         class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-300 group"
         :class="route.name === 'Profile' ? 'bg-gradient-to-r from-primary-500/20 to-solana-500/20 border border-accent-500/30' : ''"
       >
-        <div class="flex items-center justify-center w-8 h-8 rounded-xl"
+        <div class="flex items-center justify-center w-8 h-8 rounded-xl overflow-hidden"
              :class="route.name === 'Profile' ? 'bg-gradient-to-r from-primary-500 to-solana-500' : 'bg-dark-700 group-hover:bg-dark-600'">
-          <svg
-            v-if="route.name === 'Profile'"
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5 text-white"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fill-rule="evenodd"
-              d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-              clip-rule="evenodd"
-            />
-          </svg>
-          <svg
-            v-else
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5 text-dark-300 group-hover:text-white"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-            />
-          </svg>
+          <!-- Profile Picture -->
+          <img 
+            v-if="profileState.shouldShowProfilePicture()"
+            :src="profileState.getProfilePictureUrl()"
+            :alt="profileState.getDisplayName()"
+            class="w-full h-full object-cover"
+          />
+          <!-- Default Avatar -->
+          <div v-else class="w-full h-full flex items-center justify-center">
+            <span class="text-white font-bold text-sm">
+              {{ profileState.getDisplayName().charAt(0).toUpperCase() }}
+            </span>
+          </div>
         </div>
         <div class="text-lg font-medium hidden md:block"
-             :class="route.name === 'Profile' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">Profile</div>
+             :class="route.name === 'Profile' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">
+          {{ profileState.getDisplayName() }}
+        </div>
       </SafeRouterLink>
       
       <!-- X402 Proof Link -->
