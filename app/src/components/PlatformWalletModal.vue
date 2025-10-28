@@ -324,8 +324,8 @@ defineExpose({
                   <div class="text-center">
                     <div class="text-2xl font-bold text-white">{{ token.balance.toFixed(6) }}</div>
                     <div class="text-sm text-dark-400">{{ token.symbol }}</div>
-                    <div v-if="token.usdValue > 0" class="text-xs text-green-400 mt-1">
-                      ≈ ${{ token.usdValue.toFixed(2) }}
+                    <div v-if="token.value && token.value > 0" class="text-xs text-green-400 mt-1">
+                      ≈ ${{ token.value.toFixed(2) }}
                     </div>
                   </div>
                 </div>

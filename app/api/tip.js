@@ -91,13 +91,13 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Calculate 5% treasury fee
-    const treasuryFee = tipAmount * 0.05;
-    const recipientAmount = tipAmount - treasuryFee;
+    // Calculate 5% tax fee
+    const taxFee = tipAmount * 0.05;
+    const recipientAmount = tipAmount - taxFee;
 
     console.log('💰 Tip breakdown:', {
       originalAmount: tipAmount,
-      treasuryFee: treasuryFee,
+      taxFee: taxFee,
       recipientAmount: recipientAmount
     });
 
@@ -106,7 +106,7 @@ module.exports = async (req, res) => {
       recipient,
       amount: tipAmount,
       recipient_amount: recipientAmount,
-      treasury_fee: treasuryFee,
+      tax_fee: taxFee,
       message: message || '',
       beacon_id: beaconId,
       tipper,
@@ -206,20 +206,20 @@ async function verifyTipPayment(proof, connection, expectedRecipient, expectedAm
       return { valid: false, error: 'Transaction not found or not confirmed' };
     }
 
-    // Calculate expected amounts (5% to treasury, 95% to recipient)
-    const treasuryFee = expectedAmount * 0.05;
-    const recipientAmount = expectedAmount - treasuryFee;
+    // Calculate expected amounts (5% to tax wallet, 95% to recipient)
+    const taxFee = expectedAmount * 0.05;
+    const recipientAmount = expectedAmount - taxFee;
     const expectedRecipientLamports = Math.floor(recipientAmount * LAMPORTS_PER_SOL);
-    const expectedTreasuryLamports = Math.floor(treasuryFee * LAMPORTS_PER_SOL);
+    const expectedTaxLamports = Math.floor(taxFee * LAMPORTS_PER_SOL);
     
     const expectedRecipientPubkey = new PublicKey(expectedRecipient);
-    const treasuryPubkey = new PublicKey('hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6');
+    const taxWalletPubkey = new PublicKey('hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6');
 
-    // Check if transaction contains both transfers (recipient + treasury)
+    // Check if transaction contains both transfers (recipient + tax wallet)
     let recipientPaymentFound = false;
-    let treasuryPaymentFound = false;
+    let taxPaymentFound = false;
     let actualRecipientAmount = 0;
-    let actualTreasuryAmount = 0;
+    let actualTaxAmount = 0;
 
     if (transaction.meta?.preBalances && transaction.meta?.postBalances) {
       const accounts = transaction.transaction.message.accountKeys;
@@ -236,21 +236,21 @@ async function verifyTipPayment(proof, connection, expectedRecipient, expectedAm
         }
       }
       
-      // Check treasury payment
-      const treasuryIndex = accounts.findIndex(key => key.equals(treasuryPubkey));
-      if (treasuryIndex !== -1) {
-        const preBalance = transaction.meta.preBalances[treasuryIndex];
-        const postBalance = transaction.meta.postBalances[treasuryIndex];
-        actualTreasuryAmount = postBalance - preBalance;
+      // Check tax wallet payment
+      const taxIndex = accounts.findIndex(key => key.equals(taxWalletPubkey));
+      if (taxIndex !== -1) {
+        const preBalance = transaction.meta.preBalances[taxIndex];
+        const postBalance = transaction.meta.postBalances[taxIndex];
+        actualTaxAmount = postBalance - preBalance;
         
-        if (actualTreasuryAmount >= expectedTreasuryLamports) {
-          treasuryPaymentFound = true;
+        if (actualTaxAmount >= expectedTaxLamports) {
+          taxPaymentFound = true;
         }
       }
     }
 
     // Alternative verification: check transaction instructions
-    if ((!recipientPaymentFound || !treasuryPaymentFound) && transaction.transaction?.message?.instructions) {
+    if ((!recipientPaymentFound || !taxPaymentFound) && transaction.transaction?.message?.instructions) {
       const accounts = transaction.transaction.message.accountKeys;
       for (const instruction of transaction.transaction.message.instructions) {
         const programId = accounts[instruction.programIdIndex];
@@ -263,9 +263,9 @@ async function verifyTipPayment(proof, connection, expectedRecipient, expectedAm
               actualRecipientAmount = expectedRecipientLamports;
             }
             
-            if (toAccount && toAccount.equals(treasuryPubkey)) {
-              treasuryPaymentFound = true;
-              actualTreasuryAmount = expectedTreasuryLamports;
+            if (toAccount && toAccount.equals(taxWalletPubkey)) {
+              taxPaymentFound = true;
+              actualTaxAmount = expectedTaxLamports;
             }
           }
         }
@@ -276,14 +276,14 @@ async function verifyTipPayment(proof, connection, expectedRecipient, expectedAm
       return { valid: false, error: 'Recipient payment not found or insufficient amount' };
     }
     
-    if (!treasuryPaymentFound) {
-      return { valid: false, error: 'Treasury fee payment not found or insufficient amount' };
+    if (!taxPaymentFound) {
+      return { valid: false, error: 'Tax fee payment not found or insufficient amount' };
     }
 
     console.log('✅ Tip payment verified:', {
       recipientAmount: actualRecipientAmount / LAMPORTS_PER_SOL,
-      treasuryAmount: actualTreasuryAmount / LAMPORTS_PER_SOL,
-      totalAmount: (actualRecipientAmount + actualTreasuryAmount) / LAMPORTS_PER_SOL
+      taxAmount: actualTaxAmount / LAMPORTS_PER_SOL,
+      totalAmount: (actualRecipientAmount + actualTaxAmount) / LAMPORTS_PER_SOL
     });
 
     // Verify network (mainnet only)

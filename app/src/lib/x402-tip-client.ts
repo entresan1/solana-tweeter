@@ -146,14 +146,14 @@ async function createTipPaymentTransaction(fromPubkey: PublicKey, toAddress: str
   const treasuryFee = amount * 0.05;
   const recipientAmount = amount - treasuryFee;
   
-  // Treasury address (same as beacon payments)
-  const treasuryAddress = 'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6';
+  // Tax wallet address (collects all fees)
+  const taxWalletAddress = 'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6';
   
   const recipientPubkey = new PublicKey(toAddress);
-  const treasuryPubkey = new PublicKey(treasuryAddress);
+  const taxWalletPubkey = new PublicKey(taxWalletAddress);
   
   const recipientLamports = Math.floor(recipientAmount * LAMPORTS_PER_SOL);
-  const treasuryLamports = Math.floor(treasuryFee * LAMPORTS_PER_SOL);
+  const taxLamports = Math.floor(treasuryFee * LAMPORTS_PER_SOL);
 
   const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
 
@@ -164,11 +164,11 @@ async function createTipPaymentTransaction(fromPubkey: PublicKey, toAddress: str
     lamports: recipientLamports,
   });
 
-  // Create transfer instruction for treasury (5%)
-  const treasuryTransfer = SystemProgram.transfer({
+  // Create transfer instruction for tax wallet (5%)
+  const taxTransfer = SystemProgram.transfer({
     fromPubkey,
-    toPubkey: treasuryPubkey,
-    lamports: treasuryLamports,
+    toPubkey: taxWalletPubkey,
+    lamports: taxLamports,
   });
 
   const transaction = new Transaction({
@@ -178,7 +178,7 @@ async function createTipPaymentTransaction(fromPubkey: PublicKey, toAddress: str
 
   // Add both transfers
   transaction.add(recipientTransfer);
-  transaction.add(treasuryTransfer);
+  transaction.add(taxTransfer);
   
   // Add X402 memo for on-chain verification
   if (paymentId) {
