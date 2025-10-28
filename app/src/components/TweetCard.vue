@@ -176,8 +176,9 @@ const isLoadingQuote = ref(false);
         if (profile) {
           authorProfile.value = profile;
           authorDisplayName.value = profile.nickname || authorAddress.slice(0, 8) + '...';
-          authorAvatar.value = profile.profile_picture_url || '';
-          console.log('🖼️ Profile loaded - Display name:', authorDisplayName.value, 'Avatar:', authorAvatar.value);
+          // Always use generated avatar, no custom profile pictures
+          authorAvatar.value = '';
+          console.log('🖼️ Profile loaded - Display name:', authorDisplayName.value, 'Using generated avatar');
         } else {
           // No profile found - use default display name
           authorDisplayName.value = authorAddress.slice(0, 8) + '...';
@@ -190,6 +191,7 @@ const isLoadingQuote = ref(false);
         console.warn('Profile fetch failed (this is normal for new users):', error);
         authorDisplayName.value = authorAddress.slice(0, 8) + '...';
         authorProfile.value = null;
+        // Always use generated avatar, no custom profile pictures
         authorAvatar.value = '';
         console.log('🖼️ Profile fetch failed - using default display name:', authorDisplayName.value);
       }
@@ -197,6 +199,7 @@ const isLoadingQuote = ref(false);
       // Reset profile data if no author
       authorProfile.value = null;
       authorDisplayName.value = '';
+      // Always use generated avatar, no custom profile pictures
       authorAvatar.value = '';
     }
   };

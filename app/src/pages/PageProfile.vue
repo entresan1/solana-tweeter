@@ -155,14 +155,15 @@
         profile.value = userProfile;
         nickname.value = userProfile.nickname || '';
         bio.value = userProfile.bio || '';
-        profilePictureUrl.value = userProfile.profile_picture_url || '';
+        // Profile picture is auto-generated, no custom URL needed
+        profilePictureUrl.value = '';
       } else {
         // Create default profile
         profile.value = {
           wallet_address: walletAddress,
           nickname: '',
           bio: '',
-          profile_picture_url: ''
+          profile_picture_url: '' // Always empty - using generated avatars
         };
       }
     } catch (error) {
@@ -254,7 +255,8 @@
     // Reset to original values
     nickname.value = profile.value?.nickname || '';
     bio.value = profile.value?.bio || '';
-    profilePictureUrl.value = profile.value?.profile_picture_url || '';
+    // Profile picture is auto-generated, no need to reset
+    profilePictureUrl.value = '';
   };
 
   const saveProfile = async () => {
@@ -265,7 +267,7 @@
         wallet_address: wallet.value.publicKey.toBase58(),
         nickname: nickname.value,
         bio: bio.value,
-        profile_picture_url: profilePictureUrl.value
+        profile_picture_url: '' // Always empty - using generated avatars
       });
 
       profile.value = updatedProfile;
@@ -275,18 +277,7 @@
     }
   };
 
-  const handleImageUpload = (event: Event) => {
-    const target = event.target as HTMLInputElement;
-    const file = target.files?.[0];
-    if (file) {
-      // For now, we'll use a placeholder. In production, you'd upload to a service like Cloudinary
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        profilePictureUrl.value = e.target?.result as string;
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  // Removed custom image upload - using generated avatars only
 </script>
 
 <template>
@@ -294,17 +285,11 @@
     <!-- Profile Header -->
     <div class="card mb-6">
       <div class="flex items-start space-x-6">
-        <!-- Profile Picture -->
+        <!-- Profile Picture - Generated Avatar Only -->
         <div class="relative group">
           <div class="w-24 h-24 rounded-full bg-gradient-to-r from-primary-500 to-solana-500 flex items-center justify-center overflow-hidden">
             <img 
-              v-if="shouldShowProfilePicture" 
-              :src="safeProfilePictureUrl" 
-              :alt="nickname || 'Profile'"
-              class="w-full h-full object-cover"
-            />
-            <img 
-              v-else-if="defaultAvatar"
+              v-if="defaultAvatar"
               :src="defaultAvatar" 
               :alt="nickname || 'Profile'"
               class="w-full h-full object-cover"
@@ -313,24 +298,13 @@
               {{ (nickname || wallet?.publicKey?.toBase58() || 'U').charAt(0).toUpperCase() }}
             </span>
           </div>
-          <!-- Camera overlay for editing mode -->
-          <div v-if="isOwnProfile && editing" class="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 hover:opacity-100 transition-opacity duration-200">
-            <label class="cursor-pointer bg-primary-500 hover:bg-primary-600 text-white p-3 rounded-full transition-all duration-200 hover:scale-110 shadow-lg">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <input type="file" accept="image/*" @change="handleImageUpload" class="hidden" />
-            </label>
-          </div>
           
-          <!-- Hover indicator for non-editing mode -->
-          <div v-else-if="isOwnProfile" class="absolute inset-0 flex items-center justify-center bg-black/30 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            <div class="bg-white/20 text-white p-2 rounded-full">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-              </svg>
-            </div>
+          <!-- Avatar indicator -->
+          <div v-if="isOwnProfile" class="absolute -bottom-1 -right-1 bg-primary-500 text-white text-xs px-2 py-1 rounded-full shadow-lg">
+            <svg class="w-3 h-3 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" />
+            </svg>
+            Auto
           </div>
         </div>
 
@@ -379,15 +353,7 @@
                 maxlength="160"
               ></textarea>
             </div>
-            <div>
-              <label class="block text-sm font-medium text-dark-300 mb-2">Profile Picture URL</label>
-              <input
-                v-model="profilePictureUrl"
-                type="url"
-                placeholder="https://example.com/image.jpg"
-                class="input-field w-full"
-              />
-            </div>
+            <!-- Profile Picture is auto-generated - no manual input needed -->
             <div class="flex space-x-3">
               <button @click="saveProfile" class="btn-primary px-4 py-2">
                 Save Changes
