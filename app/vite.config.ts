@@ -16,5 +16,8 @@ export default defineConfig({
   define: {
     'process.env': {},
   },
+  build: {
+    target: 'es2020', // Support BigInt
+  },
   plugins: [vue()],
 });

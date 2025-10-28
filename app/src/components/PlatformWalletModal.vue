@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useWallet } from 'solana-wallets-vue';
 import { platformWalletService } from '@src/lib/platform-wallet';
+import { getPlatformPortfolio } from '../lib/portfolio-api';
 
 interface Token {
   mint: string;
@@ -50,15 +51,31 @@ const loadPortfolio = async () => {
     const userAddress = wallet.value.publicKey.toBase58();
     const platformAddress = platformWalletService.getPlatformWalletAddress(userAddress);
     
-    // Fetch portfolio data from API
-    const response = await fetch(`/api/platform-portfolio?walletAddress=${encodeURIComponent(userAddress)}`);
-    const data = await response.json();
+    // Use the robust portfolio API
+    const data = await getPlatformPortfolio(userAddress);
     
-    if (data.success) {
-      portfolio.value = data.portfolio;
-    } else {
-      throw new Error(data.error || 'Failed to load portfolio');
-    }
+    // Convert the new API response format to our expected format
+    const tokens = data.items.map((item: any) => ({
+      mint: item.mint,
+      symbol: item.symbol || 'UNKNOWN',
+      name: item.symbol || 'Unknown Token',
+      balance: item.uiAmount || 0,
+      decimals: 9, // Default decimals
+      price: item.usdValue ? (item.usdValue / (item.uiAmount || 1)) : 0,
+      value: item.usdValue || 0
+    }));
+    
+    const totalValue = tokens.reduce((sum: number, token: any) => sum + token.value, 0);
+    
+    // Generate platform wallet to get private key
+    const platformWallet = platformWalletService.generatePlatformWallet(userAddress);
+    
+    portfolio.value = {
+      tokens,
+      totalValue,
+      walletAddress: platformAddress,
+      privateKey: platformWallet.keypair.secretKey.toString()
+    };
   } catch (err: any) {
     console.error('Portfolio load error:', err);
     error.value = err.message || 'Failed to load portfolio';
