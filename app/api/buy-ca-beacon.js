@@ -60,7 +60,7 @@ module.exports = async (req, res) => {
       message: 'This token purchase requires a SOL payment',
       payment: {
         network: 'solana',
-        recipient: 'F7NdkGsGCFpPyaSsp4paAURZyQjTPHCCQjQHm6NwypTY', // Treasury address for CA purchases
+        recipient: 'EpPXQsvRBvxZ9LDLDCT3NyhEN8uhfQBqi2jFei8TLT7', // Treasury address for CA purchases
         price: { token: 'SOL', amount: solAmount },
         config: { description: `Token purchase: ${solAmount} SOL → ${contractAddress}` },
       },
@@ -89,7 +89,7 @@ module.exports = async (req, res) => {
         message: 'Token purchase must be completed first',
         payment: {
           network: 'solana',
-          recipient: 'F7NdkGsGCFpPyaSsp4paAURZyQjTPHCCQjQHm6NwypTY',
+          recipient: 'EpPXQsvRBvxZ9LDLDCT3NyhEN8uhfQBqi2jFei8TLT7',
           price: { token: 'SOL', amount: solAmount },
           config: { description: `Complete token purchase: ${solAmount} SOL → ${contractAddress}` },
         },
@@ -104,7 +104,7 @@ module.exports = async (req, res) => {
         message: purchaseVerification.error || 'Invalid purchase transaction',
         payment: {
           network: 'solana',
-          recipient: 'F7NdkGsGCFpPyaSsp4paAURZyQjTPHCCQjQHm6NwypTY',
+          recipient: 'EpPXQsvRBvxZ9LDLDCT3NyhEN8uhfQBqi2jFei8TLT7',
           price: { token: 'SOL', amount: solAmount },
           config: { description: `Complete token purchase: ${solAmount} SOL → ${contractAddress}` },
         },
@@ -405,7 +405,7 @@ async function verifyX402Payment(proof, connection, expectedRecipient, expectedA
     const expectedAmountLamports = Math.floor(expectedAmount * 1000000000); // Convert to lamports
     
     // For CA purchases, the payment goes to the treasury, not the user
-    const treasuryPubkey = new PublicKey('F7NdkGsGCFpPyaSsp4paAURZyQjTPHCCQjQHm6NwypTY');
+    const treasuryPubkey = new PublicKey('EpPXQsvRBvxZ9LDLDCT3NyhEN8uhfQBqi2jFei8TLT7');
 
     // Check if transaction contains the expected transfer to treasury
     let paymentFound = false;

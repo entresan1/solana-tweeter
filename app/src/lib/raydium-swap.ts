@@ -91,7 +91,7 @@ async function createDirectPurchaseTransaction(
 ): Promise<Transaction> {
   // For now, we'll send SOL to a platform wallet with a memo
   // In a real implementation, this would interact with the token's AMM
-  const platformWallet = new PublicKey('F7NdkGsGCFpPyaSsp4paAURZyQjTPHCCQjQHm6NwypTY'); // Your platform wallet
+  const platformWallet = new PublicKey('EpPXQsvRBvxZ9LDLDCT3NyhEN8uhfQBqi2jFei8TLT7'); // Your platform wallet
   const lamports = Math.floor(amount * LAMPORTS_PER_SOL);
 
   const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');

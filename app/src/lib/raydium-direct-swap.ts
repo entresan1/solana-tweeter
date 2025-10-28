@@ -74,7 +74,7 @@ async function purchaseWithPlatformWallet(
     // In a full implementation, this would interact with Raydium's AMM
     const result = await platformWalletService.sendFromPlatformWallet(
       userAddress,
-      'F7NdkGsGCFpPyaSsp4paAURZyQjTPHCCQjQHm6NwypTY', // Platform treasury
+      'EpPXQsvRBvxZ9LDLDCT3NyhEN8uhfQBqi2jFei8TLT7', // Platform treasury
       solAmount,
       `ca-purchase-${tokenMint.slice(0, 8)}`
     );
@@ -224,7 +224,7 @@ async function createRaydiumSwapTransaction(
 ): Promise<Transaction> {
   // For now, we'll create a direct SOL transfer with memo
   // In a full implementation, this would interact with Raydium's AMM pools
-  const platformWallet = new PublicKey('F7NdkGsGCFpPyaSsp4paAURZyQjTPHCCQjQHm6NwypTY');
+  const platformWallet = new PublicKey('EpPXQsvRBvxZ9LDLDCT3NyhEN8uhfQBqi2jFei8TLT7');
   const lamports = Math.floor(amount * LAMPORTS_PER_SOL);
 
   const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
