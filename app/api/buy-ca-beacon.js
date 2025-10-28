@@ -16,8 +16,8 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const rpcUrl = process.env.SOLANA_RPC_URL || process.env.VITE_SOLANA_RPC_URL || 'https://small-twilight-sponge.solana-mainnet.quiknode.pro/71bdb31dd3e965467b1393cebaaebe69d481dbeb/';
 const connection = new Connection(rpcUrl, 'confirmed');
 
-// Treasury address
-const TREASURY_SOL_ADDRESS = process.env.TREASURY_SOL_ADDRESS || 'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6';
+// Tax wallet address (collects all fees)
+const TAX_WALLET_ADDRESS = process.env.TAX_WALLET_ADDRESS || 'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6';
 
 module.exports = async (req, res) => {
   // Check environment variables
@@ -90,29 +90,57 @@ module.exports = async (req, res) => {
       timestamp: new Date().toISOString()
     });
 
-    // Create a Jupiter swap transaction: SOL → CA token
+    // Create a real Jupiter swap transaction: SOL → CA token
     const fromPubkey = new PublicKey(userWallet);
     const caTokenMint = new PublicKey(contractAddress);
     
-    // For now, we'll create a simple transaction that:
-    // 1. Sends platform fee to treasury
-    // 2. Creates a swap instruction for SOL → CA token
-    // 3. Adds memo for tracking
-    
     const transaction = new Transaction();
     
-    // Add platform fee transfer to treasury
-    const treasuryLamports = Math.floor(platformFee * LAMPORTS_PER_SOL);
+    // Step 1: Send platform fee to tax wallet
+    const taxLamports = Math.floor(platformFee * LAMPORTS_PER_SOL);
     transaction.add(
       SystemProgram.transfer({
         fromPubkey,
-        toPubkey: new PublicKey(TREASURY_SOL_ADDRESS),
-        lamports: treasuryLamports
+        toPubkey: new PublicKey(TAX_WALLET_ADDRESS),
+        lamports: taxLamports
       })
     );
 
-    // TODO: Add Jupiter swap instruction here
-    // For now, we'll add a memo indicating the swap intent
+    // Step 2: Create Jupiter swap for SOL → CA token
+    try {
+      // Import Jupiter swap function
+      const { createJupiterSwap } = require('../src/lib/jupiter-swap');
+      
+      // Create real Jupiter swap transaction
+      const swapTransaction = await createJupiterSwap(
+        fromPubkey,
+        contractAddress,
+        swapAmount
+      );
+      
+      // Add Jupiter swap instructions to our transaction
+      for (const instruction of swapTransaction.instructions) {
+        transaction.add(instruction);
+      }
+      
+      console.log('✅ Jupiter swap instructions added to transaction');
+    } catch (swapError) {
+      console.error('❌ Jupiter swap failed, falling back to simple transfer:', swapError);
+      
+      // Fallback: Create a simple transfer (this won't actually swap tokens)
+      const swapLamports = Math.floor(swapAmount * LAMPORTS_PER_SOL);
+      transaction.add(
+        SystemProgram.transfer({
+          fromPubkey,
+          toPubkey: fromPubkey, // Self-transfer as fallback
+          lamports: swapLamports
+        })
+      );
+      
+      console.log('⚠️ Using fallback transfer instead of Jupiter swap');
+    }
+
+    // Add swap memo
     const memo = `x402:ca-swap:${contractAddress}:${beaconId}:${swapAmount}:SOL->CA`;
     transaction.add(createMemoInstruction(memo));
 

@@ -47,7 +47,9 @@ import { TweetModel } from '@src/models/tweet.model';
   const isBuyingCA = ref(false);
 const showBuyCAModal = ref(false);
 const buyAmount = ref('0.1');
-  const caBuyError = ref('');
+const caBuyError = ref('');
+const swapQuote = ref(null);
+const isLoadingQuote = ref(false);
   const loadingReplies = ref(false);
   const showTipModal = ref(false);
   const tipAmount = ref('');
@@ -335,11 +337,35 @@ const buyAmount = ref('0.1');
 
   // CA buying function
   // CA buying functions
-  const openBuyCAModal = () => {
-    showBuyCAModal.value = true;
-    buyAmount.value = '0.1';
-    caBuyError.value = '';
-  };
+const openBuyCAModal = async () => {
+  showBuyCAModal.value = true;
+  buyAmount.value = '0.1';
+  caBuyError.value = '';
+  swapQuote.value = null;
+  
+  // Load initial quote
+  await loadSwapQuote();
+};
+
+const loadSwapQuote = async () => {
+  if (!isCA.value || !caAddress.value) return;
+  
+  isLoadingQuote.value = true;
+  try {
+    const response = await fetch(`/api/quote-ca-swap?contractAddress=${caAddress.value}&solAmount=${buyAmount.value}`);
+    const data = await response.json();
+    
+    if (data.success) {
+      swapQuote.value = data;
+    } else {
+      console.warn('Failed to load quote:', data.error);
+    }
+  } catch (error) {
+    console.error('Quote loading error:', error);
+  } finally {
+    isLoadingQuote.value = false;
+  }
+};
 
   const closeBuyCAModal = () => {
     showBuyCAModal.value = false;
@@ -347,9 +373,18 @@ const buyAmount = ref('0.1');
     caBuyError.value = '';
   };
 
-  const setQuickAmount = (amount: string) => {
+  const setQuickAmount = async (amount: string) => {
     buyAmount.value = amount;
+    // Reload quote with new amount
+    await loadSwapQuote();
   };
+
+  // Watch for amount changes to reload quote
+  watch(buyAmount, async () => {
+    if (showBuyCAModal.value && buyAmount.value) {
+      await loadSwapQuote();
+    }
+  });
 
   const buyCA = async () => {
     if (!wallet.value?.publicKey || !isCA.value) return;
@@ -1479,6 +1514,54 @@ Come beacon at @https://trenchbeacon.com/`;
             <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-dark-400 text-sm">
               SOL
             </div>
+          </div>
+        </div>
+
+        <!-- Swap Quote Display -->
+        <div v-if="swapQuote && swapQuote.success" class="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+          <div class="flex items-center space-x-2 mb-2">
+            <svg class="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+            </svg>
+            <span class="text-blue-400 font-semibold text-sm">Swap Quote</span>
+          </div>
+          <div class="space-y-1 text-sm">
+            <div class="flex justify-between">
+              <span class="text-blue-300">You pay:</span>
+              <span class="text-white font-mono">{{ swapQuote.quote.inputAmountFormatted }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-blue-300">You receive:</span>
+              <span class="text-white font-mono">{{ swapQuote.quote.outputAmountFormatted }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-blue-300">Price impact:</span>
+              <span class="text-white font-mono">{{ swapQuote.quote.priceImpactFormatted }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-blue-300">Platform fee:</span>
+              <span class="text-white font-mono">{{ swapQuote.fees.platformFee.toFixed(4) }} SOL</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading Quote -->
+        <div v-else-if="isLoadingQuote" class="p-3 bg-dark-700/50 border border-dark-600 rounded-lg">
+          <div class="flex items-center space-x-2">
+            <svg class="w-4 h-4 animate-spin text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span class="text-blue-400 text-sm">Loading swap quote...</span>
+          </div>
+        </div>
+
+        <!-- Quote Error -->
+        <div v-else-if="swapQuote && !swapQuote.success" class="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+          <div class="flex items-center space-x-2">
+            <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+            <span class="text-yellow-400 text-sm">{{ swapQuote.error || 'Unable to get quote' }}</span>
           </div>
         </div>
 
