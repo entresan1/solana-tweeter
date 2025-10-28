@@ -1343,13 +1343,13 @@ Come beacon at @https://trenchbeacon.com/`;
       @balance-updated="handlePlatformWalletBalanceUpdated"
     />
 
-    <!-- Buy CA Modal -->
+    <!-- Buy CA Modal - Like Reply Window -->
     <div 
       v-if="showBuyCAModal" 
-      class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-start justify-center p-4 pt-20"
+      class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
       @click.self="closeBuyCAModal"
     >
-      <div class="bg-gradient-to-br from-dark-900 to-dark-800 rounded-2xl border border-dark-700/50 w-full max-w-lg overflow-hidden shadow-2xl backdrop-blur-xl relative mt-8">
+      <div class="bg-gradient-to-br from-dark-900 to-dark-800 rounded-2xl border border-dark-700/50 w-full max-w-2xl overflow-hidden shadow-2xl backdrop-blur-xl relative">
         <!-- Modal Header -->
         <div class="flex items-center justify-between p-6 border-b border-dark-700/50 bg-gradient-to-r from-green-500/5 to-emerald-500/5">
           <div class="flex items-center space-x-3">
@@ -1374,42 +1374,42 @@ Come beacon at @https://trenchbeacon.com/`;
         </div>
 
         <!-- Modal Content -->
-        <div class="p-8">
+        <div class="p-6">
           <!-- Contract Address Display -->
-          <div class="mb-8 p-6 bg-green-500/10 border border-green-500/20 rounded-xl">
-            <div class="flex items-center space-x-3 mb-3">
-              <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+          <div class="mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-xl">
+            <div class="flex items-center space-x-2 mb-2">
+              <svg class="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" />
               </svg>
-              <span class="text-green-400 font-semibold text-base">Contract Address</span>
+              <span class="text-green-400 font-semibold text-sm">Contract Address</span>
             </div>
-            <p class="text-green-300 font-mono text-sm break-all bg-dark-800/50 p-3 rounded-lg">{{ caAddress }}</p>
+            <p class="text-green-300 font-mono text-xs break-all bg-dark-800/50 p-2 rounded-lg">{{ caAddress }}</p>
           </div>
 
           <!-- Amount Input -->
-          <div class="mb-8">
-            <label class="block text-base font-semibold text-white mb-4">Amount (SOL)</label>
+          <div class="mb-6">
+            <label class="block text-sm font-semibold text-white mb-3">Amount (SOL)</label>
             
             <!-- Quick Selection Buttons -->
-            <div class="flex space-x-3 mb-6">
+            <div class="flex space-x-2 mb-4">
               <button
                 @click="setQuickAmount('0.1')"
                 :class="buyAmount === '0.1' ? 'bg-green-500 text-white shadow-lg' : 'bg-dark-700 text-dark-300 hover:bg-dark-600'"
-                class="px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 hover:scale-105"
+                class="px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-300 hover:scale-105"
               >
                 0.1 SOL
               </button>
               <button
                 @click="setQuickAmount('0.5')"
                 :class="buyAmount === '0.5' ? 'bg-green-500 text-white shadow-lg' : 'bg-dark-700 text-dark-300 hover:bg-dark-600'"
-                class="px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 hover:scale-105"
+                class="px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-300 hover:scale-105"
               >
                 0.5 SOL
               </button>
               <button
                 @click="setQuickAmount('1')"
                 :class="buyAmount === '1' ? 'bg-green-500 text-white shadow-lg' : 'bg-dark-700 text-dark-300 hover:bg-dark-600'"
-                class="px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 hover:scale-105"
+                class="px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-300 hover:scale-105"
               >
                 1 SOL
               </button>
@@ -1422,19 +1422,19 @@ Come beacon at @https://trenchbeacon.com/`;
                 step="0.01"
                 min="0.01"
                 placeholder="0.1"
-                class="w-full px-6 py-4 bg-dark-800 border-2 border-dark-600 rounded-xl text-white placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 transition-all duration-300 text-lg"
+                class="w-full px-4 py-3 bg-dark-800 border-2 border-dark-600 rounded-xl text-white placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 transition-all duration-300"
               />
-              <div class="absolute right-4 top-1/2 transform -translate-y-1/2 text-dark-400 text-base font-medium">
+              <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-dark-400 text-sm font-medium">
                 SOL
               </div>
             </div>
-            <p class="text-sm text-dark-400 mt-2">Enter the amount of SOL you want to spend</p>
+            <p class="text-xs text-dark-400 mt-1">Enter the amount of SOL you want to spend</p>
           </div>
 
           <!-- Error Message -->
-          <div v-if="caBuyError" class="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
-            <div class="flex items-center space-x-3">
-              <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+          <div v-if="caBuyError" class="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+            <div class="flex items-center space-x-2">
+              <svg class="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
               </svg>
               <span class="text-red-400 text-sm font-medium">{{ caBuyError }}</span>
@@ -1442,23 +1442,23 @@ Come beacon at @https://trenchbeacon.com/`;
           </div>
 
           <!-- Action Buttons -->
-          <div class="flex space-x-4">
+          <div class="flex space-x-3">
             <button 
               @click="closeBuyCAModal"
-              class="flex-1 px-6 py-4 bg-dark-700 hover:bg-dark-600 text-white rounded-xl transition-colors font-semibold text-base"
+              class="flex-1 px-4 py-3 bg-dark-700 hover:bg-dark-600 text-white rounded-xl transition-colors font-semibold"
             >
               Cancel
             </button>
             <button 
               @click="buyCA"
               :disabled="isBuyingCA || !buyAmount"
-              class="flex-1 px-6 py-4 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-xl transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed font-bold text-base shadow-lg hover:shadow-green-500/25"
+              class="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-xl transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed font-bold shadow-lg hover:shadow-green-500/25"
             >
-              <div class="flex items-center justify-center space-x-3">
-                <svg v-if="isBuyingCA" class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="flex items-center justify-center space-x-2">
+                <svg v-if="isBuyingCA" class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                 </svg>
                 <span>{{ isBuyingCA ? 'Buying...' : 'Buy Tokens' }}</span>
