@@ -39,32 +39,32 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Try real Jupiter API first
+    // Use QuickNode Jupiter API with Metis integration
     let quote = null;
     let useMockData = false;
     
     try {
       const { getJupiterQuote } = require('../src/lib/jupiter-swap');
       
-      console.log('🔄 Getting real Jupiter quote for:', { contractAddress, solAmount });
+      console.log('🔄 Getting QuickNode Jupiter quote for:', { contractAddress, solAmount });
       
-      // Get quote for SOL → CA token swap
+      // Get quote for SOL → CA token swap using QuickNode
       quote = await getJupiterQuote(contractAddress, parseFloat(solAmount));
       
       if (!quote.success) {
-        console.error('❌ Jupiter quote failed:', quote.error);
+        console.error('❌ QuickNode Jupiter quote failed:', quote.error);
         useMockData = true;
       } else {
-        console.log('✅ Real Jupiter quote received:', quote);
+        console.log('✅ QuickNode Jupiter quote received:', quote);
       }
     } catch (jupiterError) {
-      console.error('❌ Jupiter API error:', jupiterError);
+      console.error('❌ QuickNode Jupiter API error:', jupiterError);
       useMockData = true;
     }
     
-    // Fallback to mock data if Jupiter fails
+    // Fallback to mock data if QuickNode Jupiter fails
     if (useMockData) {
-      console.log('🔄 Using mock quote data as fallback');
+      console.log('🔄 Using mock quote data as fallback (QuickNode Jupiter unavailable)');
       quote = {
         inputAmount: Math.floor(parseFloat(solAmount) * 1e9), // Convert to lamports
         outputAmount: Math.floor(parseFloat(solAmount) * 1e6), // Mock output (1:1000 ratio)

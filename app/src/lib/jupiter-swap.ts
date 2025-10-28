@@ -154,33 +154,11 @@ export async function getJupiterQuote(
       success: true
     };
   } catch (error: any) {
-    console.error('❌ Jupiter quote error:', error);
-    
-    // Fallback to standard Jupiter API
-    try {
-      console.log('🔄 Trying standard Jupiter API as fallback...');
-      const fallbackUrl = `https://quote-api.jup.ag/v6/quote?inputMint=${inputMint}&outputMint=${tokenMint}&amount=${amount}&slippageBps=${slippageBps}`;
-      
-      const fallbackResponse = await fetch(fallbackUrl);
-      const fallbackQuote = await fallbackResponse.json();
-      
-      if (fallbackResponse.ok) {
-        console.log('✅ Fallback Jupiter quote received');
-        return {
-          inputAmount: fallbackQuote.inAmount,
-          outputAmount: fallbackQuote.outAmount,
-          priceImpact: fallbackQuote.priceImpactPct,
-          route: fallbackQuote.routePlan?.length || 0,
-          success: true
-        };
-      }
-    } catch (fallbackError) {
-      console.error('❌ Fallback also failed:', fallbackError);
-    }
+    console.error('❌ QuickNode Jupiter API error:', error);
     
     return {
       success: false,
-      error: error.message
+      error: `QuickNode Jupiter API failed: ${error.message}`
     };
   }
 }
