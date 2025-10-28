@@ -1,4 +1,5 @@
 const { Keypair, PublicKey, Connection, SystemProgram, LAMPORTS_PER_SOL, Transaction } = require('@solana/web3.js');
+const { createMemoInstruction } = require('@solana/spl-memo');
 const { createClient } = require('@supabase/supabase-js');
 const crypto = require('crypto');
 
@@ -71,7 +72,7 @@ async function getPlatformWalletBalance(userWalletAddress) {
 /**
  * Send SOL from platform wallet (server-side only)
  */
-async function sendFromPlatformWallet(fromUserAddress, toAddress, amount) {
+async function sendFromPlatformWallet(fromUserAddress, toAddress, amount, transactionType = 'platform-transfer') {
   try {
     const fromKeypair = getPlatformWalletKeypair(fromUserAddress);
     const toPubkey = new PublicKey(toAddress);
@@ -84,13 +85,21 @@ async function sendFromPlatformWallet(fromUserAddress, toAddress, amount) {
     }
 
     // Create transaction
-    const transaction = new Transaction().add(
+    const transaction = new Transaction();
+    
+    // Add transfer instruction
+    transaction.add(
       SystemProgram.transfer({
         fromPubkey: fromKeypair.publicKey,
         toPubkey: toPubkey,
         lamports: lamports,
       })
     );
+
+    // Add X402 memo for transaction identification
+    const memo = `x402:platform-${transactionType}:${fromUserAddress.slice(0, 8)}:${amount}`;
+    const memoInstruction = createMemoInstruction(memo, [fromKeypair.publicKey]);
+    transaction.add(memoInstruction);
 
     // Send transaction
     const signature = await connection.sendTransaction(transaction, [fromKeypair]);

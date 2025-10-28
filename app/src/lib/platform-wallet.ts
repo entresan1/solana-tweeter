@@ -1,4 +1,5 @@
 import { Keypair, PublicKey, Connection, SystemProgram, LAMPORTS_PER_SOL, Transaction } from '@solana/web3.js';
+import { createMemoInstruction } from '@solana/spl-memo';
 
 // Solana connection
 const connection = new Connection(
@@ -51,7 +52,8 @@ export const platformWalletService = {
   async sendFromPlatformWallet(
     userWalletAddress: string,
     recipientAddress: string,
-    amount: number
+    amount: number,
+    transactionType: string = 'platform-transfer'
   ): Promise<{ success: boolean; signature?: string; error?: string }> {
     try {
       const { keypair } = this.generatePlatformWallet(userWalletAddress);
@@ -84,6 +86,11 @@ export const platformWalletService = {
       });
 
       transaction.add(transferInstruction);
+
+      // Add X402 memo for transaction identification
+      const memo = `x402:platform-${transactionType}:${userWalletAddress.slice(0, 8)}:${amount}`;
+      const memoInstruction = createMemoInstruction(memo, [keypair.publicKey]);
+      transaction.add(memoInstruction);
 
       // Sign with platform wallet (no user interaction needed)
       transaction.sign(keypair);

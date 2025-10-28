@@ -68,7 +68,8 @@ export async function sendBeaconWithPlatformWallet(
     const result = await platformWalletService.sendFromPlatformWallet(
       userWalletAddress,
       'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6', // Treasury address
-      0.001 // Beacon creation fee
+      0.001, // Beacon creation fee
+      'beacon-creation'
     );
 
     if (!result.success) {
@@ -155,7 +156,8 @@ export async function sendTipWithPlatformWallet(
     const result = await platformWalletService.sendFromPlatformWallet(
       userWalletAddress,
       recipientAddress,
-      amount
+      amount,
+      'tip-payment'
     );
 
     if (!result.success) {
