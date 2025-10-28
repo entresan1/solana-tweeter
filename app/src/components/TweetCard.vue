@@ -28,6 +28,16 @@ import { TweetModel } from '@src/models/tweet.model';
   const replyContent = ref('');
   const replies = ref<any[]>([]);
   const showReplies = ref(false);
+  
+  // CA detection
+  const isCA = computed(() => {
+    const content = tweet.value?.content?.trim() || '';
+    return content.length === 44 && /^[1-9A-HJ-NP-Za-km-z]+$/.test(content);
+  });
+  
+  // CA buying state
+  const isBuyingCA = ref(false);
+  const caBuyError = ref('');
   const loadingReplies = ref(false);
   const showTipModal = ref(false);
   const tipAmount = ref('');
@@ -310,6 +320,43 @@ import { TweetModel } from '@src/models/tweet.model';
       console.error('❌ Error loading rug data:', error);
       rugCount.value = 0;
       isRugged.value = false;
+    }
+  };
+
+  // CA buying function
+  const buyCA = async () => {
+    if (!wallet.value?.publicKey || !isCA.value) return;
+    
+    isBuyingCA.value = true;
+    caBuyError.value = '';
+    
+    try {
+      const response = await fetch('/api/buy-ca-beacon', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          beaconId: tweet.value.id,
+          userWallet: wallet.value.publicKey.toBase58(),
+          contractAddress: tweet.value.content
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to buy CA beacon');
+      }
+      
+      console.log('✅ CA beacon bought successfully:', data);
+      // You could emit an event here to refresh the UI
+      
+    } catch (error: any) {
+      console.error('❌ CA buy error:', error);
+      caBuyError.value = error.message || 'Failed to buy CA beacon';
+    } finally {
+      isBuyingCA.value = false;
     }
   };
 
@@ -793,6 +840,20 @@ Come beacon at @https://trenchbeacon.com/`;
         <!-- Enhanced Tweet Content -->
         <div class="text-dark-100 leading-relaxed mb-4 group-hover:text-white transition-colors duration-300">
           <p class="whitespace-pre-wrap" v-text="tweet?.content || 'No content available'"></p>
+          
+          <!-- CA Indicator -->
+          <div v-if="isCA" class="mt-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+            <div class="flex items-center space-x-2">
+              <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" />
+              </svg>
+              <span class="text-green-400 font-medium">Contract Address Beacon</span>
+              <span class="text-green-300 text-sm">• Buy tokens directly from platform wallet</span>
+            </div>
+            <div class="mt-2 text-xs text-green-300 font-mono break-all">
+              {{ tweet?.content }}
+            </div>
+          </div>
         </div>
         
         <!-- Enhanced Topic Tag -->
@@ -872,6 +933,23 @@ Come beacon at @https://trenchbeacon.com/`;
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" />
               </svg>
               <span class="text-sm">Tip</span>
+            </button>
+            
+            <!-- CA Buy Button (only for CA beacons) -->
+            <button 
+              v-if="isCA && wallet?.publicKey"
+              @click="buyCA"
+              :disabled="isBuyingCA"
+              class="flex items-center space-x-2 bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg transition-all duration-300 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
+              :title="'Buy ' + tweet?.content + ' tokens directly'"
+            >
+              <svg v-if="!isBuyingCA" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+              </svg>
+              <svg v-else class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span class="text-sm font-medium">{{ isBuyingCA ? 'Buying...' : 'Buy CA' }}</span>
             </button>
             <button 
               @click="handleShareLink"

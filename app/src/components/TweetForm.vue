@@ -30,9 +30,17 @@
   const textarea = ref();
   useAutoResizeTextarea(textarea);
 
-  // Character limit / count-down
-  const characterLimit = useCountCharacterLimit(content, 200);
+  // CA detection and character limit
+  const isCA = computed(() => {
+    const text = content.value.trim();
+    // Check if it's a valid Solana address (44 characters, base58)
+    return text.length === 44 && /^[1-9A-HJ-NP-Za-km-z]+$/.test(text);
+  });
+
+  // Character limit / count-down (no limit for CA)
+  const characterLimit = useCountCharacterLimit(content, isCA.value ? 44 : 200);
   const characterLimitColour = computed(() => {
+    if (isCA.value) return 'text-green-400'; // Green for CA
     if (characterLimit.value < 0) return 'text-red-400';
     if (characterLimit.value <= 10) return 'text-yellow-400';
     return 'text-dark-400';
@@ -80,7 +88,69 @@
   });
 
   // Actions
-  const emit = defineEmits(['added']);
+  const emit = defineEmits(['added', 'ca-bought', 'gambled']);
+  
+  // Gamble function - buy random CA beacon
+  const handleGamble = async () => {
+    if (!connected.value) return;
+    
+    isSubmitting.value = true;
+    errorMessage.value = '';
+    
+    try {
+      // Fetch random CA beacon
+      const response = await fetch('/api/random-ca-beacon');
+      const data = await response.json();
+      
+      if (!data.success || !data.beacon) {
+        throw new Error('No CA beacons available to gamble');
+      }
+      
+      // Buy the random CA beacon
+      await buyCABeacon(data.beacon);
+      
+      emit('gambled', data.beacon);
+    } catch (error: any) {
+      console.error('Gamble error:', error);
+      errorMessage.value = error.message || 'Gamble failed. Please try again.';
+    } finally {
+      isSubmitting.value = false;
+    }
+  };
+  
+  // Buy CA beacon function
+  const buyCABeacon = async (beacon: any) => {
+    if (!connected.value) return;
+    
+    try {
+      const response = await fetch('/api/buy-ca-beacon', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          beaconId: beacon.id,
+          userWallet: wallet.value?.publicKey?.toBase58() || '',
+          contractAddress: beacon.content
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to buy CA beacon');
+      }
+      
+      // Refresh platform wallet balance
+      await loadPlatformWalletData();
+      
+      return data;
+    } catch (error) {
+      console.error('Buy CA beacon error:', error);
+      throw error;
+    }
+  };
+  
   const send = async () => {
     if (!canTweet.value) return;
     
@@ -90,6 +160,19 @@
     try {
       // Always try platform wallet first, automatic fallback to Phantom
       const tweet = await sendTweet(effectiveTopic.value, content.value, true);
+      
+      // Load current user's profile data to ensure it's available for the new beacon
+      if (wallet.value?.publicKey) {
+        try {
+          const { profileService } = await import('@src/lib/supabase');
+          const userAddress = wallet.value.publicKey.toBase58();
+          const profile = await profileService.getProfile(userAddress);
+          console.log('👤 Loaded current user profile for new beacon:', profile);
+        } catch (profileError) {
+          console.warn('⚠️ Failed to load current user profile:', profileError);
+        }
+      }
+      
       emit('added', tweet);
       content.value = '';
       topic.value = '';
@@ -162,11 +245,22 @@
             v-model="content"
             rows="1"
             class="w-full text-xl text-dark-100 placeholder-dark-400 bg-transparent focus:outline-none resize-none transition-all duration-300 focus:text-white"
-            placeholder="What's happening on Solana?"
+            :placeholder="isCA ? 'Enter Contract Address (44 characters)...' : 'What\'s happening on Solana?'"
             @focus="onFocus = true"
             @blur="onFocus = false"
             @input="handleContentChange"
           ></textarea>
+        </div>
+        
+        <!-- CA Detection Indicator -->
+        <div v-if="isCA" class="mt-2 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+          <div class="flex items-center space-x-2">
+            <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+            </svg>
+            <span class="text-green-400 font-medium">Contract Address Detected!</span>
+            <span class="text-green-300 text-sm">This will create a token beacon that others can buy directly.</span>
+          </div>
         </div>
       </div>
 
@@ -203,10 +297,21 @@
           <!-- Enhanced Character limit -->
           <div class="text-sm font-medium transition-all duration-300" :class="characterLimitColour">
             <span class="inline-flex items-center space-x-1">
-              <span>{{ characterLimit }}</span>
-              <span class="text-xs opacity-70">left</span>
+              <span v-if="isCA">CA (44/44)</span>
+              <span v-else>{{ characterLimit }} left</span>
             </span>
           </div>
+
+          <!-- Gamble Button -->
+          <button
+            v-if="connected && !isCA"
+            @click="handleGamble"
+            :disabled="isSubmitting"
+            class="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm font-medium rounded-lg transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Buy a random CA beacon with 5% platform fee"
+          >
+            🎲 Gamble (5% fee)
+          </button>
 
           <!-- Automatic Wallet Selection Info (only when connected) -->
           <div v-if="connected && platformWalletAddress" class="flex items-center space-x-3 text-sm">

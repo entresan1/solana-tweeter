@@ -31,8 +31,20 @@
   });
 
   // Watch for wallet changes
-  watch(wallet, (newWallet) => {
+  watch(wallet, async (newWallet) => {
     console.log('👤 Wallet changed:', newWallet?.publicKey?.toString());
+    
+    // Load profile data when wallet connects
+    if (newWallet?.publicKey) {
+      try {
+        const { profileService } = await import('@src/lib/supabase');
+        const userAddress = newWallet.publicKey.toBase58();
+        const profile = await profileService.getProfile(userAddress);
+        console.log('👤 Loaded profile data for connected wallet:', profile);
+      } catch (profileError) {
+        console.warn('⚠️ Failed to load profile data:', profileError);
+      }
+    }
   });
 </script>
 
