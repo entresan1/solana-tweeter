@@ -405,60 +405,29 @@ const loadSwapQuote = async () => {
         return;
       }
       
-      // Try Smart Payment first (Direct token purchase with X402)
-      try {
-        console.log('💰 Using Smart Payment (Direct token purchase with X402)');
-        
-        // Use the direct token purchase client (no Jupiter API needed)
-        const { sendDirectTokenPurchase } = await import('../lib/raydium-swap');
-        
-        const result = await sendDirectTokenPurchase(
-          caAddress.value,
-          solAmount,
-          wallet.value
-        );
-        
-        if (result.success) {
-          console.log('✅ CA beacon bought with Smart Payment!', {
-            signature: result.swapSignature,
-            amount: solAmount
-          });
-          
-          // Show success message
-          caBuyError.value = `✅ Smart Payment purchase successful! SOL sent for CA tokens. Transaction: ${result.swapSignature?.slice(0, 8)}...`;
-          
-          // Close modal after a delay
-          setTimeout(() => {
-            closeBuyCAModal();
-            caBuyError.value = '';
-          }, 3000);
-          
-          return; // Success, exit early
-        }
-      } catch (platformError) {
-        console.log('⚠️ Smart Payment failed, falling back to Phantom:', platformError);
-      }
+      // Use Smart CA Purchase with platform wallet prioritization
+      console.log('🚀 Starting Smart CA Purchase with platform wallet prioritization');
       
-      // Fallback to Phantom wallet (also use direct purchase)
-      console.log('💰 Using Phantom wallet (Direct purchase fallback)');
+      // Use the new smart CA purchase system
+      const { smartCAPurchase } = await import('../lib/raydium-direct-swap');
       
-      // Use the same direct token purchase client for consistency
-      const { sendDirectTokenPurchase } = await import('../lib/raydium-swap');
-      
-      const result = await sendDirectTokenPurchase(
+      const result = await smartCAPurchase(
         caAddress.value,
         solAmount,
         wallet.value
       );
       
       if (result.success) {
-        console.log('✅ CA beacon bought with Phantom!', {
+        console.log('✅ CA beacon bought with Smart Purchase!', {
           signature: result.swapSignature,
-          amount: solAmount
+          amount: solAmount,
+          purchaseType: result.purchaseType,
+          platformWallet: result.platformWallet
         });
         
-        // Show success message
-        caBuyError.value = `✅ Purchase successful! SOL sent for CA tokens. Transaction: ${result.swapSignature?.slice(0, 8)}...`;
+        // Show success message with purchase type
+        const purchaseType = result.platformWallet ? 'Smart Payment (Platform Wallet)' : 'User Wallet (Raydium)';
+        caBuyError.value = `✅ ${purchaseType} purchase successful! SOL swapped for CA tokens. Transaction: ${result.swapSignature?.slice(0, 8)}...`;
         
         // Close modal after a delay
         setTimeout(() => {
@@ -466,7 +435,7 @@ const loadSwapQuote = async () => {
           caBuyError.value = '';
         }, 3000);
       } else {
-        throw new Error(result.error || 'Failed to complete token purchase');
+        throw new Error(result.error || 'Failed to complete CA token purchase');
       }
       
     } catch (error: any) {

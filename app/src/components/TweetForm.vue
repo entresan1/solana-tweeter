@@ -224,7 +224,7 @@
             ref="textarea"
             v-model="content"
             rows="1"
-            class="w-full text-xl text-dark-100 placeholder-dark-400 bg-transparent focus:outline-none resize-none transition-all duration-300 focus:text-white"
+            class="w-full text-xl text-dark-100 placeholder-dark-500 bg-transparent focus:outline-none resize-none transition-all duration-300 focus:text-white"
             :placeholder="isCA ? 'Enter Contract Address (44 characters)...' : 'What\'s happening on Solana?'"
             @focus="onFocus = true"
             @blur="onFocus = false"
@@ -326,7 +326,7 @@
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              <span>{{ isSubmitting ? 'Sending...' : 'Smart Beacon' }}</span>
+              <span>{{ isSubmitting ? 'Sending...' : 'Beacon' }}</span>
             </span>
           </button>
         </div>
