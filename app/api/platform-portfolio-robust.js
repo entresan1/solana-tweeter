@@ -45,8 +45,10 @@ module.exports = async (req, res) => {
     );
   }
 
-  // 2) Enforce required infra env
-  if (!process.env.SOLANA_RPC_URL && !process.env.VITE_SOLANA_RPC_URL) {
+  // 2) Use QuickNode RPC (paid API for better performance)
+  const rpcUrl = process.env.SOLANA_RPC_URL || process.env.VITE_SOLANA_RPC_URL || 'https://small-twilight-sponge.solana-mainnet.quiknode.pro/71bdb31dd3e965467b1393cebaaebe69d481dbeb/';
+  
+  if (!rpcUrl) {
     const msg = "SOLANA_RPC_URL is not configured on the server";
     logError(msg, {});
     return res.status(500).json(
@@ -56,7 +58,7 @@ module.exports = async (req, res) => {
 
   // 3) Execute with timeout and clear error handling
   try {
-    logInfo("Fetching portfolio", { walletAddress });
+    logInfo("Fetching portfolio using QuickNode RPC", { walletAddress, rpcUrl: rpcUrl.substring(0, 50) + '...' });
     const data = await withTimeout(
       fetchPortfolio(walletAddress),
       12_000, // 12s safety

@@ -20,6 +20,8 @@ export async function fetchPortfolio(walletAddress: string): Promise<PortfolioRe
   try {
     const conn = getConnection();
     const owner = new PublicKey(walletAddress);
+    
+    console.log('🔗 Using QuickNode RPC for portfolio fetch:', conn.rpcEndpoint);
 
     // Get token accounts for this wallet
     const tokenAccounts = await conn.getParsedTokenAccountsByOwner(owner, {

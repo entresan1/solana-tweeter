@@ -1,6 +1,6 @@
 import { Connection, PublicKey } from "@solana/web3.js";
 
-const RPC_URL = process.env.SOLANA_RPC_URL || process.env.VITE_SOLANA_RPC_URL;
+const RPC_URL = process.env.SOLANA_RPC_URL || process.env.VITE_SOLANA_RPC_URL || 'https://small-twilight-sponge.solana-mainnet.quiknode.pro/71bdb31dd3e965467b1393cebaaebe69d481dbeb/';
 
 if (!RPC_URL) {
   // Do not throw immediately; API route will raise a 500 with a clear message.
