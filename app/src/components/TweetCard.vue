@@ -849,17 +849,28 @@ Come beacon at @https://trenchbeacon.com/`;
         <div class="text-dark-100 leading-relaxed mb-4 group-hover:text-white transition-colors duration-300">
           <p class="whitespace-pre-wrap" v-text="tweet?.content || 'No content available'"></p>
           
-          <!-- CA Indicator -->
-          <div v-if="isCA" class="mt-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-            <div class="flex items-center space-x-2">
-              <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" />
-              </svg>
-              <span class="text-green-400 font-medium">Contract Address Beacon</span>
-              <span class="text-green-300 text-sm">• Buy tokens directly from platform wallet</span>
-            </div>
-            <div class="mt-2 text-xs text-green-300 font-mono break-all">
-              CA: {{ caAddress }}
+          <!-- Enhanced CA Indicator -->
+          <div v-if="isCA" class="mt-4 p-4 bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-xl shadow-lg">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center">
+                  <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="flex items-center space-x-2">
+                    <span class="text-green-400 font-semibold text-sm">Contract Address Beacon</span>
+                    <span class="px-2 py-1 bg-green-500/20 text-green-300 text-xs rounded-full font-medium">TRADABLE</span>
+                  </div>
+                  <p class="text-green-300/80 text-xs mt-1">Buy tokens directly from platform wallet</p>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-xs text-green-400 font-mono bg-green-500/10 px-2 py-1 rounded">
+                  {{ caAddress.slice(0, 8) }}...{{ caAddress.slice(-8) }}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -943,21 +954,23 @@ Come beacon at @https://trenchbeacon.com/`;
               <span class="text-sm">Tip</span>
             </button>
             
-            <!-- CA Buy Button (only for CA beacons) -->
+            <!-- Enhanced CA Buy Button (only for CA beacons) -->
             <button 
               v-if="isCA && wallet?.publicKey"
               @click="buyCA"
               :disabled="isBuyingCA"
-              class="flex items-center space-x-2 bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg transition-all duration-300 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
-              :title="'Buy ' + tweet?.content + ' tokens directly'"
+              class="flex items-center space-x-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-4 py-2 rounded-xl transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-green-500/25"
+              :title="'Buy ' + caAddress + ' tokens directly'"
             >
-              <svg v-if="!isBuyingCA" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-              </svg>
-              <svg v-else class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              <span class="text-sm font-medium">{{ isBuyingCA ? 'Buying...' : 'Buy CA' }}</span>
+              <div class="w-5 h-5 flex items-center justify-center">
+                <svg v-if="!isBuyingCA" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                </svg>
+                <svg v-else class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </div>
+              <span class="text-sm font-semibold">{{ isBuyingCA ? 'Buying...' : 'Buy CA' }}</span>
             </button>
             <button 
               @click="handleShareLink"

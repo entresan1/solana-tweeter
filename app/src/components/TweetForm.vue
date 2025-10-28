@@ -232,17 +232,28 @@
           ></textarea>
         </div>
         
-        <!-- CA Detection Indicator -->
-        <div v-if="isCA" class="mt-2 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-          <div class="flex items-center space-x-2">
-            <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-            </svg>
-            <span class="text-green-400 font-medium">Contract Address Detected!</span>
-            <span class="text-green-300 text-sm">This will create a token beacon that others can buy directly.</span>
-          </div>
-          <div class="mt-2 text-xs text-green-300 font-mono break-all">
-            CA: {{ caAddress }}
+        <!-- Enhanced CA Detection Indicator -->
+        <div v-if="isCA" class="mt-3 p-4 bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-xl shadow-lg">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center animate-pulse">
+                <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <div>
+                <div class="flex items-center space-x-2">
+                  <span class="text-green-400 font-semibold text-sm">Contract Address Detected!</span>
+                  <span class="px-2 py-1 bg-green-500/20 text-green-300 text-xs rounded-full font-medium animate-pulse">TRADABLE</span>
+                </div>
+                <p class="text-green-300/80 text-xs mt-1">This will create a token beacon that others can buy directly</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-xs text-green-400 font-mono bg-green-500/10 px-3 py-1 rounded-lg">
+                {{ caAddress.slice(0, 8) }}...{{ caAddress.slice(-8) }}
+              </div>
+            </div>
           </div>
         </div>
       </div>

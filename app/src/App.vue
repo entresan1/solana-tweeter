@@ -80,23 +80,23 @@
       <the-sidebar />
 
       <!-- Main Content -->
-      <main class="flex-1 ml-20 md:ml-64 min-h-screen">
-        <!-- Clean Header -->
+      <main class="flex-1 ml-16 sm:ml-20 md:ml-64 min-h-screen">
+        <!-- Enhanced Header -->
         <header class="glass border-b border-dark-700/50 backdrop-blur-xl">
-          <div class="flex items-center justify-between px-8 py-6">
-            <div class="flex items-center space-x-4">
-              <img src="/logo.png" alt="Trench Beacon" class="h-8 w-8 rounded-lg" />
-              <h1 class="text-2xl font-bold text-gradient" v-text="route.name"></h1>
+          <div class="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+            <div class="flex items-center space-x-3 sm:space-x-4">
+              <img src="/logo.png" alt="Trench Beacon" class="h-6 w-6 sm:h-8 sm:w-8 rounded-lg" />
+              <h1 class="text-lg sm:text-xl lg:text-2xl font-bold text-gradient" v-text="route.name"></h1>
             </div>
-            <div class="flex items-center space-x-4">
-              <div class="hidden md:flex items-center space-x-2 text-sm text-dark-400">
-                <div class="w-2 h-2 bg-solana-500 rounded-full"></div>
+            <div class="flex items-center space-x-2 sm:space-x-4">
+              <div class="hidden sm:flex items-center space-x-2 text-sm text-dark-400">
+                <div class="w-2 h-2 bg-solana-500 rounded-full animate-pulse"></div>
                 <span>Solana Network</span>
               </div>
               <!-- Status Indicator -->
-              <div class="hidden md:flex items-center space-x-2 px-3 py-1 rounded-full bg-dark-800/50 border border-dark-600/50">
-                <div class="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span class="text-xs text-dark-300">Live</span>
+              <div class="flex items-center space-x-2 px-2 sm:px-3 py-1 rounded-full bg-dark-800/50 border border-dark-600/50">
+                <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span class="text-xs text-dark-300 hidden sm:inline">Live</span>
               </div>
             </div>
           </div>

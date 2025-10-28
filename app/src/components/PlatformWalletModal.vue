@@ -164,16 +164,23 @@ defineExpose({
     @click.self="showModal = false"
   >
     <!-- Modal Content -->
-    <div class="bg-dark-900 rounded-xl border border-dark-700 w-full max-w-4xl max-h-[90vh] overflow-hidden">
-      <!-- Header -->
-      <div class="flex items-center justify-between p-6 border-b border-dark-700">
-        <div>
-          <h2 class="text-2xl font-bold text-white">Platform Wallet Portfolio</h2>
-          <p class="text-dark-400 mt-1">Manage your token holdings and wallet</p>
+    <div class="bg-gradient-to-br from-dark-900 to-dark-800 rounded-2xl border border-dark-700/50 w-full max-w-5xl max-h-[90vh] overflow-hidden shadow-2xl backdrop-blur-xl">
+      <!-- Enhanced Header -->
+      <div class="flex items-center justify-between p-6 border-b border-dark-700/50 bg-gradient-to-r from-primary-500/5 to-solana-500/5">
+        <div class="flex items-center space-x-4">
+          <div class="w-12 h-12 bg-gradient-to-r from-primary-500 to-solana-500 rounded-xl flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-2xl font-bold text-white">Platform Wallet Portfolio</h2>
+            <p class="text-dark-400 mt-1">Manage your token holdings and wallet</p>
+          </div>
         </div>
         <button 
           @click="showModal = false"
-          class="text-dark-400 hover:text-white transition-colors"
+          class="text-dark-400 hover:text-white transition-colors p-2 hover:bg-dark-700 rounded-lg"
         >
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -263,56 +270,64 @@ defineExpose({
           <!-- Tokens List -->
           <div v-if="hasTokens">
             <h3 class="text-xl font-semibold text-white mb-4">Your Tokens</h3>
-            <div class="space-y-4">
+            <div class="grid gap-4">
               <div 
                 v-for="token in portfolio.tokens" 
                 :key="token.mint"
-                class="bg-dark-800 rounded-lg p-4 border border-dark-700"
+                class="bg-gradient-to-r from-dark-800/50 to-dark-700/50 rounded-xl p-6 border border-dark-600/50 hover:border-primary-500/30 transition-all duration-300 hover:shadow-lg hover:shadow-primary-500/10"
               >
-                <div class="flex items-center justify-between">
-                  <div class="flex-1">
-                    <div class="flex items-center space-x-3">
-                      <div class="w-10 h-10 bg-gradient-to-r from-primary-500 to-solana-500 rounded-full flex items-center justify-center">
-                        <span class="text-white font-bold text-sm">{{ token.symbol.charAt(0) }}</span>
-                      </div>
-                      <div>
-                        <h4 class="font-semibold text-white">{{ token.name }}</h4>
-                        <p class="text-dark-400 text-sm">{{ token.symbol }}</p>
-                      </div>
+                <div class="flex items-center justify-between mb-4">
+                  <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-gradient-to-r from-primary-500/20 to-solana-500/20 rounded-xl flex items-center justify-center">
+                      <span class="text-primary-400 font-bold text-lg">{{ token.symbol.charAt(0) }}</span>
+                    </div>
+                    <div>
+                      <h4 class="text-white font-semibold text-lg">{{ token.name }}</h4>
+                      <p class="text-dark-400 text-sm font-mono">{{ token.symbol }}</p>
                     </div>
                   </div>
-                  
                   <div class="text-right">
-                    <p class="text-white font-semibold">{{ token.balance.toFixed(6) }}</p>
-                    <p v-if="token.value" class="text-primary-400 text-sm">{{ token.value.toFixed(2) }} USD</p>
-                  </div>
-                  
-                  <div class="flex items-center space-x-2 ml-4">
-                    <button 
-                      @click="buyToken(token.mint, 1000)"
-                      class="px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg transition-colors"
-                    >
-                      Buy
-                    </button>
-                    <button 
-                      @click="sellToken(token)"
-                      class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-sm rounded-lg transition-colors"
-                    >
-                      Sell
-                    </button>
+                    <p class="text-white font-bold text-lg">{{ token.balance.toFixed(6) }}</p>
+                    <p v-if="token.value" class="text-primary-400 text-sm font-semibold">${{ token.value.toFixed(2) }}</p>
+                    <p v-else class="text-dark-400 text-sm">Price N/A</p>
                   </div>
                 </div>
                 
-                <!-- Token Details -->
-                <div class="mt-3 pt-3 border-t border-dark-700">
+                <div class="flex space-x-3 mb-4">
+                  <button 
+                    @click="buyToken(token.mint, 1000)"
+                    class="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-6 py-3 rounded-xl transition-all duration-300 hover:scale-105 font-semibold shadow-lg hover:shadow-green-500/25"
+                  >
+                    <div class="flex items-center justify-center space-x-2">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                      <span>Buy</span>
+                    </div>
+                  </button>
+                  <button 
+                    @click="sellToken(token)"
+                    class="flex-1 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-6 py-3 rounded-xl transition-all duration-300 hover:scale-105 font-semibold shadow-lg hover:shadow-red-500/25"
+                  >
+                    <div class="flex items-center justify-center space-x-2">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                      </svg>
+                      <span>Sell</span>
+                    </div>
+                  </button>
+                </div>
+                
+                <!-- Enhanced Token Details -->
+                <div class="pt-4 border-t border-dark-600/50">
                   <div class="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span class="text-dark-400">Mint Address:</span>
-                      <p class="text-white font-mono text-xs break-all">{{ token.mint }}</p>
+                      <span class="text-dark-400 font-medium">Mint Address:</span>
+                      <p class="text-white font-mono text-xs break-all bg-dark-700/50 px-2 py-1 rounded mt-1">{{ token.mint }}</p>
                     </div>
                     <div>
-                      <span class="text-dark-400">Decimals:</span>
-                      <p class="text-white">{{ token.decimals }}</p>
+                      <span class="text-dark-400 font-medium">Decimals:</span>
+                      <p class="text-white font-semibold">{{ token.decimals }}</p>
                     </div>
                   </div>
                 </div>
