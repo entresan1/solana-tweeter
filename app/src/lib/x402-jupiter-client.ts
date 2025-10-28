@@ -8,8 +8,8 @@ const connection = new Connection(
   'confirmed'
 );
 
-// Jupiter API configuration - Using QuickNode with Metis integration
-const JUPITER_API_URL = 'https://small-twilight-sponge.solana-mainnet.quiknode.pro/71bdb31dd3e965467b1393cebaaebe69d481dbeb/';
+// Jupiter API configuration - Using standard Jupiter API
+const JUPITER_API_URL = 'https://quote-api.jup.ag/v6/';
 
 /**
  * Send Jupiter swap with automatic X402 payment
@@ -215,10 +215,10 @@ export async function getJupiterQuote(
   const slippageBps = 50; // 0.5% slippage tolerance
 
   try {
-    // Use Metis Jupiter API through QuickNode
-    const url = `${JUPITER_API_URL}jupiter/v6/quote?inputMint=${inputMint}&outputMint=${tokenMint}&amount=${amount}&slippageBps=${slippageBps}`;
+    // Use standard Jupiter API
+    const url = `${JUPITER_API_URL}quote?inputMint=${inputMint}&outputMint=${tokenMint}&amount=${amount}&slippageBps=${slippageBps}`;
     
-    console.log('🔄 Fetching Jupiter quote from QuickNode:', url);
+    console.log('🔄 Fetching Jupiter quote from Jupiter API:', url);
     
     const response = await fetch(url, {
       method: 'GET',
@@ -230,7 +230,7 @@ export async function getJupiterQuote(
     const quote = await response.json();
 
     if (!response.ok) {
-      console.error('❌ QuickNode Jupiter API error:', {
+      console.error('❌ Jupiter API error:', {
         status: response.status,
         statusText: response.statusText,
         url: url,
@@ -239,7 +239,7 @@ export async function getJupiterQuote(
       throw new Error(quote.error?.message || quote.error || `Failed to get quote: ${response.status} ${response.statusText}`);
     }
 
-    console.log('✅ Jupiter quote received from QuickNode:', {
+    console.log('✅ Jupiter quote received from Jupiter API:', {
       inputAmount: quote.inAmount,
       outputAmount: quote.outAmount,
       priceImpact: quote.priceImpactPct
@@ -253,11 +253,11 @@ export async function getJupiterQuote(
       success: true
     };
   } catch (error: any) {
-    console.error('❌ QuickNode Jupiter API error:', error);
+    console.error('❌ Jupiter API error:', error);
     
     return {
       success: false,
-      error: `QuickNode Jupiter API failed: ${error.message}`
+      error: `Jupiter API failed: ${error.message}`
     };
   }
 }
@@ -300,7 +300,7 @@ async function createJupiterSwapTransaction(
     const amount = Math.floor(solAmount * 1e9); // Convert SOL to lamports
     const slippageBps = 50; // 0.5% slippage tolerance
 
-    const swapUrl = `${JUPITER_API_URL}jupiter/v6/swap`;
+    const swapUrl = `${JUPITER_API_URL}swap`;
     
     const swapRequest = {
       quoteResponse: {
@@ -323,7 +323,7 @@ async function createJupiterSwapTransaction(
       asLegacyTransaction: false
     };
 
-    console.log('🔄 Requesting swap transaction from QuickNode Jupiter...');
+    console.log('🔄 Requesting swap transaction from Jupiter API...');
     
     const swapResponse = await fetch(swapUrl, {
       method: 'POST',
@@ -339,7 +339,7 @@ async function createJupiterSwapTransaction(
       throw new Error(swapData.error?.message || swapData.error || 'Failed to create swap transaction');
     }
 
-    console.log('✅ Jupiter swap transaction received from QuickNode');
+    console.log('✅ Jupiter swap transaction received from Jupiter API');
 
     // Deserialize the transaction
     const { Transaction } = await import('@solana/web3.js');
