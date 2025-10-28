@@ -39,17 +39,24 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // For now, create a mock quote since Jupiter API is having issues
-    // In production, you would use the real Jupiter API
-    const mockQuote = {
-      inputAmount: Math.floor(parseFloat(solAmount) * 1e9), // Convert to lamports
-      outputAmount: Math.floor(parseFloat(solAmount) * 1e6), // Mock output (1:1000 ratio)
-      priceImpact: 0.5, // Mock price impact
-      route: 1, // Mock route count
-      success: true
-    };
+    // Use real Jupiter API through QuickNode
+    const { getJupiterQuote } = require('../src/lib/jupiter-swap');
     
-    console.log('Using mock quote for:', { contractAddress, solAmount });
+    console.log('🔄 Getting real Jupiter quote for:', { contractAddress, solAmount });
+    
+    // Get quote for SOL → CA token swap
+    const quote = await getJupiterQuote(contractAddress, parseFloat(solAmount));
+    
+    if (!quote.success) {
+      console.error('❌ Jupiter quote failed:', quote.error);
+      return res.status(400).json({
+        success: false,
+        error: quote.error || 'Failed to get quote',
+        message: 'Unable to get swap quote. Token may not be tradeable or liquidity may be insufficient.'
+      });
+    }
+    
+    console.log('✅ Real Jupiter quote received:', quote);
 
     // No fees - full amount for swap
     const swapAmount = parseFloat(solAmount);
@@ -57,15 +64,15 @@ module.exports = async (req, res) => {
     return res.status(200).json({
       success: true,
       quote: {
-        inputAmount: mockQuote.inputAmount,
-        outputAmount: mockQuote.outputAmount,
-        priceImpact: mockQuote.priceImpact,
-        route: mockQuote.route,
+        inputAmount: quote.inputAmount,
+        outputAmount: quote.outputAmount,
+        priceImpact: quote.priceImpact,
+        route: quote.route,
         inputSymbol: 'SOL',
         outputSymbol: contractAddress.slice(0, 4).toUpperCase(),
         inputAmountFormatted: `${solAmount} SOL`,
-        outputAmountFormatted: `${(mockQuote.outputAmount / 1e6).toFixed(6)} ${contractAddress.slice(0, 4).toUpperCase()}`,
-        priceImpactFormatted: `${mockQuote.priceImpact}%`
+        outputAmountFormatted: `${(quote.outputAmount / 1e6).toFixed(6)} ${contractAddress.slice(0, 4).toUpperCase()}`,
+        priceImpactFormatted: `${quote.priceImpact}%`
       },
       fees: {
         swapAmount: swapAmount,

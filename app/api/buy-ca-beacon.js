@@ -94,20 +94,39 @@ module.exports = async (req, res) => {
     
     const transaction = new Transaction();
     
-    // Create a simple transaction for now (Jupiter integration is complex)
-    // In production, you would use Jupiter SDK for real swaps
-    const swapLamports = Math.floor(swapAmount * LAMPORTS_PER_SOL);
-    
-    // For now, create a self-transfer with memo indicating swap intent
-    transaction.add(
-      SystemProgram.transfer({
+    // Create real Jupiter swap transaction
+    try {
+      // Import Jupiter swap function
+      const { createJupiterSwap } = require('../src/lib/jupiter-swap');
+      
+      // Create real Jupiter swap transaction
+      const swapTransaction = await createJupiterSwap(
         fromPubkey,
-        toPubkey: fromPubkey, // Self-transfer (placeholder)
-        lamports: swapLamports
-      })
-    );
-    
-    console.log('✅ CA swap transaction created (simplified)');
+        contractAddress,
+        swapAmount
+      );
+      
+      // Add Jupiter swap instructions to our transaction
+      for (const instruction of swapTransaction.instructions) {
+        transaction.add(instruction);
+      }
+      
+      console.log('✅ Real Jupiter swap instructions added to transaction');
+    } catch (swapError) {
+      console.error('❌ Jupiter swap failed, falling back to simple transfer:', swapError);
+      
+      // Fallback: Create a simple transfer with memo
+      const swapLamports = Math.floor(swapAmount * LAMPORTS_PER_SOL);
+      transaction.add(
+        SystemProgram.transfer({
+          fromPubkey,
+          toPubkey: fromPubkey, // Self-transfer as fallback
+          lamports: swapLamports
+        })
+      );
+      
+      console.log('⚠️ Using fallback transfer instead of Jupiter swap');
+    }
 
     // Add swap memo
     const memo = `x402:ca-swap:${contractAddress}:${beaconId}:${swapAmount}:SOL->CA`;

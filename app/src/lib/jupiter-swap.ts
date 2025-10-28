@@ -6,8 +6,8 @@ const connection = new Connection(
   'confirmed'
 );
 
-// Jupiter API configuration
-const JUPITER_API_URL = 'https://quote-api.jup.ag/v6';
+// Jupiter API configuration - Using QuickNode with Metis integration
+const JUPITER_API_URL = 'https://small-twilight-sponge.solana-mainnet.quiknode.pro/71bdb31dd3e965467b1393cebaaebe69d481dbeb/';
 
 /**
  * Create a Jupiter swap transaction: SOL → Token
@@ -42,16 +42,57 @@ export async function createJupiterSwap(
       route: quote.route
     });
 
-    // For now, create a simple transaction as Jupiter SDK integration is complex
-    // In production, you would use the Jupiter SDK to create the actual swap transaction
-    const transaction = new Transaction();
-    
-    // Add a memo indicating this is a Jupiter swap
-    const { createMemoInstruction } = await import('@solana/spl-memo');
-    const memo = `Jupiter:${tokenMint}:${solAmount}:${Date.now()}`;
-    transaction.add(createMemoInstruction(memo));
+    // Get swap transaction from Jupiter API
+    const inputMint = 'So11111111111111111111111111111111111111112'; // SOL mint
+    const amount = Math.floor(solAmount * 1e9); // Convert SOL to lamports
+    const slippageBps = 50; // 0.5% slippage tolerance
 
-    console.log('✅ Jupiter swap transaction created (simplified)');
+    const swapUrl = `${JUPITER_API_URL}/jupiter/v6/swap`;
+    
+    const swapRequest = {
+      quoteResponse: {
+        inputMint,
+        inAmount: quote.inputAmount.toString(),
+        outputMint: tokenMint,
+        outAmount: quote.outputAmount.toString(),
+        otherAmountThreshold: quote.outputAmount.toString(),
+        swapMode: 'ExactIn',
+        slippageBps,
+        platformFee: null,
+        priceImpactPct: quote.priceImpact.toString()
+      },
+      userPublicKey: fromPubkey.toBase58(),
+      wrapAndUnwrapSol: true,
+      useSharedAccounts: true,
+      feeAccount: null,
+      trackingAccount: null,
+      computeUnitPriceMicroLamports: null,
+      asLegacyTransaction: false
+    };
+
+    console.log('🔄 Requesting swap transaction from Jupiter...');
+    
+    const swapResponse = await fetch(swapUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(swapRequest)
+    });
+
+    const swapData = await swapResponse.json();
+
+    if (!swapResponse.ok) {
+      throw new Error(swapData.error?.message || swapData.error || 'Failed to create swap transaction');
+    }
+
+    console.log('✅ Jupiter swap transaction received');
+
+    // Deserialize the transaction
+    const { Transaction } = await import('@solana/web3.js');
+    const transaction = Transaction.from(Buffer.from(swapData.swapTransaction, 'base64'));
+
+    console.log('✅ Jupiter swap transaction created');
     return transaction;
   } catch (error: any) {
     console.error('❌ Jupiter swap error:', error);
@@ -74,14 +115,30 @@ export async function getJupiterQuote(
     const amount = Math.floor(solAmount * 1e9); // Convert SOL to lamports
     const slippageBps = 50; // 0.5% slippage tolerance
 
-    const url = `${JUPITER_API_URL}/quote?inputMint=${inputMint}&outputMint=${tokenMint}&amount=${amount}&slippageBps=${slippageBps}`;
+    // Use Metis Jupiter API through QuickNode
+    const url = `${JUPITER_API_URL}/jupiter/v6/quote?inputMint=${inputMint}&outputMint=${tokenMint}&amount=${amount}&slippageBps=${slippageBps}`;
     
-    const response = await fetch(url);
+    console.log('🔄 Fetching Jupiter quote from:', url);
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    
     const quote = await response.json();
 
     if (!response.ok) {
-      throw new Error(quote.error || 'Failed to get quote');
+      console.error('❌ Jupiter API error:', quote);
+      throw new Error(quote.error?.message || quote.error || 'Failed to get quote');
     }
+
+    console.log('✅ Jupiter quote received:', {
+      inputAmount: quote.inAmount,
+      outputAmount: quote.outAmount,
+      priceImpact: quote.priceImpactPct
+    });
 
     return {
       inputAmount: quote.inAmount,
