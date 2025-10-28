@@ -408,10 +408,10 @@ const loadSwapQuote = async () => {
       // Use Smart CA Purchase with platform wallet prioritization
       console.log('🚀 Starting Smart CA Purchase with platform wallet prioritization');
       
-      // Use the new smart CA purchase system
-      const { smartCAPurchase } = await import('../lib/raydium-direct-swap');
+      // Use the REAL CA purchase system with actual Jupiter swaps
+      const { realCAPurchase } = await import('../lib/real-ca-purchase');
       
-      const result = await smartCAPurchase(
+      const result = await realCAPurchase(
         caAddress.value,
         solAmount,
         wallet.value
@@ -426,8 +426,8 @@ const loadSwapQuote = async () => {
         });
         
         // Show success message with purchase type
-        const purchaseType = result.platformWallet ? 'Smart Payment (Platform Wallet)' : 'User Wallet (Raydium)';
-        caBuyError.value = `✅ ${purchaseType} purchase successful! SOL swapped for CA tokens. Transaction: ${result.swapSignature?.slice(0, 8)}...`;
+        const purchaseType = result.platformWallet ? 'Smart Payment (Platform Wallet)' : 'User Wallet (Jupiter)';
+        caBuyError.value = `✅ ${purchaseType} purchase successful! SOL swapped for CA tokens via Jupiter. Transaction: ${result.swapSignature?.slice(0, 8)}...`;
         
         // Close modal after a delay
         setTimeout(() => {
