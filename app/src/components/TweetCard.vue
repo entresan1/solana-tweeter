@@ -372,7 +372,7 @@ const buyAmount = ref('0.1');
       
       // Try Smart Payment first (Platform wallet)
       try {
-        const { platformWalletService } = await import('@/lib/platform-wallet');
+        const { platformWalletService } = await import('../lib/platform-wallet');
         const userWalletAddress = wallet.value.publicKey.toBase58();
         
         // Check if platform wallet has sufficient balance
