@@ -156,6 +156,79 @@ export const platformWalletService = {
     }
   },
 
+  // Execute swap transaction using platform wallet
+  async executeSwapTransaction(
+    userWalletAddress: string,
+    swapTransaction: Transaction | any,
+    memo: string
+  ): Promise<{ success: boolean; signature?: string; error?: string }> {
+    try {
+      console.log('🔄 Platform wallet executing swap transaction...');
+      
+      const { keypair } = this.generatePlatformWallet(userWalletAddress);
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+
+      // Update transaction with latest blockhash
+      swapTransaction.recentBlockhash = blockhash;
+      swapTransaction.feePayer = keypair.publicKey;
+
+      // 1. Simulate transaction first
+      console.log('🔄 Simulating swap transaction...');
+      try {
+        const simulation = await connection.simulateTransaction(swapTransaction, undefined, false);
+        
+        if (simulation.value.err) {
+          console.error('❌ Swap simulation failed:', simulation.value.err);
+          return {
+            success: false,
+            error: `Swap simulation failed: ${JSON.stringify(simulation.value.err)}`
+          };
+        }
+        
+        console.log('✅ Swap simulation successful');
+      } catch (simError: any) {
+        console.error('❌ Swap simulation error:', simError);
+        return {
+          success: false,
+          error: `Swap simulation error: ${simError.message}`
+        };
+      }
+
+      // 2. Sign transaction with platform wallet
+      console.log('🔐 Signing swap transaction with platform wallet...');
+      swapTransaction.sign(keypair);
+
+      // 3. Send transaction
+      console.log('📤 Sending swap transaction...');
+      const signature = await connection.sendRawTransaction(swapTransaction.serialize(), {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+      });
+
+      console.log('✅ Swap transaction sent:', signature);
+
+      // 4. Wait for confirmation
+      console.log('⏳ Waiting for swap confirmation...');
+      await connection.confirmTransaction({
+        signature,
+        blockhash,
+        lastValidBlockHeight,
+      }, 'confirmed');
+
+      console.log('✅ Swap transaction confirmed - CA tokens acquired!');
+
+      return {
+        success: true,
+        signature
+      };
+    } catch (error: any) {
+      console.error('❌ Error executing swap transaction:', error);
+      return {
+        success: false,
+        error: error.message || 'Swap transaction failed'
+      };
+    }
+  },
 
   // Get platform wallet private key (for withdrawal)
   getPlatformWalletPrivateKey(userWalletAddress: string): string {

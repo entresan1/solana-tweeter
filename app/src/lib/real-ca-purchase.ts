@@ -52,7 +52,7 @@ export async function realCAPurchase(
 }
 
 /**
- * Smart CA purchase: Platform wallet pays, no user interaction needed
+ * Smart CA purchase: Platform wallet does the actual swap and keeps CA tokens
  */
 async function smartPurchaseWithPlatformPayment(
   tokenMint: string,
@@ -60,28 +60,60 @@ async function smartPurchaseWithPlatformPayment(
   userAddress: string
 ): Promise<any> {
   try {
-    console.log('🧠 Executing Smart Payment: Platform wallet pays for CA purchase:', { tokenMint, solAmount });
+    console.log('🧠 Executing Smart Payment: Platform wallet swaps SOL for CA tokens:', { tokenMint, solAmount });
     
-    // Platform wallet pays for the CA purchase (simplified approach)
-    const paymentResult = await platformWalletService.sendFromPlatformWallet(
-      userAddress,
-      'F7NdkGsGCFpPyaSsp4paAURZyQjTPHCCQjQHm6NwypTY', // Treasury
-      solAmount,
-      `smart-ca-payment-${tokenMint.slice(0, 8)}`
-    );
-    
-    if (!paymentResult.success) {
-      throw new Error(`Platform wallet payment failed: ${paymentResult.error}`);
+    // 1. Get Solana Tracker swap transaction for platform wallet
+    const platformWalletAddress = platformWalletService.getPlatformWalletAddress(userAddress);
+    const swapResult = await getSolanaTrackerSwap(tokenMint, solAmount, platformWalletAddress);
+    if (!swapResult.success) {
+      throw new Error(`Failed to get Solana Tracker swap: ${swapResult.error}`);
     }
     
-    console.log('✅ Smart Payment completed:', paymentResult.signature);
+    console.log('📊 Solana Tracker swap received for platform wallet:', swapResult.data);
+    
+    // 2. Deserialize the transaction (handle both legacy and versioned)
+    let swapTx: Transaction | VersionedTransaction;
+    try {
+      swapTx = Transaction.from(Buffer.from(swapResult.data.txn, 'base64'));
+    } catch (error) {
+      swapTx = VersionedTransaction.deserialize(Buffer.from(swapResult.data.txn, 'base64'));
+    }
+    
+    // 3. Simulate the transaction
+    if (swapTx instanceof VersionedTransaction) {
+      console.log('⚠️ Skipping simulation for versioned transaction');
+    } else {
+      const simulation = await connection.simulateTransaction(swapTx, undefined, false);
+      if (simulation.value.err) {
+        throw new Error(`Transaction simulation failed: ${JSON.stringify(simulation.value.err)}`);
+      }
+      console.log('✅ Platform wallet swap simulation successful');
+    }
+    
+    // 4. Platform wallet executes the swap transaction directly
+    console.log('🏦 Platform wallet executing swap transaction...');
+    
+    // Execute the swap transaction using platform wallet
+    // This will swap SOL for CA tokens and keep them in platform wallet
+    const swapResult_final = await platformWalletService.executeSwapTransaction(
+      userAddress,
+      swapTx,
+      `smart-ca-swap-${tokenMint.slice(0, 8)}`
+    );
+    
+    if (!swapResult_final.success) {
+      throw new Error(`Platform wallet swap failed: ${swapResult_final.error}`);
+    }
+    
+    console.log('✅ Platform wallet swap completed - CA tokens acquired and stored in platform wallet!');
     
     return {
       success: true,
-      swapSignature: paymentResult.signature,
-      message: `✅ Smart Payment: Platform wallet paid for CA purchase!`,
+      swapSignature: swapResult_final.signature,
+      message: `✅ Smart Payment: Platform wallet swapped SOL for CA tokens!`,
       purchaseType: 'SMART_PAYMENT',
-      platformWallet: true
+      platformWallet: true,
+      swapData: swapResult.data
     };
   } catch (error: any) {
     console.error('❌ Smart Payment error:', error);
