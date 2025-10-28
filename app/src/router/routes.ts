@@ -4,6 +4,7 @@ import ProfilePage from '@src/pages/PageProfile.vue';
 import TweetPage from '@src/pages/PageTweet.vue';
 import X402Page from '@src/pages/PageX402.vue';
 import TopicPage from '@src/pages/PageTopic.vue';
+import LeaderboardPage from '@src/pages/PageLeaderboard.vue';
 import NotFoundPage from '@src/pages/PageNotFound.vue';
 
 export default [
@@ -39,6 +40,11 @@ export default [
     name: 'X402',
     path: '/x402',
     component: X402Page,
+  },
+  {
+    name: 'Leaderboard',
+    path: '/leaderboard',
+    component: LeaderboardPage,
   },
   {
     name: 'NotFound',

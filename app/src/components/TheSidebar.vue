@@ -218,6 +218,38 @@
              :class="route.name === 'X402' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">x402</div>
       </SafeRouterLink>
 
+      <!-- Leaderboard Link -->
+      <SafeRouterLink
+        :to="{ name: 'Leaderboard' }"
+        class="rounded-2xl hover:bg-dark-800/50 p-4 md:w-full inline-flex items-center space-x-4 transition-all duration-300 group"
+        :class="route.name === 'Leaderboard' ? 'bg-gradient-to-r from-primary-500/20 to-solana-500/20 border border-primary-500/30' : ''"
+      >
+        <div class="flex items-center justify-center w-8 h-8 rounded-xl"
+             :class="route.name === 'Leaderboard' ? 'bg-gradient-to-r from-primary-500 to-solana-500' : 'bg-dark-700 group-hover:bg-dark-600'">
+          <svg
+            v-if="route.name === 'Leaderboard'"
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 text-white"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <svg
+            v-else
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 text-dark-300 group-hover:text-white"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div class="text-lg font-medium hidden md:block"
+             :class="route.name === 'Leaderboard' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">🏆</div>
+      </SafeRouterLink>
+
       <!-- How Button -->
       <button
         @click="toggleHelpModal"
@@ -323,17 +355,37 @@
       <div class="space-y-4 text-dark-300">
         <div>
           <h4 class="font-semibold text-white mb-2">🔗 Platform Wallet</h4>
-          <p class="text-sm">A shared wallet for platform operations. Deposit SOL to use for beacons and tips without individual wallet transactions.</p>
+          <p class="text-sm">A shared wallet for platform operations. Deposit SOL to use for beacons, tips, and token trading without individual wallet transactions.</p>
         </div>
         
         <div>
           <h4 class="font-semibold text-white mb-2">📡 Beacons</h4>
-          <p class="text-sm">Post messages, share thoughts, or announcements. Each beacon costs a small fee from the platform wallet.</p>
+          <p class="text-sm">Post messages, share thoughts, or announcements. Each beacon costs a small fee from the platform wallet. Click on usernames to see their beacons!</p>
+        </div>
+        
+        <div>
+          <h4 class="font-semibold text-white mb-2">🏷️ Topics</h4>
+          <p class="text-sm">Click on any topic tag to filter beacons by that topic. Discover content by category!</p>
+        </div>
+        
+        <div>
+          <h4 class="font-semibold text-white mb-2">🪙 CA Tokens</h4>
+          <p class="text-sm">When a beacon contains a 44-character contract address, you can buy those tokens directly! CA addresses don't count toward character limits.</p>
+        </div>
+        
+        <div>
+          <h4 class="font-semibold text-white mb-2">💼 Portfolio Management</h4>
+          <p class="text-sm">Click "Manage" in the sidebar to access your platform wallet portfolio. Buy, sell, and manage tokens you've purchased!</p>
         </div>
         
         <div>
           <h4 class="font-semibold text-white mb-2">💰 Tips & Fees</h4>
           <p class="text-sm">Tip beacons you like! 5% of tips go to treasury. All beacon fees and tip fees fund strategic buybacks, creating a flywheel effect.</p>
+        </div>
+        
+        <div>
+          <h4 class="font-semibold text-white mb-2">🏆 Leaderboard</h4>
+          <p class="text-sm">Check the leaderboard to see top users by beacons posted, likes received, and tips earned!</p>
         </div>
         
         <div>
