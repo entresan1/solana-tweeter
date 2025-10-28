@@ -217,19 +217,35 @@
         </div>
       </div>
       
-      <!-- Enhanced Content field -->
+      <!-- Enhanced Content field - Much Clearer Input Area -->
       <div class="mb-6">
         <div class="relative">
-          <textarea
-            ref="textarea"
-            v-model="content"
-            rows="1"
-            class="w-full text-xl text-dark-100 placeholder-dark-500 bg-transparent focus:outline-none resize-none transition-all duration-300 focus:text-white"
-            :placeholder="isCA ? 'Enter Contract Address (44 characters)...' : 'What\'s happening on Solana?'"
-            @focus="onFocus = true"
-            @blur="onFocus = false"
-            @input="handleContentChange"
-          ></textarea>
+          <!-- Clear input border and focus area -->
+          <div class="relative border-2 border-dark-600 rounded-xl p-4 transition-all duration-300 hover:border-dark-500 focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-500/20 bg-dark-800/30">
+            <textarea
+              ref="textarea"
+              v-model="content"
+              rows="1"
+              class="w-full text-xl text-dark-100 placeholder-dark-500 bg-transparent focus:outline-none resize-none transition-all duration-300 focus:text-white"
+              :placeholder="isCA ? 'Enter Contract Address (44 characters)...' : 'What\'s happening on Solana?'"
+              @focus="onFocus = true"
+              @blur="onFocus = false"
+              @input="handleContentChange"
+            ></textarea>
+            
+            <!-- Clear writing indicator -->
+            <div class="absolute top-2 right-2 text-xs text-dark-500 pointer-events-none">
+              <span v-if="!content.trim()" class="flex items-center space-x-1">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                </svg>
+                <span>Write here</span>
+              </span>
+              <span v-else class="text-green-400">
+                ✓ Ready to beam
+              </span>
+            </div>
+          </div>
         </div>
         
         <!-- Enhanced CA Detection Indicator -->
@@ -258,14 +274,14 @@
         </div>
       </div>
 
-      <div class="flex flex-wrap items-center justify-between">
-        <!-- Enhanced Topic field -->
-        <div class="relative flex-1 max-w-xs group/topic">
+      <!-- Simplified Bottom Controls -->
+      <div class="flex items-center justify-between">
+        <!-- Topic field - simplified -->
+        <div class="relative flex-1 max-w-xs">
           <input
             type="text"
             placeholder="Add a topic..."
             class="input-field pl-10 pr-4 py-2 text-sm transition-all duration-300 focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500"
-            :class="{}"
             :value="effectiveTopic"
             :disabled="forcedTopic != null"
             @input="handleTopicChange"
@@ -274,7 +290,7 @@
             <svg
               xmlns="http://www.w3.org/2000/svg"
               class="h-5 w-5 m-auto transition-all duration-300"
-              :class="effectiveTopic ? 'text-primary-400 scale-110' : 'text-dark-400 group-hover/topic:text-primary-300'"
+              :class="effectiveTopic ? 'text-primary-400 scale-110' : 'text-dark-400'"
               viewBox="0 0 20 20"
               fill="currentColor"
             >
@@ -287,30 +303,15 @@
           </div>
         </div>
         
-        <div class="flex items-center space-x-6">
-          <!-- Enhanced Character limit -->
+        <!-- Right side - Character count and Send button -->
+        <div class="flex items-center space-x-4">
+          <!-- Character limit - simplified -->
           <div class="text-sm font-medium transition-all duration-300" :class="characterLimitColour">
-            <span class="inline-flex items-center space-x-1">
-              <span v-if="isCA">CA Detected</span>
-              <span v-else>{{ characterLimit }} left</span>
-            </span>
+            <span v-if="isCA">CA Detected</span>
+            <span v-else>{{ characterLimit }} left</span>
           </div>
 
-          <!-- Automatic Wallet Selection Info (only when connected) -->
-          <div v-if="connected && platformWalletAddress" class="flex items-center space-x-3 text-sm">
-            <span class="text-dark-300">Payment:</span>
-            <div class="flex items-center space-x-2">
-              <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" />
-              </svg>
-              <span class="text-yellow-400 font-medium">Smart Payment</span>
-              <span class="text-xs text-dark-400">
-                (Platform: {{ platformBalance.toFixed(4) }} SOL → Phantom fallback)
-              </span>
-            </div>
-          </div>
-
-          <!-- Enhanced Tweet button -->
+          <!-- Send button - more prominent -->
           <button
             class="btn-primary text-sm px-6 py-2 relative overflow-hidden group/btn"
             :disabled="!canTweet || isSubmitting"
@@ -330,6 +331,16 @@
             </span>
           </button>
         </div>
+      </div>
+      
+      <!-- Smart Payment Info - moved below and simplified -->
+      <div v-if="connected && platformWalletAddress" class="mt-3 text-xs text-dark-400 text-center">
+        <span class="flex items-center justify-center space-x-2">
+          <svg class="w-3 h-3 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" />
+          </svg>
+          <span>Smart Payment: Platform wallet ({{ platformBalance.toFixed(4) }} SOL) → Phantom fallback</span>
+        </span>
       </div>
     </div>
   </div>

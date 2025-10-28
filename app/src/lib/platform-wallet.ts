@@ -85,7 +85,7 @@ export const platformWalletService = {
         lamports,
       });
 
-      // Create and sign transaction
+      // Create transaction
       const transaction = new Transaction({
         recentBlockhash: blockhash,
         feePayer: keypair.publicKey,
@@ -98,28 +98,60 @@ export const platformWalletService = {
       const memoInstruction = createMemoInstruction(memo, [keypair.publicKey]);
       transaction.add(memoInstruction);
 
-      // Sign with platform wallet (no user interaction needed)
+      // 1. Simulate transaction first to ensure it won't fail
+      console.log('🔄 Simulating platform wallet transaction...');
+      try {
+        const simulation = await connection.simulateTransaction(transaction, {
+          sigVerify: false, // Don't verify signatures during simulation
+          commitment: 'confirmed'
+        });
+        
+        if (simulation.value.err) {
+          console.error('❌ Transaction simulation failed:', simulation.value.err);
+          return {
+            success: false,
+            error: `Transaction simulation failed: ${JSON.stringify(simulation.value.err)}`
+          };
+        }
+        
+        console.log('✅ Transaction simulation successful');
+      } catch (simError) {
+        console.error('❌ Transaction simulation error:', simError);
+        return {
+          success: false,
+          error: `Transaction simulation error: ${simError.message}`
+        };
+      }
+
+      // 2. Sign transaction with platform wallet (no user interaction needed)
+      console.log('🔐 Signing platform wallet transaction...');
       transaction.sign(keypair);
 
-      // Send transaction
+      // 3. Send transaction
+      console.log('📤 Sending platform wallet transaction...');
       const signature = await connection.sendRawTransaction(transaction.serialize(), {
         skipPreflight: false,
         preflightCommitment: 'confirmed',
       });
 
-      // Wait for confirmation
+      console.log('✅ Platform wallet transaction sent:', signature);
+
+      // 4. Wait for confirmation
+      console.log('⏳ Waiting for confirmation...');
       await connection.confirmTransaction({
         signature,
         blockhash,
         lastValidBlockHeight,
       }, 'confirmed');
 
+      console.log('✅ Platform wallet transaction confirmed');
+
       return {
         success: true,
         signature
       };
     } catch (error: any) {
-      console.error('Error sending from platform wallet:', error);
+      console.error('❌ Error sending from platform wallet:', error);
       return {
         success: false,
         error: error.message || 'Transaction failed'

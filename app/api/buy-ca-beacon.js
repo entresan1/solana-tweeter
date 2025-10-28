@@ -40,7 +40,10 @@ module.exports = async (req, res) => {
 
   const { beaconId, userWallet, contractAddress, solAmount, swapSignature } = req.body;
 
+  console.log('📥 CA Purchase Request Body:', { beaconId, userWallet, contractAddress, solAmount, swapSignature });
+
   if (!beaconId || !userWallet || !contractAddress || !solAmount) {
+    console.error('❌ Missing required fields:', { beaconId, userWallet, contractAddress, solAmount });
     return res.status(400).json({ error: 'Missing required fields: beaconId, userWallet, contractAddress, solAmount' });
   }
 
@@ -125,27 +128,48 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Verify the beacon exists and is a CA beacon
-    const { data: beacon, error: beaconError } = await supabase
-      .from('beacons')
-      .select('*')
-      .eq('id', beaconId)
-      .single();
+    // Check if this is a new CA beacon creation or existing beacon purchase
+    let beacon = null;
+    
+    // Try to find existing beacon first
+    if (beaconId && !beaconId.startsWith('platform_ca_') && !beaconId.startsWith('user_ca_')) {
+      const { data: existingBeacon, error: beaconError } = await supabase
+        .from('beacons')
+        .select('*')
+        .eq('id', beaconId)
+        .single();
 
-    if (beaconError || !beacon) {
-      return res.status(404).json({ error: 'Beacon not found' });
-    }
+      if (beaconError || !existingBeacon) {
+        return res.status(404).json({ error: 'Beacon not found' });
+      }
 
-    // Verify it's actually a CA beacon
-    const content = beacon.content?.trim() || '';
-    const caMatch = content.match(/\b[1-9A-HJ-NP-Za-km-z]{44}\b/);
-    if (!caMatch) {
-      return res.status(400).json({ error: 'This is not a valid CA beacon' });
-    }
+      // Verify it's actually a CA beacon
+      const content = existingBeacon.content?.trim() || '';
+      const caMatch = content.match(/\b[1-9A-HJ-NP-Za-km-z]{44}\b/);
+      if (!caMatch) {
+        return res.status(400).json({ error: 'This is not a valid CA beacon' });
+      }
 
-    // Verify contract address matches
-    if (caMatch[0] !== contractAddress) {
-      return res.status(400).json({ error: 'Contract address mismatch' });
+      // Verify contract address matches
+      if (caMatch[0] !== contractAddress) {
+        return res.status(400).json({ error: 'Contract address mismatch' });
+      }
+      
+      beacon = existingBeacon;
+    } else {
+      // This is a new CA beacon creation - validate the contract address format
+      const caMatch = contractAddress.match(/\b[1-9A-HJ-NP-Za-km-z]{44}\b/);
+      if (!caMatch) {
+        return res.status(400).json({ error: 'Invalid contract address format' });
+      }
+      
+      // Create a virtual beacon for new CA purchases
+      beacon = {
+        id: beaconId,
+        content: contractAddress,
+        author: userWallet,
+        created_at: new Date().toISOString()
+      };
     }
 
     // Direct swap - no fees, full amount goes to Jupiter
@@ -167,7 +191,7 @@ module.exports = async (req, res) => {
 
     // Create purchase record for database
     const purchase = {
-      beacon_id: beaconId,
+      beacon_id: beacon.id,
       buyer_wallet: userWallet,
       contract_address: contractAddress,
       purchase_amount: parseFloat(solAmount),

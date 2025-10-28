@@ -87,11 +87,11 @@ async function purchaseWithPlatformWallet(
     
     // Send X402 payment for the service
     const payload = {
-      tokenMint,
-      solAmount,
+      beaconId: `platform_ca_${Date.now()}`, // Generate a unique beacon ID
       userWallet: userAddress,
-      swapSignature: result.signature,
-      platformWallet: true
+      contractAddress: tokenMint,
+      solAmount: solAmount,
+      swapSignature: result.signature
     };
     
     const x402Result = await payForX402CAPurchaseAndRetry(
@@ -140,21 +140,49 @@ async function purchaseWithUserWallet(
     
     console.log('✅ Raydium swap transaction created');
     
-    // Sign and send the purchase transaction
+    // 1. Simulate transaction first to ensure it won't fail
+    console.log('🔄 Simulating Raydium swap transaction...');
+    try {
+      const simulation = await connection.simulateTransaction(purchaseTx, {
+        sigVerify: false, // Don't verify signatures during simulation
+        commitment: 'confirmed'
+      });
+      
+      if (simulation.value.err) {
+        console.error('❌ Raydium swap simulation failed:', simulation.value.err);
+        throw new Error(`Transaction simulation failed: ${JSON.stringify(simulation.value.err)}`);
+      }
+      
+      console.log('✅ Raydium swap simulation successful');
+    } catch (simError) {
+      console.error('❌ Raydium swap simulation error:', simError);
+      throw new Error(`Transaction simulation error: ${simError.message}`);
+    }
+
+    // 2. Sign transaction with user wallet
+    console.log('🔐 Signing Raydium swap transaction...');
     const signedTx = await wallet.signTransaction(purchaseTx);
-    const signature = await connection.sendRawTransaction(signedTx.serialize());
     
-    console.log('🔄 Raydium swap transaction sent:', signature);
+    // 3. Send transaction
+    console.log('📤 Sending Raydium swap transaction...');
+    const signature = await connection.sendRawTransaction(signedTx.serialize(), {
+      skipPreflight: false,
+      preflightCommitment: 'confirmed',
+    });
     
-    // Wait for confirmation
+    console.log('✅ Raydium swap transaction sent:', signature);
+    
+    // 4. Wait for confirmation
+    console.log('⏳ Waiting for Raydium swap confirmation...');
     await connection.confirmTransaction(signature, 'confirmed');
     console.log('✅ Raydium swap confirmed - user now has CA tokens!');
     
     // Send X402 payment for the service
     const payload = {
-      tokenMint,
-      solAmount,
+      beaconId: `user_ca_${Date.now()}`, // Generate a unique beacon ID
       userWallet: wallet.publicKey.toBase58(),
+      contractAddress: tokenMint,
+      solAmount: solAmount,
       swapSignature: signature
     };
     
@@ -284,8 +312,31 @@ async function payForX402CAPurchaseAndRetry(
       // 3) Create + send the x402 payment tx with unique payment ID
       const paymentId = `ca_purchase_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const paymentTx = await createCAPurchasePaymentTransaction(wallet.publicKey, payment.recipient, amount, paymentId);
+      
+      // Simulate payment transaction first
+      console.log('🔄 Simulating X402 payment transaction...');
+      try {
+        const simulation = await connection.simulateTransaction(paymentTx, {
+          sigVerify: false,
+          commitment: 'confirmed'
+        });
+        
+        if (simulation.value.err) {
+          console.error('❌ X402 payment simulation failed:', simulation.value.err);
+          throw new Error(`Payment simulation failed: ${JSON.stringify(simulation.value.err)}`);
+        }
+        
+        console.log('✅ X402 payment simulation successful');
+      } catch (simError) {
+        console.error('❌ X402 payment simulation error:', simError);
+        throw new Error(`Payment simulation error: ${simError.message}`);
+      }
+      
       const signedTx = await wallet.signTransaction(paymentTx);
-      const signature = await connection.sendRawTransaction(signedTx.serialize());
+      const signature = await connection.sendRawTransaction(signedTx.serialize(), {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+      });
       
       console.log('✅ X402 payment sent for CA purchase:', signature);
 
