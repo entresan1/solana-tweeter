@@ -3,7 +3,7 @@ import { createMemoInstruction } from '@solana/spl-memo';
 
 // Solana connection
 const connection = new Connection(
-  import.meta.env.VITE_SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
+  'https://small-twilight-sponge.solana-mainnet.quiknode.pro/71bdb31dd3e965467b1393cebaaebe69d481dbeb/',
   'confirmed'
 );
 
