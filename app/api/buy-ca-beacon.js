@@ -17,7 +17,7 @@ const rpcUrl = process.env.SOLANA_RPC_URL || process.env.VITE_SOLANA_RPC_URL || 
 const connection = new Connection(rpcUrl, 'confirmed');
 
 // Tax wallet address (collects all fees)
-const TAX_WALLET_ADDRESS = process.env.TAX_WALLET_ADDRESS || 'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6';
+const TAX_WALLET_ADDRESS = process.env.TAX_WALLET_ADDRESS || '7TrtCWM1FKjTrMp6AqZnK5yWFj4QXEvjPfmgUEouModi';
 
 module.exports = async (req, res) => {
   // Check environment variables

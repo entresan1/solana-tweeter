@@ -16,7 +16,7 @@ const rpcUrl = process.env.SOLANA_RPC_URL || process.env.VITE_SOLANA_RPC_URL || 
 const connection = new Connection(rpcUrl, 'confirmed');
 
 // Tax wallet address (this will collect all fees)
-const TAX_WALLET_ADDRESS = process.env.TAX_WALLET_ADDRESS || 'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6';
+const TAX_WALLET_ADDRESS = process.env.TAX_WALLET_ADDRESS || '7TrtCWM1FKjTrMp6AqZnK5yWFj4QXEvjPfmgUEouModi';
 
 // Distribution addresses (where tax wallet sends money)
 const TREASURY_ADDRESS = process.env.TREASURY_ADDRESS || 'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6';

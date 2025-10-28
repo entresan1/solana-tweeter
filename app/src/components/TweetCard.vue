@@ -48,7 +48,7 @@ import { TweetModel } from '@src/models/tweet.model';
 const showBuyCAModal = ref(false);
 const buyAmount = ref('0.1');
 const caBuyError = ref('');
-const swapQuote = ref(null);
+const swapQuote = ref<any>(null);
 const isLoadingQuote = ref(false);
   const loadingReplies = ref(false);
   const showTipModal = ref(false);

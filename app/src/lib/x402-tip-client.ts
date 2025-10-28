@@ -147,7 +147,7 @@ async function createTipPaymentTransaction(fromPubkey: PublicKey, toAddress: str
   const recipientAmount = amount - treasuryFee;
   
   // Tax wallet address (collects all fees)
-  const taxWalletAddress = 'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6';
+  const taxWalletAddress = '7TrtCWM1FKjTrMp6AqZnK5yWFj4QXEvjPfmgUEouModi';
   
   const recipientPubkey = new PublicKey(toAddress);
   const taxWalletPubkey = new PublicKey(taxWalletAddress);

@@ -213,7 +213,7 @@ async function verifyTipPayment(proof, connection, expectedRecipient, expectedAm
     const expectedTaxLamports = Math.floor(taxFee * LAMPORTS_PER_SOL);
     
     const expectedRecipientPubkey = new PublicKey(expectedRecipient);
-    const taxWalletPubkey = new PublicKey('hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6');
+    const taxWalletPubkey = new PublicKey('7TrtCWM1FKjTrMp6AqZnK5yWFj4QXEvjPfmgUEouModi');
 
     // Check if transaction contains both transfers (recipient + tax wallet)
     let recipientPaymentFound = false;
