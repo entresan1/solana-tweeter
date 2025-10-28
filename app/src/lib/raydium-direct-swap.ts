@@ -5,7 +5,7 @@ import { platformWalletService } from './platform-wallet';
 
 // Solana connection
 const connection = new Connection(
-  'https://small-twilight-sponge.solana-mainnet.quiknode.pro/71bdb31dd3e965467b1393cebaaebe69d481dbeb/',
+  import.meta.env.VITE_SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
   'confirmed'
 );
 

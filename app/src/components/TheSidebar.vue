@@ -167,12 +167,9 @@
             </span>
           </div>
         </div>
-        <div class="text-lg font-medium hidden md:block flex items-center space-x-2"
+        <div class="text-lg font-medium hidden md:block"
              :class="route.name === 'Profile' ? 'text-primary-300' : 'text-dark-400 group-hover:text-primary-300'">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-          </svg>
-          <span>{{ profileState.getDisplayName() }}</span>
+          {{ profileState.getDisplayName() }}
         </div>
       </SafeRouterLink>
       
