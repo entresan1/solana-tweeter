@@ -55,14 +55,26 @@ module.exports = async (req, res) => {
     }
 
     // Verify payment
-    console.log('🔍 Verifying platform deposit proof:', proof);
+    console.log('🔍 Verifying platform deposit proof:', {
+      proof,
+      recipient: req.body.recipient,
+      amount: req.body.amount,
+      proofKeys: Object.keys(proof)
+    });
+    
     const verification = await verifyPayment(proof, connection, req.body.recipient, req.body.amount);
     console.log('🔍 Platform deposit verification result:', verification);
     
     if (!verification.valid) {
+      console.error('❌ Payment verification failed:', verification.error);
       return res.status(402).json({
         error: 'Payment Verification Failed',
         message: verification.error || 'Invalid payment proof',
+        debug: {
+          proofReceived: proof,
+          expectedRecipient: req.body.recipient,
+          expectedAmount: req.body.amount
+        },
         payment: {
           network: 'solana',
           recipient: req.body.recipient,
@@ -180,8 +192,21 @@ module.exports = async (req, res) => {
  */
 async function verifyPayment(proof, connection, expectedRecipient, expectedAmount) {
   try {
+    console.log('🔍 Starting payment verification:', {
+      proof,
+      expectedRecipient,
+      expectedAmount
+    });
+
+    // Check if proof has required fields
+    if (!proof || !proof.transaction) {
+      return { valid: false, error: 'Invalid proof format - missing transaction signature' };
+    }
+
     // Verify transaction exists and is confirmed
     const signature = proof.transaction;
+    console.log('🔍 Looking up transaction:', signature);
+    
     const transaction = await connection.getTransaction(signature, {
       commitment: 'confirmed',
     });
@@ -190,9 +215,23 @@ async function verifyPayment(proof, connection, expectedRecipient, expectedAmoun
       return { valid: false, error: 'Transaction not found or not confirmed' };
     }
 
+    console.log('✅ Transaction found and confirmed');
+
     // Verify transaction is to the expected recipient
     const expectedRecipientPubkey = new PublicKey(expectedRecipient);
-    const expectedAmountLamports = parseFloat(expectedAmount) * LAMPORTS_PER_SOL;
+    const expectedAmountNum = parseFloat(expectedAmount);
+    
+    if (isNaN(expectedAmountNum) || expectedAmountNum <= 0) {
+      return { valid: false, error: 'Invalid amount provided' };
+    }
+    
+    const expectedAmountLamports = expectedAmountNum * LAMPORTS_PER_SOL;
+    
+    console.log('🔍 Verification details:', {
+      expectedRecipient: expectedRecipient,
+      expectedAmount: expectedAmountNum,
+      expectedAmountLamports: expectedAmountLamports
+    });
 
     // Check if transaction contains transfer to recipient
     let paymentFound = false;
@@ -235,8 +274,18 @@ async function verifyPayment(proof, connection, expectedRecipient, expectedAmoun
       }
     }
 
+    console.log('🔍 Payment verification result:', {
+      paymentFound,
+      actualAmount,
+      expectedAmountLamports,
+      difference: actualAmount - expectedAmountLamports
+    });
+
     if (!paymentFound) {
-      return { valid: false, error: 'Payment not found or insufficient amount' };
+      return { 
+        valid: false, 
+        error: `Payment not found or insufficient amount. Expected: ${expectedAmountLamports} lamports, Found: ${actualAmount} lamports` 
+      };
     }
 
     // Verify network (mainnet only)
