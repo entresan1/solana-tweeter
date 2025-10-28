@@ -38,7 +38,7 @@
     
     // Load profile data when wallet connects
     if (newWallet?.publicKey) {
-      await profileState.loadCurrentUserProfile();
+      await profileState.loadCurrentUserProfile(newWallet);
     } else {
       profileState.clearProfile();
     }

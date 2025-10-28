@@ -13,10 +13,8 @@ export const profileState = {
   isLoadingProfile: computed(() => isLoadingProfile.value),
   
   // Load profile for connected wallet
-  async loadCurrentUserProfile() {
-    const { wallet } = useWallet();
-    
-    if (!wallet.value?.publicKey) {
+  async loadCurrentUserProfile(wallet?: any) {
+    if (!wallet?.publicKey) {
       currentUserProfile.value = null;
       return;
     }
@@ -24,7 +22,7 @@ export const profileState = {
     isLoadingProfile.value = true;
     
     try {
-      const userAddress = wallet.value.publicKey.toBase58();
+      const userAddress = wallet.publicKey.toBase58();
       console.log('👤 Loading current user profile for:', userAddress);
       
       const profile = await profileService.getProfile(userAddress);
@@ -85,17 +83,5 @@ export const profileState = {
 };
 
 // Auto-load profile when wallet connects
-if (typeof window !== 'undefined') {
-  const { wallet } = useWallet();
-  
-  // Watch for wallet changes and load profile
-  import('vue').then(({ watch }) => {
-    watch(wallet, async (newWallet) => {
-      if (newWallet?.publicKey) {
-        await profileState.loadCurrentUserProfile();
-      } else {
-        profileState.clearProfile();
-      }
-    });
-  });
-}
+// Note: This will be handled by components that call loadCurrentUserProfile()
+// when the wallet changes, rather than at module level

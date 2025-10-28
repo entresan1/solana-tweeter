@@ -35,7 +35,7 @@
     if (isConnected) {
       loadPlatformWalletData();
       // Load current user profile
-      await profileState.loadCurrentUserProfile();
+      await profileState.loadCurrentUserProfile(wallet.value);
     } else {
       platformWalletAddress.value = '';
       platformBalance.value = 0;
@@ -48,7 +48,7 @@
     if (connected) {
       loadPlatformWalletData();
       // Load current user profile
-      await profileState.loadCurrentUserProfile();
+      await profileState.loadCurrentUserProfile(wallet.value);
     }
   });
   
