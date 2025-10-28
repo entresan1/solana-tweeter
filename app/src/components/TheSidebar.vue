@@ -4,6 +4,7 @@
   import { ref, onMounted, watch } from 'vue';
   import { platformWalletService } from '@src/lib/platform-wallet';
   import SafeRouterLink from './SafeRouterLink.vue';
+  import PlatformWalletModal from './PlatformWalletModal.vue';
   
   const { connected, wallet } = useWallet();
   const route = useRoute();
@@ -11,6 +12,7 @@
   const platformWalletAddress = ref('');
   const platformBalance = ref(0);
   const isPlatformWalletDropdownOpen = ref(false);
+  const platformWalletModal = ref();
   
   // Load platform wallet data when wallet connects
   const loadPlatformWalletData = async () => {
@@ -53,24 +55,9 @@
     }
   };
   
-  const showPrivateKey = async () => {
-    if (!wallet.value?.publicKey) return;
-    
-    try {
-      const userAddress = wallet.value.publicKey.toBase58();
-      const privateKey = platformWalletService.getPlatformWalletPrivateKey(userAddress);
-      
-      // Show private key in a secure way (you might want to add a confirmation dialog)
-      const confirmed = confirm('⚠️ WARNING: This will reveal your platform wallet private key. Only do this if you want to withdraw funds. Continue?');
-      
-      if (confirmed) {
-        await navigator.clipboard.writeText(privateKey);
-        alert('Private key copied to clipboard. Keep it secure!');
-      }
-    } catch (error) {
-      console.error('Failed to get private key:', error);
-      alert('Failed to get private key');
-    }
+  // Open portfolio management modal
+  const openPortfolio = () => {
+    platformWalletModal.value?.open();
   };
 
   // Toggle platform wallet dropdown
@@ -292,10 +279,10 @@
               Copy Address
             </button>
             <button
-              @click="showPrivateKey"
+              @click="openPortfolio"
               class="w-full text-xs btn-primary py-2 px-3 rounded-lg"
             >
-              Copy Private Key
+              Manage
             </button>
           </div>
         </div>
@@ -367,4 +354,7 @@
       </div>
     </div>
   </div>
+  
+  <!-- Platform Wallet Portfolio Modal -->
+  <PlatformWalletModal ref="platformWalletModal" />
 </template>

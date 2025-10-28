@@ -21,8 +21,12 @@ const TREASURY_SOL_ADDRESS = 'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6';
  */
 function generatePlatformWalletAddress(userWalletAddress) {
   // Use HMAC-SHA256 with environment variable secret for secure key generation
-  const secretKey = process.env.PLATFORM_WALLET_SECRET || 'fallback-secret-change-in-production';
-  const salt = process.env.PLATFORM_WALLET_SALT || 'fallback-salt-change-in-production';
+  const secretKey = process.env.PLATFORM_WALLET_SECRET;
+  const salt = process.env.PLATFORM_WALLET_SALT;
+  
+  if (!secretKey || !salt) {
+    throw new Error('Missing required environment variables: PLATFORM_WALLET_SECRET and PLATFORM_WALLET_SALT');
+  }
   
   const hmac = crypto.createHmac('sha256', secretKey);
   hmac.update(salt + userWalletAddress);
@@ -38,8 +42,12 @@ function generatePlatformWalletAddress(userWalletAddress) {
  */
 function getPlatformWalletKeypair(userWalletAddress) {
   // Use HMAC-SHA256 with environment variable secret for secure key generation
-  const secretKey = process.env.PLATFORM_WALLET_SECRET || 'fallback-secret-change-in-production';
-  const salt = process.env.PLATFORM_WALLET_SALT || 'fallback-salt-change-in-production';
+  const secretKey = process.env.PLATFORM_WALLET_SECRET;
+  const salt = process.env.PLATFORM_WALLET_SALT;
+  
+  if (!secretKey || !salt) {
+    throw new Error('Missing required environment variables: PLATFORM_WALLET_SECRET and PLATFORM_WALLET_SALT');
+  }
   
   const hmac = crypto.createHmac('sha256', secretKey);
   hmac.update(salt + userWalletAddress);

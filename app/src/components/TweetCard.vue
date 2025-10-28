@@ -32,7 +32,15 @@ import { TweetModel } from '@src/models/tweet.model';
   // CA detection
   const isCA = computed(() => {
     const content = tweet.value?.content?.trim() || '';
-    return content.length === 44 && /^[1-9A-HJ-NP-Za-km-z]+$/.test(content);
+    const caMatch = content.match(/\b[1-9A-HJ-NP-Za-km-z]{44}\b/);
+    return !!caMatch;
+  });
+  
+  // Extract CA address from content
+  const caAddress = computed(() => {
+    const content = tweet.value?.content?.trim() || '';
+    const caMatch = content.match(/\b[1-9A-HJ-NP-Za-km-z]{44}\b/);
+    return caMatch ? caMatch[0] : '';
   });
   
   // CA buying state
@@ -339,7 +347,7 @@ import { TweetModel } from '@src/models/tweet.model';
         body: JSON.stringify({
           beaconId: tweet.value.id,
           userWallet: wallet.value.publicKey.toBase58(),
-          contractAddress: tweet.value.content
+          contractAddress: caAddress.value
         })
       });
       
@@ -851,7 +859,7 @@ Come beacon at @https://trenchbeacon.com/`;
               <span class="text-green-300 text-sm">• Buy tokens directly from platform wallet</span>
             </div>
             <div class="mt-2 text-xs text-green-300 font-mono break-all">
-              {{ tweet?.content }}
+              CA: {{ caAddress }}
             </div>
           </div>
         </div>

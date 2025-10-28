@@ -33,12 +33,20 @@
   // CA detection and character limit
   const isCA = computed(() => {
     const text = content.value.trim();
-    // Check if it's a valid Solana address (44 characters, base58)
-    return text.length === 44 && /^[1-9A-HJ-NP-Za-km-z]+$/.test(text);
+    // Check if text contains a valid Solana address (44 characters, base58)
+    const caMatch = text.match(/\b[1-9A-HJ-NP-Za-km-z]{44}\b/);
+    return !!caMatch;
+  });
+  
+  // Extract CA address from content
+  const caAddress = computed(() => {
+    const text = content.value.trim();
+    const caMatch = text.match(/\b[1-9A-HJ-NP-Za-km-z]{44}\b/);
+    return caMatch ? caMatch[0] : '';
   });
 
   // Character limit / count-down (no limit for CA)
-  const characterLimit = useCountCharacterLimit(content, isCA.value ? 44 : 200);
+  const characterLimit = useCountCharacterLimit(content, 200);
   const characterLimitColour = computed(() => {
     if (isCA.value) return 'text-green-400'; // Green for CA
     if (characterLimit.value < 0) return 'text-red-400';
@@ -88,35 +96,7 @@
   });
 
   // Actions
-  const emit = defineEmits(['added', 'ca-bought', 'gambled']);
-  
-  // Gamble function - buy random CA beacon
-  const handleGamble = async () => {
-    if (!connected.value) return;
-    
-    isSubmitting.value = true;
-    errorMessage.value = '';
-    
-    try {
-      // Fetch random CA beacon
-      const response = await fetch('/api/random-ca-beacon');
-      const data = await response.json();
-      
-      if (!data.success || !data.beacon) {
-        throw new Error('No CA beacons available to gamble');
-      }
-      
-      // Buy the random CA beacon
-      await buyCABeacon(data.beacon);
-      
-      emit('gambled', data.beacon);
-    } catch (error: any) {
-      console.error('Gamble error:', error);
-      errorMessage.value = error.message || 'Gamble failed. Please try again.';
-    } finally {
-      isSubmitting.value = false;
-    }
-  };
+  const emit = defineEmits(['added', 'ca-bought']);
   
   // Buy CA beacon function
   const buyCABeacon = async (beacon: any) => {
@@ -261,6 +241,9 @@
             <span class="text-green-400 font-medium">Contract Address Detected!</span>
             <span class="text-green-300 text-sm">This will create a token beacon that others can buy directly.</span>
           </div>
+          <div class="mt-2 text-xs text-green-300 font-mono break-all">
+            CA: {{ caAddress }}
+          </div>
         </div>
       </div>
 
@@ -297,21 +280,11 @@
           <!-- Enhanced Character limit -->
           <div class="text-sm font-medium transition-all duration-300" :class="characterLimitColour">
             <span class="inline-flex items-center space-x-1">
-              <span v-if="isCA">CA (44/44)</span>
+              <span v-if="isCA">CA Detected</span>
               <span v-else>{{ characterLimit }} left</span>
             </span>
           </div>
 
-          <!-- Gamble Button -->
-          <button
-            v-if="connected && !isCA"
-            @click="handleGamble"
-            :disabled="isSubmitting"
-            class="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm font-medium rounded-lg transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Buy a random CA beacon with 5% platform fee"
-          >
-            🎲 Gamble (5% fee)
-          </button>
 
           <!-- Automatic Wallet Selection Info (only when connected) -->
           <div v-if="connected && platformWalletAddress" class="flex items-center space-x-3 text-sm">

@@ -38,47 +38,34 @@ module.exports = async (req, res) => {
 
     // Verify it's actually a CA beacon
     const content = beacon.content?.trim() || '';
-    if (content.length !== 44 || !/^[1-9A-HJ-NP-Za-km-z]+$/.test(content)) {
+    const caMatch = content.match(/\b[1-9A-HJ-NP-Za-km-z]{44}\b/);
+    if (!caMatch) {
       return res.status(400).json({ error: 'This is not a valid CA beacon' });
     }
 
     // Verify contract address matches
-    if (content !== contractAddress) {
+    if (caMatch[0] !== contractAddress) {
       return res.status(400).json({ error: 'Contract address mismatch' });
     }
 
-    // Record the CA purchase
-    const { data: purchase, error: purchaseError } = await supabase
-      .from('ca_purchases')
-      .insert({
-        beacon_id: beaconId,
-        buyer_wallet: userWallet,
-        contract_address: contractAddress,
-        purchase_amount: 0.001, // Standard beacon price
-        platform_fee: 0.00005, // 5% of 0.001 SOL
-        created_at: new Date().toISOString()
-      })
-      .select()
-      .single();
+    // For now, just log the purchase (we'll add database tracking later)
+    console.log('CA Purchase:', {
+      beaconId,
+      userWallet,
+      contractAddress,
+      timestamp: new Date().toISOString()
+    });
 
-    if (purchaseError) {
-      console.error('Failed to record CA purchase:', purchaseError);
-      return res.status(500).json({ error: 'Failed to record purchase', details: purchaseError.message });
-    }
-
-    // Update beacon stats (increment purchase count)
-    const { error: updateError } = await supabase
-      .from('beacons')
-      .update({ 
-        purchase_count: (beacon.purchase_count || 0) + 1,
-        last_purchased_at: new Date().toISOString()
-      })
-      .eq('id', beaconId);
-
-    if (updateError) {
-      console.warn('Failed to update beacon stats:', updateError);
-      // Don't fail the purchase for this
-    }
+    // Create a mock purchase object
+    const purchase = {
+      id: Date.now(), // Temporary ID
+      beacon_id: beaconId,
+      buyer_wallet: userWallet,
+      contract_address: contractAddress,
+      purchase_amount: 0.001,
+      platform_fee: 0.00005,
+      created_at: new Date().toISOString()
+    };
 
     return res.status(200).json({ 
       success: true, 

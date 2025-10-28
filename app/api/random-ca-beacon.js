@@ -19,23 +19,23 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Get all CA beacons (44 character content)
+    // Get all beacons
     const { data: beacons, error } = await supabase
       .from('beacons')
       .select('*')
-      .eq('content_length', 44) // Assuming we have a content_length field
       .order('created_at', { ascending: false })
-      .limit(100);
+      .limit(1000);
 
     if (error) {
       console.error('Supabase query error:', error);
-      return res.status(500).json({ error: 'Failed to fetch CA beacons', details: error.message });
+      return res.status(500).json({ error: 'Failed to fetch beacons', details: error.message });
     }
 
-    // Filter for actual CA beacons (44 characters, base58)
+    // Filter for actual CA beacons (containing 44 character base58 address)
     const caBeacons = beacons.filter(beacon => {
       const content = beacon.content?.trim() || '';
-      return content.length === 44 && /^[1-9A-HJ-NP-Za-km-z]+$/.test(content);
+      const caMatch = content.match(/\b[1-9A-HJ-NP-Za-km-z]{44}\b/);
+      return !!caMatch;
     });
 
     if (caBeacons.length === 0) {
