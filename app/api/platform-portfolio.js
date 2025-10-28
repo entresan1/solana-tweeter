@@ -39,20 +39,29 @@ module.exports = async (req, res) => {
 
   try {
     console.log('Platform portfolio request for wallet:', walletAddress);
+    console.log('Supabase URL:', supabaseUrl ? 'Set' : 'Missing');
+    console.log('Supabase Key:', supabaseAnonKey ? 'Set' : 'Missing');
     
     // Get platform wallet address for the user
     const platformWalletAddress = `platform_${walletAddress}`;
     
-    // Get CA purchases for this user
-    const { data: purchases, error: purchasesError } = await supabase
-      .from('ca_purchases')
-      .select('*')
-      .eq('buyer_wallet', walletAddress)
-      .order('created_at', { ascending: false });
+    // Get CA purchases for this user (optional, don't fail if table doesn't exist)
+    let purchases = [];
+    try {
+      const { data: purchasesData, error: purchasesError } = await supabase
+        .from('ca_purchases')
+        .select('*')
+        .eq('buyer_wallet', walletAddress)
+        .order('created_at', { ascending: false });
 
-    if (purchasesError) {
-      console.error('Failed to fetch CA purchases:', purchasesError);
-      // Don't fail if table doesn't exist yet
+      if (purchasesError) {
+        console.error('Failed to fetch CA purchases:', purchasesError);
+      } else {
+        purchases = purchasesData || [];
+      }
+    } catch (purchaseError) {
+      console.error('CA purchases table error:', purchaseError);
+      // Continue without purchases data
     }
 
     // Mock portfolio data for now (you can integrate with actual token data later)

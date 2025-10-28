@@ -352,50 +352,30 @@
         </button>
       </div>
       
-      <div class="space-y-4 text-dark-300">
+      <div class="space-y-3 text-dark-300">
         <div>
-          <h4 class="font-semibold text-white mb-2">🔗 Platform Wallet</h4>
-          <p class="text-sm">A shared wallet for platform operations. Deposit SOL to use for beacons, tips, and token trading without individual wallet transactions.</p>
+          <h4 class="font-semibold text-white mb-1">📡 Beacons</h4>
+          <p class="text-sm">Post messages, share thoughts, or announcements. Click usernames to see their beacons!</p>
         </div>
         
         <div>
-          <h4 class="font-semibold text-white mb-2">📡 Beacons</h4>
-          <p class="text-sm">Post messages, share thoughts, or announcements. Each beacon costs a small fee from the platform wallet. Click on usernames to see their beacons!</p>
+          <h4 class="font-semibold text-white mb-1">🪙 CA Tokens</h4>
+          <p class="text-sm">Buy tokens directly when beacons contain contract addresses!</p>
         </div>
         
         <div>
-          <h4 class="font-semibold text-white mb-2">🏷️ Topics</h4>
-          <p class="text-sm">Click on any topic tag to filter beacons by that topic. Discover content by category!</p>
+          <h4 class="font-semibold text-white mb-1">💼 Portfolio</h4>
+          <p class="text-sm">Click "Manage" to buy, sell, and manage your tokens.</p>
         </div>
         
         <div>
-          <h4 class="font-semibold text-white mb-2">🪙 CA Tokens</h4>
-          <p class="text-sm">When a beacon contains a 44-character contract address, you can buy those tokens directly! CA addresses don't count toward character limits.</p>
+          <h4 class="font-semibold text-white mb-1">💰 Tips & Leaderboard</h4>
+          <p class="text-sm">Tip beacons you like! Check leaderboard for top users.</p>
         </div>
         
         <div>
-          <h4 class="font-semibold text-white mb-2">💼 Portfolio Management</h4>
-          <p class="text-sm">Click "Manage" in the sidebar to access your platform wallet portfolio. Buy, sell, and manage tokens you've purchased!</p>
-        </div>
-        
-        <div>
-          <h4 class="font-semibold text-white mb-2">💰 Tips & Fees</h4>
-          <p class="text-sm">Tip beacons you like! 5% of tips go to treasury. All beacon fees and tip fees fund strategic buybacks, creating a flywheel effect.</p>
-        </div>
-        
-        <div>
-          <h4 class="font-semibold text-white mb-2">🏆 Leaderboard</h4>
-          <p class="text-sm">Check the leaderboard to see top users by beacons posted, likes received, and tips earned!</p>
-        </div>
-        
-        <div>
-          <h4 class="font-semibold text-white mb-2">⚡ x402 Protocol</h4>
-          <p class="text-sm"><strong>Both browser wallet and platform wallet use x402!</strong> This ensures secure, verifiable payments for all transactions on the platform.</p>
-        </div>
-        
-        <div>
-          <h4 class="font-semibold text-white mb-2">🔄 Flywheel Effect</h4>
-          <p class="text-sm">More activity → More fees → More buybacks → Higher value → More activity. A self-reinforcing cycle!</p>
+          <h4 class="font-semibold text-white mb-1">⚡ x402 Protocol</h4>
+          <p class="text-sm">Secure, verifiable payments for all transactions.</p>
         </div>
       </div>
       
