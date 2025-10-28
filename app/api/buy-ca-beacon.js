@@ -1,6 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
-const { Connection, PublicKey, SystemProgram, LAMPORTS_PER_SOL, Transaction } = require('@solana/web3.js');
-const { createMemoInstruction } = require('@solana/spl-memo');
+const { Connection, PublicKey } = require('@solana/web3.js');
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
@@ -16,8 +15,7 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const rpcUrl = process.env.SOLANA_RPC_URL || process.env.VITE_SOLANA_RPC_URL || 'https://small-twilight-sponge.solana-mainnet.quiknode.pro/71bdb31dd3e965467b1393cebaaebe69d481dbeb/';
 const connection = new Connection(rpcUrl, 'confirmed');
 
-// Tax wallet address (collects all fees)
-const TAX_WALLET_ADDRESS = process.env.TAX_WALLET_ADDRESS || '7TrtCWM1FKjTrMp6AqZnK5yWFj4QXEvjPfmgUEouModi';
+// Direct Jupiter swap - no platform fees collected
 
 module.exports = async (req, res) => {
   // Check environment variables
@@ -74,9 +72,9 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'Contract address mismatch' });
     }
 
-    // No fees - full amount goes to swap
-    const swapAmount = parseFloat(solAmount); // Full amount for swap
-    const totalCost = parseFloat(solAmount); // Total SOL user pays
+    // Direct swap - no fees, full amount goes to Jupiter
+    const swapAmount = parseFloat(solAmount);
+    const totalCost = parseFloat(solAmount);
     
     console.log('CA Purchase Request:', {
       beaconId,
@@ -88,60 +86,35 @@ module.exports = async (req, res) => {
       timestamp: new Date().toISOString()
     });
 
-    // Create a real Jupiter swap transaction: SOL → CA token
+    // Create direct Jupiter swap transaction using QuickNode API
     const fromPubkey = new PublicKey(userWallet);
-    const caTokenMint = new PublicKey(contractAddress);
     
-    const transaction = new Transaction();
-    
-    // Create real Jupiter swap transaction
     try {
       // Import Jupiter swap function
       const { createJupiterSwap } = require('../src/lib/jupiter-swap');
       
-      // Create real Jupiter swap transaction
+      // Create direct Jupiter swap transaction - no memo, no extra fees
       const swapTransaction = await createJupiterSwap(
         fromPubkey,
         contractAddress,
-        swapAmount
+        parseFloat(solAmount) // Use full amount for swap
       );
       
-      // Add Jupiter swap instructions to our transaction
-      for (const instruction of swapTransaction.instructions) {
-        transaction.add(instruction);
-      }
+      console.log('✅ Direct Jupiter swap transaction created using QuickNode API');
       
-      console.log('✅ Real Jupiter swap instructions added to transaction');
+      // Serialize the Jupiter transaction directly
+      const serializedTransaction = swapTransaction.serialize({
+        requireAllSignatures: false,
+        verifySignatures: false
+      });
+
     } catch (swapError) {
-      console.error('❌ Jupiter swap failed, falling back to simple transfer:', swapError);
-      
-      // Fallback: Create a simple transfer with memo
-      const swapLamports = Math.floor(swapAmount * LAMPORTS_PER_SOL);
-      transaction.add(
-        SystemProgram.transfer({
-          fromPubkey,
-          toPubkey: fromPubkey, // Self-transfer as fallback
-          lamports: swapLamports
-        })
-      );
-      
-      console.log('⚠️ Using fallback transfer instead of Jupiter swap');
+      console.error('❌ QuickNode Jupiter swap failed:', swapError);
+      return res.status(500).json({ 
+        error: 'Swap transaction creation failed', 
+        details: swapError.message 
+      });
     }
-
-    // Add swap memo
-    const memo = `x402:ca-swap:${contractAddress}:${beaconId}:${swapAmount}:SOL->CA`;
-    transaction.add(createMemoInstruction(memo));
-
-    // Get recent blockhash
-    const { blockhash } = await connection.getRecentBlockhash();
-    transaction.recentBlockhash = blockhash;
-    transaction.feePayer = fromPubkey;
-
-    // Serialize transaction for client to sign
-    const serializedTransaction = transaction.serialize({
-      requireAllSignatures: false,
-      verifySignatures: false
-    });
 
     // Create purchase record for database
     const purchase = {
@@ -149,7 +122,7 @@ module.exports = async (req, res) => {
       buyer_wallet: userWallet,
       contract_address: contractAddress,
       purchase_amount: parseFloat(solAmount),
-      platform_fee: platformFee,
+      platform_fee: 0, // No platform fee - direct swap
       total_cost: totalCost,
       transaction_data: serializedTransaction.toString('base64'),
       status: 'pending',
@@ -192,10 +165,9 @@ module.exports = async (req, res) => {
       success: true, 
       purchase: savedPurchase || purchase,
       transaction: serializedTransaction.toString('base64'),
-      message: `CA swap transaction created: ${swapAmount} SOL → ${contractAddress}`,
-      swapAmount,
-      totalCost,
-      memo,
+      message: `Direct Jupiter swap created: ${solAmount} SOL → ${contractAddress}`,
+      swapAmount: parseFloat(solAmount),
+      totalCost: parseFloat(solAmount),
       swapType: 'SOL_TO_CA'
     });
 
