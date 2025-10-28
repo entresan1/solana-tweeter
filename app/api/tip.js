@@ -206,54 +206,85 @@ async function verifyTipPayment(proof, connection, expectedRecipient, expectedAm
       return { valid: false, error: 'Transaction not found or not confirmed' };
     }
 
-    // Verify transaction is to the expected recipient
+    // Calculate expected amounts (5% to treasury, 95% to recipient)
+    const treasuryFee = expectedAmount * 0.05;
+    const recipientAmount = expectedAmount - treasuryFee;
+    const expectedRecipientLamports = Math.floor(recipientAmount * LAMPORTS_PER_SOL);
+    const expectedTreasuryLamports = Math.floor(treasuryFee * LAMPORTS_PER_SOL);
+    
     const expectedRecipientPubkey = new PublicKey(expectedRecipient);
-    const expectedAmountLamports = parseFloat(expectedAmount) * LAMPORTS_PER_SOL;
+    const treasuryPubkey = new PublicKey('hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6');
 
-    // Check if transaction contains transfer to recipient
-    let paymentFound = false;
-    let actualAmount = 0;
+    // Check if transaction contains both transfers (recipient + treasury)
+    let recipientPaymentFound = false;
+    let treasuryPaymentFound = false;
+    let actualRecipientAmount = 0;
+    let actualTreasuryAmount = 0;
 
     if (transaction.meta?.preBalances && transaction.meta?.postBalances) {
-      // Find the recipient account in the transaction
       const accounts = transaction.transaction.message.accountKeys;
-      const recipientIndex = accounts.findIndex(key => key.equals(expectedRecipientPubkey));
       
+      // Check recipient payment
+      const recipientIndex = accounts.findIndex(key => key.equals(expectedRecipientPubkey));
       if (recipientIndex !== -1) {
         const preBalance = transaction.meta.preBalances[recipientIndex];
         const postBalance = transaction.meta.postBalances[recipientIndex];
-        actualAmount = postBalance - preBalance;
+        actualRecipientAmount = postBalance - preBalance;
         
-        if (actualAmount >= expectedAmountLamports) {
-          paymentFound = true;
+        if (actualRecipientAmount >= expectedRecipientLamports) {
+          recipientPaymentFound = true;
+        }
+      }
+      
+      // Check treasury payment
+      const treasuryIndex = accounts.findIndex(key => key.equals(treasuryPubkey));
+      if (treasuryIndex !== -1) {
+        const preBalance = transaction.meta.preBalances[treasuryIndex];
+        const postBalance = transaction.meta.postBalances[treasuryIndex];
+        actualTreasuryAmount = postBalance - preBalance;
+        
+        if (actualTreasuryAmount >= expectedTreasuryLamports) {
+          treasuryPaymentFound = true;
         }
       }
     }
 
     // Alternative verification: check transaction instructions
-    if (!paymentFound && transaction.transaction?.message?.instructions) {
+    if ((!recipientPaymentFound || !treasuryPaymentFound) && transaction.transaction?.message?.instructions) {
       const accounts = transaction.transaction.message.accountKeys;
       for (const instruction of transaction.transaction.message.instructions) {
-        // Get the program ID from the accounts array
         const programId = accounts[instruction.programIdIndex];
         if (programId && programId.equals(SystemProgram.programId)) {
-          // This is a system program instruction, check if it's a transfer
           if (instruction.accounts && instruction.accounts.length >= 2) {
             const toAccount = accounts[instruction.accounts[1]];
+            
             if (toAccount && toAccount.equals(expectedRecipientPubkey)) {
-              // This is a transfer to the expected recipient
-              paymentFound = true;
-              actualAmount = expectedAmountLamports; // Assume correct amount for now
-              break;
+              recipientPaymentFound = true;
+              actualRecipientAmount = expectedRecipientLamports;
+            }
+            
+            if (toAccount && toAccount.equals(treasuryPubkey)) {
+              treasuryPaymentFound = true;
+              actualTreasuryAmount = expectedTreasuryLamports;
             }
           }
         }
       }
     }
 
-    if (!paymentFound) {
-      return { valid: false, error: 'Payment not found or insufficient amount' };
+    if (!recipientPaymentFound) {
+      return { valid: false, error: 'Recipient payment not found or insufficient amount' };
     }
+    
+    if (!treasuryPaymentFound) {
+      return { valid: false, error: 'Treasury fee payment not found or insufficient amount' };
+    }
+
+    console.log('✅ Tip payment verified:', {
+      recipientAmount: actualRecipientAmount / LAMPORTS_PER_SOL,
+      treasuryAmount: actualTreasuryAmount / LAMPORTS_PER_SOL,
+      totalAmount: (actualRecipientAmount + actualTreasuryAmount) / LAMPORTS_PER_SOL
+    });
 
     // Verify network (mainnet only)
     const cluster = connection.rpcEndpoint;
@@ -267,3 +298,4 @@ async function verifyTipPayment(proof, connection, expectedRecipient, expectedAm
     return { valid: false, error: 'Payment verification failed' };
   }
 }
+

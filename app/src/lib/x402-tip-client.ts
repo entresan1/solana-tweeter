@@ -134,23 +134,41 @@ async function payForX402TipAndRetry(
 }
 
 /**
- * Create tip payment transaction with X402 memo
+ * Create tip payment transaction with X402 memo and treasury fee
  * @param fromPubkey - Sender's public key
  * @param toAddress - Recipient's address
- * @param amount - Amount in SOL
+ * @param amount - Total amount in SOL (will be split between recipient and treasury)
  * @param paymentId - Unique payment identifier for X402 verification
  * @returns Transaction object
  */
 async function createTipPaymentTransaction(fromPubkey: PublicKey, toAddress: string, amount: number, paymentId?: string): Promise<Transaction> {
-  const toPubkey = new PublicKey(toAddress);
-  const lamports = amount * LAMPORTS_PER_SOL;
+  // Calculate 5% treasury fee
+  const treasuryFee = amount * 0.05;
+  const recipientAmount = amount - treasuryFee;
+  
+  // Treasury address (same as beacon payments)
+  const treasuryAddress = 'hQGYkc3kq3z6kJY2coFAoBaFhCgtSTa4UyEgVrCqFL6';
+  
+  const recipientPubkey = new PublicKey(toAddress);
+  const treasuryPubkey = new PublicKey(treasuryAddress);
+  
+  const recipientLamports = Math.floor(recipientAmount * LAMPORTS_PER_SOL);
+  const treasuryLamports = Math.floor(treasuryFee * LAMPORTS_PER_SOL);
 
   const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
 
-  const transferInstruction = SystemProgram.transfer({
+  // Create transfer instruction for recipient (95%)
+  const recipientTransfer = SystemProgram.transfer({
     fromPubkey,
-    toPubkey,
-    lamports,
+    toPubkey: recipientPubkey,
+    lamports: recipientLamports,
+  });
+
+  // Create transfer instruction for treasury (5%)
+  const treasuryTransfer = SystemProgram.transfer({
+    fromPubkey,
+    toPubkey: treasuryPubkey,
+    lamports: treasuryLamports,
   });
 
   const transaction = new Transaction({
@@ -158,7 +176,9 @@ async function createTipPaymentTransaction(fromPubkey: PublicKey, toAddress: str
     feePayer: fromPubkey,
   });
 
-  transaction.add(transferInstruction);
+  // Add both transfers
+  transaction.add(recipientTransfer);
+  transaction.add(treasuryTransfer);
   
   // Add X402 memo for on-chain verification
   if (paymentId) {
